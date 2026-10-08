@@ -1,0 +1,11 @@
+# Live data and secrets: never commit these
+server/data/
+server/certs/
+*.db
+*.db-wal
+*.db-shm
+*.pem
+*.key
+node_modules/
+*.log
+.claude/
