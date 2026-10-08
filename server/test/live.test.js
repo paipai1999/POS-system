@@ -88,6 +88,7 @@ async function listen(pathname) {
     } catch (e) { /* aborted */ }
   })();
   return {
+    events,
     // Resolves when a matching message has arrived (or already did); fails after 3 s.
     when(pred) {
       const hit = events.find(pred);
@@ -216,4 +217,36 @@ test('importing a backup tells every connected device to reload', async () => {
     assert.equal((await call('/api/import', { token: admin.token, method: 'POST', body: exported })).status, 200);
     await s.when(m => m.type === 'reload');
   } finally { s.close(); }
+});
+
+test('the kitchen display receives tickets and nothing else: no orders, prices, guests or payments', async () => {
+  const admin = await login('Admin', '1234');
+  const kitchen = await login('Kitchen', '3333');
+  const snap = (await call('/api/snapshot', { token: kitchen.token })).data;
+  const cols = new Set(snap.rows.map(r => r.col));
+  for (const c of ['orders', 'products', 'categories', 'tables', 'guestRequests', 'printJobs']) assert.ok(!cols.has(c), `no ${c}`);
+  assert.ok(cols.has('users'), 'staff names are still shown on tickets');
+  assert.ok(!JSON.stringify(snap).includes('"payment"'));
+
+  // A new order and a ticket: the kitchen's live feed carries the ticket only.
+  const waiter = await login('Leo', '2222');
+  const s = await listen('/api/events?token=' + kitchen.token);
+  try {
+    await s.when(m => m.type === 'hello');
+    const o = order(waiter, [['Latte', 1]]);
+    assert.equal((await waiter.put('orders', o)).status, 'ok');
+    const ticket = { id: 'k_' + Math.random().toString(36).slice(2), orderId: o.id, orderNo: 1, where: 'Takeaway', status: 'new', createdAt: Date.now(), items: [{ name: 'Latte', qty: 1 }] };
+    assert.equal((await waiter.put('kitchenTickets', ticket)).status, 'ok');
+    await s.when(changeOf('kitchenTickets', t => t.id === ticket.id));
+    assert.ok(!s.events.some(m => m.type === 'change' && m.rows.some(r => r.col === 'orders')), 'the order itself was not sent');
+  } finally { s.close(); }
+
+  const { data: missed } = await call('/api/changes?since=0', { token: kitchen.token });
+  assert.ok(missed.rows.every(r => ['settings', 'users', 'kitchenTickets'].includes(r.col)));
+
+  // The kitchen cannot use the API for anything but tickets.
+  assert.equal((await kitchen.put('kitchenTickets', { ...kitchen.doc('kitchenTickets', 'none') || { id: 'k_x', orderId: 'o', status: 'new', createdAt: 1, items: [] } })).status, 'ok');
+  const job = await kitchen.put('printJobs', { id: 'j_x', html: '<b>hi</b>', kind: 'receipt', status: 'pending', createdAt: Date.now() });
+  assert.equal(job.status, 'error', 'cannot queue print jobs');
+  assert.equal((await call('/api/orders?from=0', { token: kitchen.token })).status, 403);
 });

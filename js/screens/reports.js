@@ -43,19 +43,31 @@ Screens.reports = {
     const all = this.ordersInRange();
     const paid = all.filter(o => o.status === 'paid');
     const refunded = all.filter(o => o.status === 'refunded');
-    const sum = (arr, f) => round2(arr.reduce((s, x) => s + f(x), 0));
+    const sum = (arr, f) => rmoney(arr.reduce((s, x) => s + f(x), 0));
     const gross = sum(paid, o => o.totals.total);
     const net = sum(paid, o => o.totals.subtotal - o.totals.discount);
     const discounts = sum(paid, o => o.totals.discount);
     const tax = sum(paid, o => o.totals.tax);
     const service = sum(paid, o => o.totals.service);
+    const tips = sum(paid, o => (o.payment && o.payment.tip) || 0);
+    // Ingredient cost is known only for items that have a recipe (each paid line carries the cost it had at the time).
+    let cogs = 0, costedSales = 0, allSales = 0;
+    for (const o of paid) for (const l of o.items) {
+      allSales += l.price * l.qty;
+      if (l.cost !== undefined) { cogs += l.cost * l.qty; costedSales += l.price * l.qty; }
+    }
+    const [rangeStart, rangeEnd] = this.bounds().map(d => d.getTime());
+    const bought = sum(Store.data.purchases.filter(p => p.status === 'received' && p.date >= rangeStart && p.date < rangeEnd), p => p.total);
+    const lowIng = Store.lowIngredients();
     const refundTotal = sum(refunded, o => o.totals.total);
 
     const items = {}, cats = {}, methods = {}, staff = {};
     const hours = Array(24).fill(0);
     for (const o of paid) {
-      const m = (methods[o.payment.method] ||= { count: 0, amount: 0 });
-      m.count++; m.amount += o.totals.total;
+      for (const [k, amount] of Object.entries(paymentByMethod(o.payment))) { // a split bill counts under each method used
+        const m = (methods[k] ||= { count: 0, amount: 0 });
+        m.count++; m.amount += amount;
+      }
       const s = (staff[o.staffId] ||= { count: 0, amount: 0 });
       s.count++; s.amount += o.totals.total;
       hours[new Date(o.paidAt).getHours()] += o.totals.total;
@@ -100,6 +112,10 @@ Screens.reports = {
         ${stat('Average order', money(paid.length ? gross / paid.length : 0))}
         ${stat('Tax collected', money(tax))}
         ${service ? stat('Service charge', money(service)) : ''}
+        ${tips ? stat('Tips', money(tips), 'not part of sales') : ''}
+        ${cogs ? stat('Ingredient cost', money(cogs), `${Math.round(costedSales / (allSales || 1) * 100)}% of sales have a recipe`) : ''}
+        ${cogs ? stat('Profit on those items', money(costedSales - cogs), `${costedSales ? Math.round((costedSales - cogs) / costedSales * 100) : 0}% margin`) : ''}
+        ${bought ? stat('Bought (purchases)', money(bought), 'ingredients received') : ''}
         ${stat('Discounts', money(discounts))}
         ${stat('Refunds', money(refundTotal), `${refunded.length} order${refunded.length === 1 ? '' : 's'}`)}
       </div>
@@ -133,8 +149,8 @@ Screens.reports = {
         </section>
         <section class="card">
           <h2>Low stock</h2>
-          ${low.length
-            ? `<table class="data compact"><tbody>${low.map(p => `<tr><td>${esc(p.emoji)} ${esc(p.name)}</td><td class="num low-stock">${p.stock} left</td></tr>`).join('')}</tbody></table>`
+          ${low.length || lowIng.length
+            ? `<table class="data compact"><tbody>${low.map(p => `<tr><td>${esc(p.emoji)} ${esc(p.name)}</td><td class="num low-stock">${p.stock} left</td></tr>`).join('')}${lowIng.map(i => `<tr><td>🧂 ${esc(i.name)}</td><td class="num low-stock">${qtyText(i.stock)} ${esc(i.unit)} left</td></tr>`).join('')}</tbody></table>`
             : '<p class="empty small">All tracked items are well stocked 👍</p>'}
         </section>
       </div>`;
@@ -156,7 +172,7 @@ Screens.reports = {
       const s = String(v ?? '');
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
-    const header = ['Order', 'Paid at', 'Status', 'Table', 'Server', 'Cashier', 'Items', 'Subtotal', 'Discount', 'Service', 'Tax', 'Total', 'Payment'];
+    const header = ['Order', 'Paid at', 'Status', 'Table', 'Server', 'Cashier', 'Items', 'Subtotal', 'Discount', 'Service', 'Tax', 'Total', 'Tip', 'Payment'];
     const rows = orders.map(o => {
       const t = o.totals;
       const server = Store.user(o.staffId);
@@ -165,7 +181,10 @@ Screens.reports = {
         o.number, new Date(o.paidAt).toLocaleString(), o.status, whereLabel(o),
         server ? server.name : '', cashier ? cashier.name : '',
         o.items.map(l => `${l.qty}x ${l.name}`).join('; '),
-        t.subtotal, t.discount, t.service, t.tax, t.total, o.payment ? o.payment.method : '',
+        t.subtotal, t.discount, t.service, t.tax, t.total, (o.payment && o.payment.tip) || 0,
+        !o.payment ? '' : o.payment.method === 'split' && o.payment.parts
+          ? 'split: ' + o.payment.parts.map(p => `${p.method} ${p.amount}`).join(' + ')
+          : o.payment.method,
       ];
     });
     const csv = [header, ...rows].map(r => r.map(cell).join(',')).join('\n');

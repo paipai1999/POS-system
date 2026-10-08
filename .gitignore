@@ -9,3 +9,4 @@ server/certs/
 node_modules/
 *.log
 .claude/
+*.pdf

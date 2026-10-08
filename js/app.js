@@ -8,7 +8,10 @@ const NAV = [
   { id: 'tables', label: 'Tables', icon: '🪑', perm: 'tables' },
   { id: 'kitchen', label: 'Kitchen', icon: '👨‍🍳', perm: 'kitchen' },
   { id: 'orders', label: 'Orders', icon: '🧾', perm: 'orders' },
+  { id: 'drawer', label: 'Cash drawer', icon: '💰', perm: 'checkout' },
   { id: 'products', label: 'Menu & Stock', icon: '📦', perm: 'products' },
+  { id: 'inventory', label: 'Inventory', icon: '🧂', perm: 'products' },
+  { id: 'customers', label: 'Customers', icon: '👤', perm: 'checkout' },
   { id: 'reports', label: 'Reports', icon: '📊', perm: 'reports' },
   { id: 'users', label: 'Staff', icon: '👥', perm: 'users' },
   { id: 'settings', label: 'Settings', icon: '⚙️', perm: 'settings' },
@@ -22,12 +25,14 @@ const App = {
   deferredRender: false,
 
   async init() {
+    I18N.init();
     Modal.init();
 
     $('#topbar').addEventListener('click', e => {
       const b = e.target.closest('[data-nav]');
       if (!b) return;
-      if (b.dataset.nav === 'logout') this.logout();
+      if (b.dataset.nav === 'lang') { I18N.toggle(); this.render(); }
+      else if (b.dataset.nav === 'logout') this.logout();
       else this.go(b.dataset.nav);
     });
 
@@ -162,6 +167,7 @@ const App = {
       </nav>
       ${Store.server ? '<span id="sync-status" class="sync-status"></span>' : ''}
       <div class="who">
+        ${I18N.button('lang')}
         <span>${esc(this.user.name)}<small>${ROLES[this.user.role].label}</small></span>
         <button class="btn small" data-nav="logout">Log out</button>
       </div>`;

@@ -69,6 +69,8 @@ const Store = {
   category(id) { return this.data.categories.find(c => c.id === id); },
   table(id) { return this.data.tables.find(t => t.id === id); },
   order(id) { return this.data.orders.find(o => o.id === id); },
+  ingredient(id) { return this.data.ingredients.find(i => i.id === id); },
+  customer(id) { return this.data.customers.find(c => c.id === id); },
   userByPin(pin) { return this.data.users.find(u => u.active && u.pin === pin); },
 
   sortCategories(data = this.data) {
@@ -161,10 +163,72 @@ const Store = {
   },
 
   // Name and price are copied onto the line so later menu edits don't change past orders.
-  addItem(order, product, qty = 1, note = '') {
-    const line = !note && order.items.find(l => l.productId === product.id && !l.note);
+  // `mods` are priced options picked for this line (extra shot, large…); they raise the line's price.
+  addItem(order, product, qty = 1, note = '', mods = []) {
+    const same = l => l.productId === product.id && !l.note && JSON.stringify(l.mods || []) === JSON.stringify(mods);
+    const line = !note && order.items.find(same);
     if (line) line.qty += qty;
-    else order.items.push({ id: uid('l_'), productId: product.id, name: product.name, price: product.price, qty, note, sentQty: 0 });
+    else {
+      const l = { id: uid('l_'), productId: product.id, name: product.name, price: lineUnitPrice(product, mods), qty, note, sentQty: 0 };
+      if (mods.length) l.mods = mods.map(m => ({ name: m.name, price: m.price }));
+      order.items.push(l);
+    }
+  },
+
+  // Moves some lines of an open bill onto a new bill ("split the bill"). Returns the new order.
+  // In server mode the server does it in one step so nothing can be lost; local mode does the same here.
+  async splitOrder(order, moves) {
+    if (this.server) {
+      await Sync.flush();
+      const base = (Sync.synced.orders && Sync.synced.orders[order.id] || {}).ver || 0;
+      const res = await Sync.api('/api/orders/split', { method: 'POST', body: { orderId: order.id, base, moves } });
+      Sync.applyRemote(res.rows, { advanceSeq: false });
+      return this.order(res.rows[1].data.id);
+    }
+    const items = order.items.map(l => ({ ...l }));
+    const moved = [];
+    for (const mv of moves) {
+      const line = items.find(l => l.id === mv.lineId);
+      if (!line || !(mv.qty >= 1 && mv.qty <= line.qty)) throw new Error('Invalid split');
+      const sent = Math.min(line.sentQty || 0, mv.qty);
+      moved.push({ ...line, id: uid('l_'), qty: mv.qty, sentQty: sent });
+      line.qty -= mv.qty;
+      line.sentQty = Math.max(0, (line.sentQty || 0) - sent);
+    }
+    const rest = items.filter(l => l.qty > 0);
+    if (!rest.length) throw new Error('Leave at least one item on the original bill');
+    order.items = rest;
+    const created = this.createOrder({ tableId: null, staffId: order.staffId });
+    created.tableName = (order.tableId && (this.table(order.tableId) || {}).name) || order.tableName || '';
+    created.splitFrom = order.id;
+    created.items = moved;
+    this.save();
+    return created;
+  },
+
+  // ----- cash drawer -----
+  openShift() { return this.data.shifts.find(s => !s.closedAt) || null; },
+
+  startShift(openingFloat) {
+    const shift = { id: uid('s_'), openingFloat: rmoney(openingFloat), openedAt: Date.now(), openedBy: App.user.id, closedAt: null };
+    this.data.shifts.push(shift);
+    this.save();
+    return shift;
+  },
+
+  // The server works out the expected cash itself; in local mode it is worked out here.
+  closeShift(shift, countedCash, note) {
+    shift.countedCash = rmoney(countedCash);
+    shift.note = note;
+    if (!this.server) {
+      shift.closedAt = Date.now();
+      shift.closedBy = App.user.id;
+      const sums = computeShift(shift, this.data.orders, decimalsOf(this.settings));
+      Object.assign(shift, { expectedCash: sums.expected, difference: rmoney(shift.countedCash - sums.expected), cashIn: sums.cashIn, cashOut: sums.cashOut, tips: sums.tips, sales: sums.sales, orders: sums.orders });
+    } else {
+      shift.closedAt = Date.now(); // marks the close request; the server replaces every figure
+    }
+    this.save();
   },
 
   totals(order) {
@@ -173,20 +237,22 @@ const Store = {
   },
 
   // In server mode the server adjusts stock when it sees the status change (see server/sync.js).
+  // The payment is checked and the figures worked out by the same rules the server applies (shared.js settleOrder);
+  // throws an Error with a message for the cashier if it does not add up.
   payOrder(order, payment, cashierId) {
-    order.totals = this.totals(order);
-    order.payment = payment;
+    const settled = settleOrder(order, payment, this.settings);
+    const cust = !this.server && order.customerId && this.customer(order.customerId);
+    if (cust && settled.totals.points > (cust.points || 0) + 0.005) throw new Error('The customer does not have that many points');
+    order.totals = settled.totals;
+    order.payment = settled.payment;
     order.status = 'paid';
     order.paidAt = Date.now();
     order.cashierId = cashierId;
     if (!this.server) {
-      for (const l of order.items) {
-        const p = this.product(l.productId);
-        if (p && p.trackStock) {
-          l.stockTaken = Math.min(p.stock, l.qty); // remembered so a refund returns only what was deducted
-          p.stock -= l.stockTaken;
-        }
-      }
+      // The server does all of this itself in server mode; single-device mode does it here with the same rules (shared.js).
+      takeStockLines(order.items, id => this.product(id));
+      consumeIngredients(order.items, id => this.product(id), id => this.ingredient(id));
+      if (cust) applyLoyalty(order, cust, this.settings);
     }
     this.save();
   },
@@ -196,12 +262,48 @@ const Store = {
     order.refundedAt = Date.now();
     order.refundedBy = byId;
     if (!this.server) {
-      for (const l of order.items) {
-        const p = this.product(l.productId);
-        if (p && p.trackStock) p.stock += l.stockTaken ?? l.qty;
-      }
+      returnStockLines(order.items, id => this.product(id));
+      restoreIngredients(order.items, id => this.ingredient(id));
+      const cust = order.loyalty && this.customer(order.loyalty.customerId);
+      if (cust) reverseLoyalty(order, cust, this.settings);
     }
     this.save();
+  },
+
+  // ----- ingredients: purchases and stocktakes -----
+  // In server mode the server adds the stock (and works out the cost) itself; single-device mode does it here.
+  addPurchase({ supplier = '', note = '', lines }) {
+    const dec = decimalsOf(this.settings);
+    const purchase = {
+      id: uid('pu_'), date: Date.now(), supplier: supplier.trim(), note: note.trim(), by: App.user.id, status: 'received',
+      lines: lines.map(l => ({ ingredientId: l.ingredientId, qty: round4(l.qty), total: roundTo(l.total, dec) })),
+    };
+    purchase.total = roundTo(purchase.lines.reduce((n, l) => n + l.total, 0), dec);
+    if (!this.server) receivePurchase(purchase, id => this.ingredient(id));
+    this.data.purchases.push(purchase);
+    this.save();
+    return purchase;
+  },
+
+  voidPurchase(purchase) {
+    purchase.status = 'void';
+    purchase.voidedAt = Date.now();
+    purchase.voidedBy = App.user.id;
+    if (!this.server) voidPurchase(purchase, id => this.ingredient(id));
+    this.save();
+  },
+
+  // lines: [{ kind: 'ingredient' | 'product', refId, counted }]
+  addStocktake({ note = '', lines }) {
+    const st = { id: uid('st_'), date: Date.now(), by: App.user.id, note: note.trim(), lines: lines.map(l => ({ ...l })) };
+    if (!this.server) st.value = applyStocktake(st, id => this.ingredient(id), id => this.product(id), decimalsOf(this.settings)).value;
+    this.data.stocktakes.push(st);
+    this.save();
+    return st;
+  },
+
+  lowIngredients() {
+    return this.data.ingredients.filter(i => i.active !== false && i.stock <= i.lowStock);
   },
 
   voidOrder(order, byId) {
@@ -221,7 +323,7 @@ const Store = {
       orderNo: order.number,
       where: whereLabel(order),
       staffId: order.staffId,
-      items: lines.map(l => ({ name: l.name, qty: l.qty, note: l.note })),
+      items: lines.map(l => ({ name: l.name, qty: l.qty, note: l.note, ...(l.mods && l.mods.length ? { mods: l.mods.map(m => m.name) } : {}) })),
       note: order.note,
       status: 'new',
       createdAt: Date.now(),

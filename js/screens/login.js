@@ -33,7 +33,8 @@ Screens.login = {
           </div>
           ${demo ? '<p class="login-hint">Demo PINs: Admin 1234 · Maya (cashier) 1111 · Leo (waiter) 2222 · Kitchen 3333.<br>Change them under Staff.</p>' : ''}
         </div>
-        ${Store.server ? '' : '<button class="guest-link" data-act="guest">📖 Open guest menu</button>'}
+        ${Store.server ? '' : '<p class="muted small single-note">Single-device mode: data stays in this browser. For several devices, use the POS server (see README).</p><button class="guest-link" data-act="guest">📖 Open guest menu</button>'}
+        <div class="lang-corner">${I18N.button('lang')}</div>
       </div>`;
     st.error = false;
 
@@ -43,6 +44,7 @@ Screens.login = {
       if (t.dataset.act === 'pick') { st.userId = t.dataset.id; st.pin = ''; this.render(root); }
       else if (t.dataset.act === 'key') this.press(root, t.dataset.key);
       else if (t.dataset.act === 'guest') { st.userId = null; st.pin = ''; App.go('guest'); }
+      else if (t.dataset.act === 'lang') { I18N.toggle(); this.render(root); }
     };
     App.keyHandler = e => {
       if (/^\d$/.test(e.key)) this.press(root, e.key);

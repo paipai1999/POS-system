@@ -34,7 +34,7 @@ Screens.products = {
         </div>
         <div class="table-wrap">
           <table class="data">
-            <thead><tr><th>Item</th><th>Category</th><th class="num">Price</th><th class="num">Stock</th><th>On sale</th><th></th></tr></thead>
+            <thead><tr><th>Item</th><th>Category</th><th class="num">Price</th><th class="num">Cost</th><th class="num">Margin</th><th class="num">Stock</th><th>On sale</th><th></th></tr></thead>
             <tbody>${this.itemRows()}</tbody>
           </table>
         </div>` : this.catsHTML()}`;
@@ -73,12 +73,20 @@ Screens.products = {
     };
   },
 
+  // What one portion costs from its recipe, and what is left of the price (a dash when the item has no recipe).
+  costCells(p) {
+    const cost = recipeCost(p, id => Store.ingredient(id));
+    if (cost === null) return '<td class="num muted">—</td><td class="num muted">—</td>';
+    const margin = p.price > 0 ? Math.round((p.price - cost) / p.price * 100) : 0;
+    return `<td class="num">${costMoney(cost)}</td><td class="num ${margin < 30 ? 'low-stock' : ''}">${margin}%</td>`;
+  },
+
   itemRows() {
     const st = this.state;
     const q = st.q.trim().toLowerCase();
     const list = Store.data.products.filter(p =>
       (st.cat === 'all' || p.categoryId === st.cat) && (!q || p.name.toLowerCase().includes(q)));
-    if (!list.length) return '<tr><td colspan="6" class="empty">No items</td></tr>';
+    if (!list.length) return '<tr><td colspan="8" class="empty">No items</td></tr>';
     return list.map(p => {
       const cat = Store.category(p.categoryId);
       return `
@@ -86,6 +94,7 @@ Screens.products = {
           <td><span class="cell-emoji">${esc(p.emoji || '🍽️')}</span> <b>${esc(p.name)}</b></td>
           <td>${esc(cat ? cat.name : '-')}</td>
           <td class="num">${money(p.price)}</td>
+          ${this.costCells(p)}
           <td class="num">${p.trackStock
             ? `<span class="${p.stock <= p.lowStock ? 'low-stock' : ''}">${p.stock}</span> <button class="btn small" data-act="stock" data-id="${p.id}">±</button>`
             : '<span class="muted">not tracked</span>'}</td>
@@ -102,18 +111,67 @@ Screens.products = {
       name: '', emoji: '🍽️', categoryId: this.state.cat !== 'all' ? this.state.cat : cats[0].id,
       price: '', description: '', trackStock: false, stock: 0, lowStock: 5, active: true,
     };
+    // The recipe: what one portion uses of each ingredient. Rows are kept here so typing is not lost when one is added or removed.
+    const ings = Store.data.ingredients.filter(i => i.active !== false);
+    const recipe = (p.recipe || []).map(r => ({ ingredientId: r.ingredientId, qty: String(r.qty) }));
+    const ingOf = rid => Store.ingredient(rid);
+    const recipeRows = () => recipe.map((r, i) => `
+      <div class="line-row recipe" data-i="${i}">
+        <select class="input" data-role="rc-ing">${(ings.some(x => x.id === r.ingredientId) || !ingOf(r.ingredientId) ? ings : [ingOf(r.ingredientId), ...ings]).map(x => `<option value="${x.id}" ${x.id === r.ingredientId ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
+        <input class="input" type="number" min="0" step="any" inputmode="decimal" placeholder="Amount" data-role="rc-qty" value="${esc(r.qty)}">
+        <span class="unit">${esc((ingOf(r.ingredientId) || {}).unit || '')}</span>
+        <button class="icon-btn" data-act="rc-del" data-i="${i}" aria-label="Remove">✕</button>
+      </div>`).join('');
+    const recipeSummary = () => {
+      const m = Modal.el();
+      const price = parseFloat(m.querySelector('[name=price]').value) || 0;
+      const cost = recipe.reduce((n, r) => n + (parseFloat(r.qty) || 0) * ((ingOf(r.ingredientId) || {}).cost || 0), 0);
+      m.querySelector('[data-role=rc-sum]').innerHTML = recipe.length
+        ? `Cost per portion <b>${costMoney(cost)}</b> · profit <b>${costMoney(price - cost)}</b> (${price > 0 ? Math.round((price - cost) / price * 100) : 0}% margin)`
+        : 'No recipe: selling this item does not use up any ingredients.';
+    };
+    const refreshRecipe = () => { Modal.el().querySelector('[data-role=rc-rows]').innerHTML = recipeRows(); recipeSummary(); };
+    const rowOf = el => recipe[+el.closest('.line-row').dataset.i];
     const actions = {
+      'rc-add': () => {
+        if (!ings.length) return toast('Add ingredients under Inventory first', 'error');
+        const unused = ings.find(i => !recipe.some(r => r.ingredientId === i.id)) || ings[0];
+        recipe.push({ ingredientId: unused.id, qty: '' });
+        refreshRecipe();
+      },
+      'rc-del': t => { recipe.splice(+t.dataset.i, 1); refreshRecipe(); },
+      __input: e => {
+        if (e.target.dataset.role === 'rc-qty') { rowOf(e.target).qty = e.target.value; recipeSummary(); }
+        else if (e.target.name === 'price') recipeSummary();
+      },
       __change: e => {
         if (e.target.name === 'trackStock') Modal.el().querySelector('[data-role=stock]').hidden = !e.target.checked;
+        if (e.target.dataset.role === 'rc-ing') { rowOf(e.target).ingredientId = e.target.value; refreshRecipe(); }
       },
       save: () => {
         const v = formValues(Modal.el());
         const price = parseFloat(v.price);
         if (!v.name) return toast('Name is required', 'error');
+        const rows = recipe.filter(r => r.qty !== '');
+        if (rows.some(r => !(parseFloat(r.qty) > 0))) return toast('Each recipe ingredient needs an amount above 0', 'error');
+        if (new Set(rows.map(r => r.ingredientId)).size !== rows.length) return toast('An ingredient is listed twice in the recipe', 'error');
         if (!(price >= 0)) return toast('Enter a valid price', 'error');
+        const options = [];
+        for (const raw of String(v.options || '').split('\n')) {
+          const text = raw.trim();
+          if (!text) continue;
+          const at = text.lastIndexOf('=');
+          const name = (at < 0 ? text : text.slice(0, at)).trim();
+          const cost = at < 0 || !text.slice(at + 1).trim() ? 0 : parseFloat(text.slice(at + 1));
+          if (!name || !(cost >= 0)) return toast(`Option "${text}": write it as  name = price  (price 0 or more)`, 'error');
+          if (options.some(o => o.name === name)) return toast(`Option "${name}" is listed twice`, 'error');
+          options.push({ name, price: rmoney(cost) });
+        }
+        if (options.length > 8) return toast('At most 8 options per item', 'error');
         const data = {
-          name: v.name, emoji: v.emoji || '🍽️', categoryId: v.categoryId, price: round2(price),
-          description: v.description, active: v.active, trackStock: v.trackStock,
+          name: v.name, emoji: v.emoji || '🍽️', categoryId: v.categoryId, price: rmoney(price),
+          description: v.description, options, recipe: rows.map(r => ({ ingredientId: r.ingredientId, qty: round4(parseFloat(r.qty)) })),
+          active: v.active, trackStock: v.trackStock,
           stock: Math.max(0, parseInt(v.stock, 10) || 0), lowStock: Math.max(0, parseInt(v.lowStock, 10) || 0),
         };
         if (id) Object.assign(Store.product(id), data);
@@ -147,10 +205,16 @@ Screens.products = {
           <label class="field"><span>Category</span>
             <select class="input" name="categoryId">${cats.map(c => `<option value="${c.id}" ${c.id === p.categoryId ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>
           <label class="field"><span>Price (${esc(Store.settings.currency)})</span>
-            <input class="input" name="price" type="number" min="0" step="0.01" inputmode="decimal" value="${p.price}"></label>
+            <input class="input" name="price" type="number" min="0" step="${moneyStep()}" inputmode="decimal" value="${p.price}"></label>
         </div>
         <label class="field"><span>Description (shown on the guest menu)</span>
           <textarea class="input" name="description" rows="2">${esc(p.description)}</textarea></label>
+        <label class="field"><span>Options with a price (one per line, e.g. Extra shot = 0.5) — optional</span>
+          <textarea class="input" name="options" rows="3" placeholder="Extra shot = 0.5&#10;Large = 1">${esc((p.options || []).map(o => `${o.name} = ${o.price}`).join('\n'))}</textarea></label>
+        <div class="field-label">Recipe — what one portion uses (optional)</div>
+        <div data-role="rc-rows">${recipeRows()}</div>
+        <button class="btn small" data-act="rc-add" ${ings.length ? '' : 'disabled'}>＋ Add ingredient</button>
+        <div class="recipe-sum" data-role="rc-sum"></div>
         <label class="check"><input type="checkbox" name="active" ${p.active ? 'checked' : ''}> On sale</label>
         <label class="check"><input type="checkbox" name="trackStock" ${p.trackStock ? 'checked' : ''}> Track stock</label>
         <div class="grid-2" data-role="stock" ${p.trackStock ? '' : 'hidden'}>
@@ -161,6 +225,7 @@ Screens.products = {
         <button class="btn" data-act="__close">Cancel</button><button class="btn primary" data-act="save">Save</button>`,
       actions,
     });
+    recipeSummary();
   },
 
   adjustStock(id) {

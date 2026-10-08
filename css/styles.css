@@ -17,7 +17,7 @@
   --radius: 14px;
   --shadow: 0 1px 2px rgba(31, 27, 22, .06), 0 4px 14px rgba(31, 27, 22, .05);
   --topbar-h: 60px;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", "Myanmar Text", "Noto Sans Myanmar", "Padauk", Roboto, sans-serif;
   color: var(--ink);
 }
 
@@ -409,3 +409,42 @@ ul.plain li { display: flex; justify-content: space-between; padding: .3rem 0; b
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- Activity log ---------- */
+.audit-wrap { max-height: 55vh; overflow-y: auto; margin-top: .6rem; }
+.audit-wrap .wrap-cell { white-space: normal; min-width: 14rem; }
+.nowrap { white-space: nowrap; }
+
+/* ---------- Language switch ---------- */
+.lang-btn { white-space: nowrap; }
+.lang-corner { position: fixed; top: .75rem; right: .75rem; }
+:lang(my) { line-height: 1.6; }
+
+/* ---------- Tips, split payment, options, split bill, drawer ---------- */
+.pay-methods.four { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 560px) { .pay-methods.four { grid-template-columns: repeat(2, 1fr); } }
+.tip-line { margin: .35rem 0 1rem; color: var(--muted); font-size: .95rem; }
+.tip-line b { color: var(--ink); font-size: 1.1rem; }
+.split-row { display: grid; grid-template-columns: 6.5rem 1fr auto; gap: .5rem; align-items: center; margin-bottom: .5rem; }
+.opt-list { display: flex; flex-direction: column; gap: .5rem; }
+.opt-row { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding: .7rem .9rem; border: 2px solid var(--line); border-radius: 12px; background: var(--panel-2); font-weight: 600; cursor: pointer; }
+.opt-row:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.opt-row input { width: 1.25rem; height: 1.25rem; }
+.split-lines .line { align-items: center; }
+.drawer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .85rem; margin: 1rem 0; }
+.diff-ok { color: var(--ok); font-weight: 700; }
+.diff-bad { color: var(--danger); font-weight: 700; }
+.line-mods { font-size: .82rem; color: var(--accent-2); font-weight: 600; }
+.single-note { max-width: 24rem; text-align: center; margin: .75rem auto 0; }
+
+/* ---------- Inventory, recipes, customers ---------- */
+.line-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(5rem, 1fr) 3rem minmax(5rem, 1fr) auto; gap: .5rem; align-items: center; margin-bottom: .5rem; }
+.line-row .unit { color: var(--muted); font-size: .9rem; }
+@media (max-width: 600px) { .line-row { grid-template-columns: 1fr 1fr; } .line-row .unit { display: none; } }
+.line-row.recipe { grid-template-columns: minmax(0, 2fr) minmax(5rem, 1fr) 3rem auto; }
+.recipe-sum { margin: .5rem 0 1rem; padding: .6rem .85rem; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--line); font-size: .92rem; }
+.recipe-sum b { font-size: 1.05rem; }
+.cust-line { display: flex; align-items: center; justify-content: space-between; gap: .6rem; flex-wrap: wrap; padding: .55rem .8rem; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); margin-bottom: .6rem; }
+.cust-list { display: flex; flex-direction: column; gap: .4rem; max-height: 40vh; overflow-y: auto; margin: .6rem 0; }
+.cust-list button { text-align: left; display: flex; justify-content: space-between; gap: .5rem; padding: .65rem .85rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.cust-list button:hover { border-color: var(--accent); }

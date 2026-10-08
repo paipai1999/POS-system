@@ -223,7 +223,7 @@ const Sync = {
       if (this.again) { this.again = false; this.schedule(); }
       App.renderSyncStatus();
     }
-    if (refresh) App.liveRefresh(['orders', 'products', 'users', 'tables', 'settings', 'kitchenTickets', 'guestRequests', 'categories']);
+    if (refresh) App.liveRefresh(['orders', 'products', 'users', 'tables', 'settings', 'kitchenTickets', 'guestRequests', 'categories', 'shifts']);
   },
 
   // Returns true when the local copy changed (server assigned a number, rejected a change, …).

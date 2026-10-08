@@ -16,7 +16,7 @@ Screens.order = {
     const order = this.order();
     if (!order || order.status !== 'open') {
       // Our own payment coming back from the server: the receipt dialog is showing and takes us back to Tables when closed.
-      if (order && order.status === 'paid' && order.cashierId === App.user.id && Modal.isOpen) return;
+      if (order && order.status === 'paid' && order.cashierId === App.user.id && Modal.isOpen) return refreshReceipt(order.id);
       if (order) toast(`Order #${orderNo(order)} was ${order.status} on another device`);
       return App.go('tables');
     }
@@ -118,6 +118,7 @@ Screens.order = {
         <div class="grow">
           <div class="t-title">${esc(whereLabel(order))}</div>
           <div class="muted small">#${orderNo(order)} · ${esc(staff ? staff.name : '')} · ${fmtTime(order.createdAt)}</div>
+          ${order.customerId && Store.customer(order.customerId) ? `<div class="small">👤 ${esc(Store.customer(order.customerId).name)}</div>` : ''}
         </div>
         <button class="icon-btn" data-act="more" title="More options" aria-label="More options">⋯</button>
       </div>
@@ -128,6 +129,7 @@ Screens.order = {
           <div class="line">
             <div class="line-main" data-act="edit-line" data-id="${l.id}" title="Add note / remove">
               <div class="line-name">${esc(l.name)}</div>
+              ${modsText(l) ? `<div class="line-mods">${esc(modsText(l))}</div>` : ''}
               ${l.note ? `<div class="line-note">${esc(l.note)}</div>` : ''}
               <div class="line-meta">${money(l.price)}${l.sentQty ? ` · <span class="sent">✓ ${l.sentQty} sent</span>` : ''}</div>
             </div>
@@ -152,9 +154,42 @@ Screens.order = {
     const p = Store.product(productId);
     if (!order || !p) return;
     if (Store.available(p) < 1) return toast(`${p.name} is out of stock`, 'error');
+    if (p.options && p.options.length) return this.pickOptions(p);
     Store.addItem(order, p);
     Store.save();
     this.update();
+  },
+
+  // Items with priced options (extra shot, large…): tick the ones the guest wants, then add.
+  pickOptions(p) {
+    const base = lineUnitPrice(p, []);
+    const picked = () => [...Modal.el().querySelectorAll('[name=opt]:checked')].map(i => p.options[+i.value]);
+    const refresh = () => {
+      Modal.el().querySelector('[data-role=sum]').textContent = money(lineUnitPrice(p, picked()));
+    };
+    const actions = {
+      __change: e => { if (e.target.name === 'opt') refresh(); },
+      add: () => {
+        const o = this.order();
+        if (!o || Store.available(p) < 1) return Modal.close();
+        Store.addItem(o, p, 1, '', picked());
+        Store.save();
+        Modal.close();
+        this.update();
+      },
+    };
+    actions.__enter = actions.add;
+    Modal.open({
+      title: p.name,
+      body: `
+        <div class="opt-list">
+          ${p.options.map((o, i) => `
+            <label class="opt-row"><span><input type="checkbox" name="opt" value="${i}"> ${esc(o.name)}</span><span>${o.price ? '+' + money(o.price) : ''}</span></label>`).join('')}
+        </div>
+        <div class="totals-inline spaced"><span>Price</span><b data-role="sum">${money(base)}</b></div>`,
+      footer: '<button class="btn" data-act="__close">Cancel</button><button class="btn primary" data-act="add">Add to order</button>',
+      actions,
+    });
   },
 
   changeQty(lineId, delta) {
@@ -234,11 +269,13 @@ Screens.order = {
         <div class="stack">
           <button class="btn block" data-act="note">📝 Order note</button>
           <button class="btn block" data-act="move">🔀 Move to another table</button>
+          <button class="btn block" data-act="split" ${order.items.length > 1 || order.items.some(l => l.qty > 1) ? '' : 'disabled'}>✂️ Split the bill</button>
           <button class="btn block danger" data-act="void">🗑️ Void order</button>
         </div>`,
       actions: {
         note: () => this.editOrderNote(),
         move: () => this.moveTable(),
+        split: () => this.splitBill(),
         void: () => requireManager('Void this whole order.', mgr => {
           confirmDialog({
             title: `Void order #${orderNo(order)}?`,
@@ -252,6 +289,55 @@ Screens.order = {
             },
           });
         }),
+      },
+    });
+  },
+
+  // Pick which items (and how many) go onto a separate bill, e.g. when friends pay separately.
+  splitBill() {
+    const order = this.order();
+    if (!order) return;
+    const moves = {}; // line id -> quantity to move
+    const total = () => order.items.reduce((n, l) => n + l.qty, 0);
+    const moving = () => Object.values(moves).reduce((n, q) => n + q, 0);
+    const linesHTML = () => order.items.map(l => `
+      <div class="line">
+        <div class="line-main"><div class="line-name">${esc(l.name)}</div>${modsText(l) ? `<div class="line-mods">${esc(modsText(l))}</div>` : ''}<div class="line-meta">${money(l.price)} × ${l.qty}</div></div>
+        <div class="qty"><button data-act="less" data-id="${l.id}" aria-label="Less">−</button><span>${moves[l.id] || 0}</span><button data-act="more" data-id="${l.id}" aria-label="More">+</button></div>
+      </div>`).join('');
+    const refresh = () => {
+      const m = Modal.el();
+      m.querySelector('[data-role=lines]').innerHTML = linesHTML();
+      m.querySelector('[data-role=go]').disabled = moving() === 0 || moving() >= total();
+    };
+    Modal.open({
+      title: `Split bill #${orderNo(order)}`,
+      body: `
+        <p class="muted small">Choose what goes on the new bill. The new bill is paid separately; the rest stays here.</p>
+        <div class="split-lines" data-role="lines">${linesHTML()}</div>`,
+      footer: '<button class="btn" data-act="__close">Cancel</button><button class="btn primary" data-act="go" data-role="go" disabled>Move to a new bill</button>',
+      actions: {
+        more: t => {
+          const l = order.items.find(x => x.id === t.dataset.id);
+          if (l && (moves[l.id] || 0) < l.qty) moves[l.id] = (moves[l.id] || 0) + 1;
+          refresh();
+        },
+        less: t => {
+          if (moves[t.dataset.id] > 0) moves[t.dataset.id]--;
+          if (!moves[t.dataset.id]) delete moves[t.dataset.id];
+          refresh();
+        },
+        go: async () => {
+          const list = Object.entries(moves).map(([lineId, qty]) => ({ lineId, qty }));
+          try {
+            const created = await Store.splitOrder(order, list);
+            Modal.close();
+            toast(`New bill #${orderNo(created)} created`, 'ok');
+            App.go('order', { orderId: created.id });
+          } catch (e) {
+            toast(e.message, 'error');
+          }
+        },
       },
     });
   },

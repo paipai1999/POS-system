@@ -92,10 +92,14 @@ function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = 
     const f = failures.get(ip);
     if (f && f.until > Date.now()) throw new HttpError(429, 'Too many wrong PINs. Wait 30 seconds and try again.');
   };
-  const pinFailed = ip => {
+  const pinFailed = (ip, who = '') => {
     const f = failures.get(ip) || { n: 0, until: 0 };
     f.n++;
-    if (f.n >= 5) { f.n = 0; f.until = Date.now() + 30000; }
+    if (f.n >= 5) {
+      f.n = 0;
+      f.until = Date.now() + 30000;
+      db.addAudit({ action: 'sign-in blocked', target: who, detail: `5 wrong PINs in a row from ${ip}; locked for 30 seconds` });
+    }
     failures.set(ip, f);
   };
 
@@ -155,7 +159,7 @@ function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = 
     const settings = db.doc('settings', 'main');
     const users = db.all('users');
     return {
-      settings: { name: settings.name, currency: settings.currency },
+      settings: { name: settings.name, currency: settings.currency, decimals: settings.decimals, currencyAfter: settings.currencyAfter },
       users: users.filter(u => u.active).map(rules.stripUser),
       demo: users.some(u => u.role === 'admin' && hasDemoPin(u)),
     };
@@ -183,8 +187,9 @@ function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = 
         checkLock(ip);
         const { userId, pin } = await readJSON(req);
         const user = typeof userId === 'string' ? db.doc('users', userId) : null;
-        if (!user || !user.active || !pinMatches(user, pin)) { pinFailed(ip); throw new HttpError(401, 'Incorrect PIN'); }
+        if (!user || !user.active || !pinMatches(user, pin)) { pinFailed(ip, user ? user.name : ''); throw new HttpError(401, 'Incorrect PIN'); }
         failures.delete(ip);
+        db.addAudit({ user, action: 'signed in', detail: `from ${ip}` });
         return sendJSON(res, 200, { token: db.createSession(user.id), user: rules.stripUser(user), mustChangePin: hasDemoPin(user, DEMO_PINS) });
       }
       case 'POST /api/verify-pin': {
@@ -192,6 +197,7 @@ function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = 
         const { pin } = await readJSON(req);
         const user = db.all('users').find(u => u.active && pinMatches(u, pin));
         if (!user) { pinFailed(ip); throw new HttpError(401, 'Wrong PIN'); }
+        { const s0 = authenticate(req, url); db.addAudit({ user: s0 ? s0.user : null, action: 'manager PIN entered', target: user.name, detail: 'approval check' }); }
         failures.delete(ip);
         const s = authenticate(req, url);
         if (s) {
@@ -281,6 +287,12 @@ function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = 
         openStream(req, res, { kind: 'staff', token: s.token, userId: s.user.id });
         write([...clients].find(c => c.res === res), { type: 'hello', seq: db.meta('seq', 0), stations: stationCount() });
         return;
+      case 'POST /api/orders/split': {
+        const body = await readJSON(req, 100000);
+        const rows = db.tx(() => rules.splitOrder(db, { user: s.user }, body));
+        broadcast(rows);
+        return sendJSON(res, 200, { rows: rows.map(rules.publicRow), seq: db.meta('seq', 0) });
+      }
       case 'POST /api/me/pin': {
         // Every user may change their own PIN; this is also how a demo PIN gets replaced at first sign-in.
         checkLock(ip);
@@ -295,6 +307,7 @@ function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = 
           return db.put('users', me.id, { ...rest, pinHash: hashPin(newPin) });
         });
         broadcast([row]);
+        db.addAudit({ user: s.user, action: 'own PIN changed', target: s.user.name });
         return sendJSON(res, 200, { ok: true });
       }
       case 'POST /api/logout':
@@ -304,6 +317,7 @@ function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = 
         return sendJSON(res, 200, { ok: true });
       case 'POST /api/station/register': {
         if (!isAdmin) throw new HttpError(403, 'Only an admin can set up a printer station');
+        db.addAudit({ user: s.user, action: 'printer station added' });
         const key = crypto.randomBytes(18).toString('hex');
         db.setMeta('stationKeys', [...stationKeys(), key]);
         return sendJSON(res, 200, { key });
@@ -311,6 +325,7 @@ function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = 
       case 'POST /api/station/unregister': {
         if (!isAdmin) throw new HttpError(403, 'Only an admin can remove a printer station');
         const { key } = await readJSON(req);
+        db.addAudit({ user: s.user, action: 'printer station removed' });
         db.setMeta('stationKeys', stationKeys().filter(k => k !== key));
         for (const c of clients) if (c.kind === 'station' && c.key === key) c.res.end();
         return sendJSON(res, 200, { ok: true });
@@ -320,6 +335,7 @@ function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = 
     if (!isAdmin) throw new HttpError(403, 'Only an admin can do that');
     switch (route) {
       case 'GET /api/export': {
+        db.addAudit({ user: s.user, action: 'data exported', detail: 'full backup downloaded' });
         const d = new Date();
         const name = `pos-backup-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.json`;
         res.writeHead(200, { ...SECURITY_HEADERS, 'Content-Type': 'application/json', 'Content-Disposition': `attachment; filename="${name}"`, 'Cache-Control': 'no-store' });
@@ -331,9 +347,15 @@ function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = 
         db.loadDataset(normalizeDataset(data));
         ensureGuestCodes(db);
         migratePins(db);
+        db.addAudit({ user: s.user, action: 'backup imported', detail: `${data.orders.length} orders, ${data.users.length} staff replaced all data` });
         approvals.clear();
         broadcastReload();
         return sendJSON(res, 200, { ok: true });
+      }
+      case 'GET /api/audit': {
+        const before = Number(url.searchParams.get('before')) || undefined;
+        const rows = db.auditPage(url.searchParams.get('limit'), before);
+        return sendJSON(res, 200, { rows, more: rows.length > 0 && db.auditPage(1, rows[rows.length - 1].id).length > 0 });
       }
       case 'GET /api/backup':
         return sendJSON(res, 200, backups.status());
@@ -342,11 +364,13 @@ function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = 
         return sendJSON(res, 200, backups.status());
       case 'POST /api/backup/folders': {
         const { dirs } = await readJSON(req);
+        db.addAudit({ user: s.user, action: 'backup folders changed', detail: (Array.isArray(dirs) ? dirs : []).join(' | ') });
         try { return sendJSON(res, 200, backups.setExtra(dirs)); } catch (e) { throw new HttpError(400, e.message); }
       }
       case 'POST /api/reset':
         db.loadDataset(seedData());
         migratePins(db);
+        db.addAudit({ user: s.user, action: 'data reset', detail: 'everything replaced by demo data' });
         approvals.clear();
         broadcastReload();
         return sendJSON(res, 200, { ok: true });
@@ -360,17 +384,21 @@ function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = 
     try { rel = decodeURIComponent(url.pathname); } catch (e) { rel = ''; }
     if (rel === '/') rel = '/index.html';
     let base = ROOT;
+    const notFound = () => { res.writeHead(404, SECURITY_HEADERS); return res.end('Not found'); };
     if (testDir && rel.startsWith('/__test/')) { base = path.resolve(testDir); rel = rel.slice('/__test'.length); }
-    else if (!/^\/(index\.html|css\/|js\/)/.test(rel)) { res.writeHead(404); return res.end('Not found'); }
     const file = path.resolve(base, '.' + rel);
-    if (!file.startsWith(base + path.sep)) { res.writeHead(404); return res.end('Not found'); }
+    // Check the path AFTER "../" has been resolved (a check on the raw URL can be bypassed with "..%2f").
+    const allowed = base === ROOT
+      ? file === path.join(ROOT, 'index.html') || file.startsWith(path.join(ROOT, 'css') + path.sep) || file.startsWith(path.join(ROOT, 'js') + path.sep)
+      : file.startsWith(base + path.sep);
+    if (!allowed) return notFound();
     fs.readFile(file, (err, buf) => {
-      if (err) { res.writeHead(404); return res.end('Not found'); }
+      if (err) return notFound();
       const type = MIME[path.extname(file)] || 'application/octet-stream';
       res.writeHead(200, {
         ...SECURITY_HEADERS, 'Content-Type': type, 'Cache-Control': 'no-cache',
+        // No HSTS on purpose: with a self-signed certificate it would stop Chrome from offering "Continue anyway".
         ...(type.startsWith('text/html') ? { 'Content-Security-Policy': PAGE_CSP } : {}),
-        ...(tls ? { 'Strict-Transport-Security': 'max-age=31536000' } : {}),
       });
       res.end(buf);
     });

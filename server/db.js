@@ -30,6 +30,16 @@ class Database {
       CREATE INDEX IF NOT EXISTS docs_seq ON docs (seq);
       CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, user_id TEXT NOT NULL, created INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS audit (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ts INTEGER NOT NULL,
+        user_id TEXT,
+        user_name TEXT,
+        action TEXT NOT NULL,
+        target TEXT,
+        detail TEXT
+      );
+      CREATE INDEX IF NOT EXISTS audit_ts ON audit (ts);
     `);
     this.q = {
       get: this.db.prepare('SELECT * FROM docs WHERE col = ? AND id = ?'),
@@ -45,6 +55,8 @@ class Database {
       delSession: this.db.prepare('DELETE FROM sessions WHERE token = ?'),
       delUserSessions: this.db.prepare('DELETE FROM sessions WHERE user_id = ?'),
       delOldSessions: this.db.prepare('DELETE FROM sessions WHERE created < ?'),
+      addAudit: this.db.prepare('INSERT INTO audit (ts, user_id, user_name, action, target, detail) VALUES (?, ?, ?, ?, ?, ?)'),
+      auditPage: this.db.prepare('SELECT * FROM audit WHERE id < ? ORDER BY id DESC LIMIT ?'),
     };
   }
 
@@ -121,13 +133,15 @@ class Database {
   snapshotRows(since) {
     return this.db.prepare(`
       SELECT * FROM docs WHERE deleted = 0 AND (
-        col IN ('settings', 'users', 'categories', 'products', 'tables')
+        col IN ('settings', 'users', 'categories', 'products', 'tables', 'ingredients', 'customers')
+        OR (col IN ('purchases', 'stocktakes') AND json_extract(data, '$.date') >= ?)
         OR (col = 'orders' AND (json_extract(data, '$.status') = 'open'
             OR json_extract(data, '$.createdAt') >= ? OR json_extract(data, '$.paidAt') >= ?))
         OR (col = 'guestRequests' AND (json_extract(data, '$.status') = 'pending' OR json_extract(data, '$.createdAt') >= ?))
         OR (col = 'kitchenTickets' AND (json_extract(data, '$.status') IN ('new', 'ready') OR json_extract(data, '$.createdAt') >= ?))
         OR (col = 'printJobs' AND json_extract(data, '$.status') IN ('pending', 'printing') AND json_extract(data, '$.createdAt') >= ?)
-      ) ORDER BY rowid`).all(since, since, since, since, Date.now() - 30 * 60 * 1000).map(r => this.row(r));
+        OR (col = 'shifts' AND (json_extract(data, '$.closedAt') IS NULL OR json_extract(data, '$.openedAt') >= ?))
+      ) ORDER BY rowid`).all(since, since, Date.now() - 90 * 24 * 60 * 60 * 1000, since, since, Date.now() - 30 * 60 * 1000, Date.now() - 90 * 24 * 60 * 60 * 1000).map(r => this.row(r));
   }
 
   ordersBetween(from, to) {
@@ -154,9 +168,20 @@ class Database {
   deleteSession(token) { this.q.delSession.run(token); }
   deleteUserSessions(userId) { this.q.delUserSessions.run(userId); }
 
+  // ----- audit log (who did what; survives imports and resets) -----
+  addAudit({ user = null, action, target = '', detail = '' }) {
+    this.q.addAudit.run(Date.now(), user ? user.id : null, user ? user.name : null, String(action), String(target ?? ''), String(detail ?? ''));
+  }
+
+  auditPage(limit = 200, before = Number.MAX_SAFE_INTEGER) {
+    return this.q.auditPage.all(before, Math.min(Math.max(Number(limit) || 200, 1), 500))
+      .map(r => ({ id: r.id, at: r.ts, userId: r.user_id, user: r.user_name, action: r.action, target: r.target, detail: r.detail }));
+  }
+
   // ----- housekeeping -----
   cleanup() {
     this.q.delOldSessions.run(Date.now() - SESSION_TTL);
+    this.db.prepare('DELETE FROM audit WHERE ts < ?').run(Date.now() - 400 * 24 * 60 * 60 * 1000);
     // Print jobs hold a copy of a receipt; there is no need to keep them after a day.
     this.db.prepare("DELETE FROM docs WHERE col = 'printJobs' AND (deleted = 1 OR json_extract(data, '$.createdAt') < ?)")
       .run(Date.now() - 24 * 60 * 60 * 1000);

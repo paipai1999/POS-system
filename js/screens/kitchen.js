@@ -60,7 +60,7 @@ Screens.kitchen = {
         ${this.head(t)}
         <div class="kds-time">${mins} min</div>
         <ul class="kds-items">
-          ${t.items.map(l => `<li><b>${l.qty}×</b> ${esc(l.name)}${l.note ? `<div class="line-note">» ${esc(l.note)}</div>` : ''}</li>`).join('')}
+          ${t.items.map(l => `<li><b>${l.qty}×</b> ${esc(l.name)}${l.mods && l.mods.length ? `<div class="line-note">${esc('+ ' + l.mods.join(', '))}</div>` : ''}${l.note ? `<div class="line-note">» ${esc(l.note)}</div>` : ''}</li>`).join('')}
         </ul>
         ${t.note ? `<div class="order-note">📝 ${esc(t.note)}</div>` : ''}
         <button class="btn primary big" data-act="ready" data-id="${t.id}">✓ Ready</button>

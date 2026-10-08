@@ -17,13 +17,32 @@ Screens.settings = {
           <label class="field"><span>Restaurant name</span><input class="input" name="name" value="${esc(s.name)}"></label>
           <label class="field"><span>Address</span><input class="input" name="address" value="${esc(s.address)}"></label>
           <label class="field"><span>Phone</span><input class="input" name="phone" value="${esc(s.phone)}"></label>
+          <label class="field"><span>Money format</span>
+            <select class="input" data-role="preset">
+              <option value="">Custom (use the three boxes below)</option>
+              <option value="usd">US dollar — $1,234.50</option>
+              <option value="mmk">Myanmar kyat — 1,500 Ks</option>
+            </select></label>
           <div class="grid-3">
             <label class="field"><span>Currency symbol</span><input class="input" name="currency" value="${esc(s.currency)}" maxlength="4"></label>
+            <label class="field"><span>Decimals</span>
+              <select class="input" name="decimals"><option value="2" ${decimalsOf(s) === 2 ? 'selected' : ''}>2 (1.50)</option><option value="0" ${decimalsOf(s) === 0 ? 'selected' : ''}>0 (1,500)</option></select></label>
+            <label class="field"><span>Symbol position</span>
+              <select class="input" name="currencyAfter"><option value="0" ${s.currencyAfter ? '' : 'selected'}>Before ($5)</option><option value="1" ${s.currencyAfter ? 'selected' : ''}>After (5 Ks)</option></select></label>
+          </div>
+          <p class="muted small">Changing the money format does not convert menu prices. Edit the prices under Menu &amp; Stock.</p>
+          <div class="grid-2">
             <label class="field"><span>Tax %</span><input class="input" name="taxRate" type="number" min="0" max="100" step="0.01" value="${s.taxRate}"></label>
             <label class="field"><span>Service charge %</span><input class="input" name="serviceRate" type="number" min="0" max="100" step="0.01" value="${s.serviceRate}"></label>
           </div>
           <label class="field"><span>Receipt footer</span><input class="input" name="receiptFooter" value="${esc(s.receiptFooter)}"></label>
           <label class="check"><input type="checkbox" name="printKitchenTickets" ${s.printKitchenTickets ? 'checked' : ''}> Also print a kitchen ticket when items are sent</label>
+          <label class="check"><input type="checkbox" name="loyaltyEnabled" ${loyaltyOf(s).enabled ? 'checked' : ''}> Customer loyalty points</label>
+          <div class="grid-2">
+            <label class="field"><span>Points earned (% of each bill)</span><input class="input" name="earnPercent" type="number" min="0" max="100" step="0.5" value="${loyaltyOf(s).earnPercent}"></label>
+            <label class="field"><span>Most of a bill points can pay (%)</span><input class="input" name="maxRedeemPercent" type="number" min="0" max="100" step="1" value="${loyaltyOf(s).maxRedeemPercent}"></label>
+          </div>
+          <p class="muted small">With points on, a customer chosen at checkout earns points on the bill and can pay part of a later bill with them. 1 point is worth 1 ${esc(s.currency)}.</p>
           <button class="btn primary" data-act="save">Save settings</button>
         </section>
 
@@ -56,6 +75,13 @@ Screens.settings = {
           <div class="address-list">${this.addresses().map(a => `<code>${esc(a)}</code>`).join('')}</div>
           <label class="check spaced"><input type="checkbox" data-role="station" ${Station.active ? 'checked' : ''}> This device is the printer station</label>
           <p class="muted small">Bills, receipts and kitchen tickets from waiters' phones print here. ${Sync.stations ? `<b>${Sync.stations} station${Sync.stations > 1 ? 's' : ''} online.</b>` : 'No station is online, so each device prints for itself.'}</p>
+        </section>` : ''}
+
+        ${server ? `
+        <section class="card">
+          <h2>Activity log</h2>
+          <p class="muted small">A record of who changed prices, stock, staff, settings and tax, who voided, refunded or discounted an order, and who signed in or downloaded the data. It cannot be edited and is kept for 13 months.</p>
+          <button class="btn" data-act="audit">📜 View activity log</button>
         </section>` : ''}
 
         <section class="card">
@@ -96,6 +122,7 @@ Screens.settings = {
         case 'rename-table': this.renameTable(id); break;
         case 'del-table': this.deleteTable(id); break;
         case 'qr': this.showQR(); break;
+        case 'audit': this.showAudit(); break;
         case 'backup-now': this.backupNow(); break;
         case 'backup-folders': this.backupFolders(); break;
         case 'test-print-here': printLocal(testPageHTML()); break;
@@ -113,6 +140,13 @@ Screens.settings = {
       }
     };
     root.onchange = e => {
+      if (e.target.dataset.role === 'preset' && e.target.value) {
+        const [symbol, decimals, after] = { usd: ['$', '2', '0'], mmk: ['Ks', '0', '1'] }[e.target.value];
+        const box = root.querySelector('[data-role=general]');
+        box.querySelector('[name=currency]').value = symbol;
+        box.querySelector('[name=decimals]').value = decimals;
+        box.querySelector('[name=currencyAfter]').value = after;
+      }
       if (e.target.dataset.role === 'import' && e.target.files[0]) this.importFile(e.target.files[0]);
       if (e.target.dataset.role === 'station') this.toggleStation(e.target);
     };
@@ -134,8 +168,12 @@ Screens.settings = {
     const service = parseFloat(v.serviceRate);
     if (!v.name) return toast('Restaurant name is required', 'error');
     if (!(tax >= 0 && tax <= 100) || !(service >= 0 && service <= 100)) return toast('Rates must be between 0 and 100', 'error');
+    const earn = parseFloat(v.earnPercent), redeem = parseFloat(v.maxRedeemPercent);
+    if (!(earn >= 0 && earn <= 100) || !(redeem >= 0 && redeem <= 100)) return toast('Loyalty percentages must be between 0 and 100', 'error');
     Object.assign(Store.settings, {
-      name: v.name, address: v.address, phone: v.phone, currency: v.currency.replace(/[<>&"']/g, '') || '$',
+      name: v.name, address: v.address, phone: v.phone, currency: v.currency.replace(/[<>&"'`]/g, '').trim() || '$',
+      decimals: v.decimals === '0' ? 0 : 2, currencyAfter: v.currencyAfter === '1',
+      loyalty: { enabled: v.loyaltyEnabled, earnPercent: earn, maxRedeemPercent: redeem },
       taxRate: tax, serviceRate: service, receiptFooter: v.receiptFooter, printKitchenTickets: v.printKitchenTickets,
     });
     Store.save();
@@ -251,6 +289,52 @@ Screens.settings = {
       toast(e.message, 'error');
     }
     input.disabled = false;
+  },
+
+  // ----- activity log -----
+  async showAudit() {
+    const state = { rows: [], more: false, q: '' };
+    const rowsHTML = () => {
+      const q = state.q.trim().toLowerCase();
+      const rows = state.rows.filter(r => !q || `${r.user} ${r.action} ${r.target} ${r.detail}`.toLowerCase().includes(q));
+      if (!rows.length) return '<tr><td colspan="4" class="empty">Nothing recorded</td></tr>';
+      return rows.map(r => `
+        <tr>
+          <td class="nowrap">${fmtDateTime(r.at)}</td>
+          <td>${esc(r.user || '—')}</td>
+          <td><b>${esc(r.action)}</b>${r.target ? ` · ${esc(r.target)}` : ''}</td>
+          <td class="muted small wrap-cell">${esc(r.detail)}</td>
+        </tr>`).join('');
+    };
+    const refresh = () => {
+      const m = Modal.el();
+      if (!m) return;
+      m.querySelector('tbody').innerHTML = rowsHTML();
+      m.querySelector('[data-act=older]').hidden = !state.more;
+    };
+    const load = async before => {
+      try {
+        const r = await Sync.api('/api/audit?limit=200' + (before ? '&before=' + before : ''));
+        state.rows.push(...r.rows);
+        state.more = r.more;
+        refresh();
+      } catch (e) {
+        toast(e.message, 'error');
+      }
+    };
+    Modal.open({
+      title: 'Activity log',
+      wide: true,
+      body: `
+        <input class="input" type="search" data-role="q" placeholder="Filter, e.g. price, refund, Maya…">
+        <div class="table-wrap audit-wrap"><table class="data compact"><thead><tr><th>When</th><th>Who</th><th>What</th><th>Details</th></tr></thead><tbody><tr><td colspan="4" class="empty">Loading…</td></tr></tbody></table></div>`,
+      footer: '<button class="btn" data-act="older" hidden>Load older entries</button><span class="spacer"></span><button class="btn primary" data-act="__close">Close</button>',
+      actions: {
+        older: () => load(state.rows[state.rows.length - 1].id),
+        __input: e => { if (e.target.dataset.role === 'q') { state.q = e.target.value; refresh(); } },
+      },
+    });
+    await load();
   },
 
   // ----- backup -----

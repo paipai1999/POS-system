@@ -1,56 +1,59 @@
-# Security & reliability fixes — report
+# Work report
 
-Date: 2026-10-07. Test run: `node --test server/test/api.test.js` → 21 passed (12 existing, 9 new).
+Date: 2026-10-08. All tests: `npm test` → **83 passed** (server API, live multi-device sync, security, backups, money, features, and the real web app clicked through in jsdom).
 
-## 1. Printer station removal (admin only)
-- **Problem:** `POST /api/station/unregister` had no role check; any signed-in user could remove a printer station.
-- **Fix:** admin check added ([server/server.js](server/server.js), same rule as `register`).
-- **Test:** waiter gets 403 and the station still works; admin succeeds and the station is then refused.
+## Earlier rounds (summary)
+Bill and price checks on the server, per-role visibility of orders, stock reservation, salted-hash PINs, Kitchen role limited to tickets, safe printing of other devices' print jobs, receipt no longer closing after payment. Details are in the code and tests.
 
-## 2. Server checks the bill (prices, totals, change)
-- **Problem:** the server trusted line prices and `totals.total` sent by the device.
-- **Fix** ([server/sync.js](server/sync.js)):
-  - A new order line must match the current menu price; an existing line can never change price or product.
-  - At payment the server recalculates subtotal, discount, service, tax and total from its own settings. A device total that differs is rejected ("total no longer matches… reopen the order"). The stored totals are the server's.
-  - Payment method must be cash/card/other; cash must cover the total; `amount` and `change` are calculated by the server.
-  - Discounts must be type `percent` or `amount`, and a percent cannot exceed 100.
-  - The calculation now lives once in `computeTotals` ([js/shared.js](js/shared.js)); the browser's `Store.totals` uses the same function, so the two cannot drift apart.
-- **Trade-off:** if an admin changes the tax rate while a bill is open (or an offline device pays after a rate change), that payment is rejected and the cashier must reopen the order. This is deliberate: a visible error rather than a bill that differs from what the customer was shown.
-- **Test:** invented price, edited price, wrong total, short cash, invalid method, server-calculated change.
+## This round, item by item
 
-## 3. Who can read orders and sales
-- **Problem:** every signed-in user received all orders (including others' payments) in the snapshot, live updates and `GET /api/orders`.
-- **Fix:**
-  - Cashier, manager and admin: unchanged (see everything).
-  - Waiter: sees all open orders (needed for the table map) and their own finished orders; other people's paid/refunded/void orders are not sent.
-  - When a colleague's open order is paid, the waiter's device receives a deletion for it, so the table does not stay "busy" on their screen.
-  - `GET /api/orders` needs the `orders` permission (Kitchen gets 403) and is filtered the same way.
-- **Not changed:** the Kitchen role still receives the normal snapshot (the kitchen screen reads orders for labels). Say if you want that narrowed too.
-- **Test:** waiter vs cashier vs kitchen, including the deletion message.
+| # | Item | What was done | Verified |
+|---|------|---------------|----------|
+| 1 | Many devices at once | `server/test/live.test.js`: guest, waiter, cashier and kitchen on live streams at once; two cashiers paying the same bill (one wins); a device catching up after being offline; import reloads everyone. `allow-firewall.bat` opens port 3000. | Tests. **The firewall script was written but not run** (it changes system settings and needs administrator rights). Real phones/Wi-Fi not tried. |
+| 2 | Printer | **Settings → Printing → Print test page** (width ruler, wrapped line, Myanmar text, paper cut). Print jobs from other devices are cleaned of scripts before printing. | Page renders in the browser. **No real printer was available**, so printing, paper cut and Myanmar fonts must be tried on the counter PC. |
+| 3 | Auto-start | `start-server.bat` restarts the server after a crash (not when it is already running); `install-autostart.bat` / `uninstall-autostart.bat` use a Windows scheduled task. | Restart codes tested (exit 2 when the port is in use). **Autostart scripts not run.** |
+| 4 | Demo PINs | Signing in with a demo PIN forces a new PIN (locked dialog, weak PINs refused, uniqueness enforced) in server and single-device mode; `POST /api/me/pin`. | Server tests + browser test. |
+| 5 | Backups off the PC's disk | Up to two extra folders (USB / cloud-synced); status screen with freshness and "same disk" warning; Back up now; unplugged drive reported and retried. | 7 tests. |
+| 6 | HTTPS | Optional: `node server/make-cert.js` then HTTPS automatically. Security headers and a content-security policy on every response. **No HSTS** (it would block Chrome's "continue" for a self-signed certificate). | HTTPS served and checked with a generated certificate; header tests. |
+| 7 | Audit log | Append-only log (13 months): prices, stock, staff, PIN/role changes, settings/tax, voids, refunds, discounts, payments, shifts, bill splits, sign-ins, lock-outs, exports/imports. Settings → Activity log. PINs are never written to it. | 5 tests. |
+| 8 | Kitchen role | Receives tickets, staff names and settings only; cannot read orders, prices, payments, guests or create print jobs. | Test + browser check. |
+| 9 | Kyat | Money format: symbol before/after, 0 or 2 decimals, thousands commas; bill rounding, quick-cash notes (500 … 50,000) and the server's payment checks follow it. Presets for US dollar and kyat. | Tests. Menu prices are **not converted** when the format changes. |
+| 10 | Myanmar interface | 🌐 switch on sign-in, top bar and guest menu; ~500 phrases + sentence patterns; menu/staff/table names left as typed; receipts and kitchen tickets stay English. | Unit tests + browser; every menu label and settings card verified in Myanmar. **Not reviewed by a native speaker.** |
+| 11 | New features | Tip; payment split between cash/card/other; split a bill by items (done atomically on the server); priced options per item; cash drawer shifts with server-calculated difference. | 13 server tests + browser tests. |
+| 12 | Browser/offline tests | jsdom harness runs the real app against a real server: PIN change, selling, kitchen ticket, **offline queue**, **offline conflict**, tampered price, options/split/tip/drawer, Myanmar switch, single-device mode. | 9 + 5 tests. |
+| 13 | One set of rules | Bill/payment validation and stock take/return moved to `js/shared.js` and used by both the browser and the server. Single-device mode now rejects the same bad payments. | Parity test. Single-device PINs are still stored unhashed (documented). |
+| 14 | Node version | Server stops with a clear message below Node 22.5; `start-server.bat` checks it and says where to download. | Checked. |
 
-## 4. Overselling tracked stock
-- **Problem:** two devices could each add the last portion; payment then just clamped stock to 0.
-- **Fix:** when an open order is saved, any increase of a tracked item is checked against stock minus items reserved on other open orders; otherwise "Not enough X in stock". Lowering a quantity, or items already on the order, is never blocked. Payment is not blocked (food already served must still be paid for).
-- **Test:** brownie stock 10: 6 reserved, a second order for 5 is refused, 4 is accepted.
+## Security bug found and fixed this round
+A path-traversal flaw: `/js/..%2fserver%2fdata%2fpos.db` was served, which would have handed out the whole database (orders and PIN hashes) to anyone on the network. The static-file check ran before `..` was resolved. It now checks the resolved path against the allowed folders; four tests cover the encoded variants.
+**The copy already pushed to GitHub (first commit) still contains this flaw** until a new commit is pushed.
 
-## 5. PIN hashing (server mode)
-- **Problem:** PINs were stored as plain digits in the database, in every daily backup and in exported backups.
-- **Fix** ([server/pins.js](server/pins.js)): a PIN is stored only as `scrypt$salt$hash` (new random salt per user). Login, manager approval (`verify-pin`), the "PIN already used" rule and the demo-PIN warning all work through the hash.
-  - A device can only send digits; a `pinHash` in a request is ignored, so a hash cannot be copied from one account to another. Editing a user without a new PIN keeps the existing hash.
-  - Demo data, imported backups and databases from older versions are converted on start/import. Plain PINs are never written (`loadDataset` hashes first); for old databases the file is compacted (`VACUUM`) so old plain rows are not left in free pages or the write-ahead log.
-  - Exported backups contain hashes, never digits; old-style backups with plain PINs still import.
-- **Limits:** with only 4–6 digits, a stolen database could still be brute-forced offline, so keep `server/data` private. Daily backups made *before* this change (none exist yet on this machine) would still contain plain PINs. Single-device mode (no server) still stores PINs unhashed in the browser.
-- **Test:** 4 new tests (hash format and unique salts, no plain PIN in the database file, PIN change re-hashes, planted hash ignored, old database and old backup conversion, demo warning).
+## Not done / needs you
+- Test with real phones, the real receipt printer, and run `allow-firewall.bat` / `install-autostart.bat`.
+- Have a Myanmar speaker read `js/i18n-my.js`.
+- Partial payment over time (a balance left open) is not implemented; split by items and split between methods are.
+- Guests order items at base price (no options on the guest menu).
+- Single-device mode: PINs unhashed, data readable in the browser.
+- Choose real PINs; set a backup folder on a USB drive or cloud folder.
 
-## Also fixed while testing in the browser (server mode)
-- After a cashier paid, the server's reply refreshed the order screen, which closed the receipt dialog and showed "paid on another device". The order screen now ignores its own payment while the receipt is open ([js/screens/order.js](js/screens/order.js)). Verified in the browser: tampered price is rejected and reverted, payment completes, receipt stays open.
+## Latest: features taken from Poster POS (2026-10-08)
 
-## Earlier round (single-device mode)
-Storage sync no longer wipes data from a cleared/corrupt entry; modal saves use fresh records; refund returns exactly the stock taken; empty open orders cleaned at start; settings defaults and order numbers never reused; currency symbol sanitised; guest requests for deleted tables rejected.
+Chosen by you: ingredient inventory with recipes, purchases and stocktake, customers and loyalty.
 
-## Still open (not done)
-- PINs travel over plain HTTP on the LAN.
-- Backups are written to the same disk (`server/data/backups`); copy them to a USB drive or cloud folder.
-- Change the demo PINs (admin 1234, kitchen 3333, …) before real use.
-- No automated tests for the browser screens or the offline queue (`js/sync.js`).
-- Single-device mode (`js/store.js`) still has its own copy of the stock logic and does not have these server checks, and keeps PINs unhashed.
+| Feature | What it does | Where |
+|---------|--------------|-------|
+| Ingredients & recipes | Ingredients with unit, cost and low-stock level; a recipe per menu item. Paying a bill uses up the ingredients and writes each dish's cost on the line; a refund restores exactly that. Cost and margin shown per menu item; Reports show ingredient cost and profit on items with a recipe. | Inventory, Menu & Stock |
+| Purchases | Stock in with supplier and price paid; cost becomes the weighted average; a manager can void a mistake (stock taken back). | Inventory → Purchases |
+| Stocktake | Count what is on the shelves; stock set to the count; difference and its value at cost kept as a record (ingredients and tracked menu items). | Inventory → Stocktake |
+| Customers | List with phone, points, spent, visits; add on the spot at checkout; phone numbers unique. | Customers, checkout |
+| Loyalty | Optional (Settings). Earn a % of each bill as points; pay part of a bill with points (1 point = 1 unit, up to a set share); refund takes points back; standing discount per customer needs no manager PIN each time. | Settings, Customers, checkout |
+
+How it is built: the rules live once in `js/shared.js` and are used by the server and by single-device mode, so both behave the same. The server does the stock, cost and points work itself at payment; a device cannot send its own cost or points.
+
+Who sees what (enforced by the server): only managers receive ingredients, recipes, costs, purchases and stocktakes; cashiers receive customers (they take payment); waiters and the kitchen do not. Dish costs are removed from the bills sent to non-managers.
+
+Found by the new tests and fixed: a customer discount made the server answer with an error (500) because the activity log looked up a missing approver; odd values sent by a device (an object where an id is expected) are now refused cleanly; after paying in server mode the receipt on screen did not show points earned until the server answered, so the open receipt now refreshes itself.
+
+Tests added: 13 server tests (ingredients, recipes, costs hidden from cashiers, purchases, stocktake, loyalty, customer discount, odd input) and 4 browser tests (the whole flow through the screens in two tabs, single-device parity, Myanmar coverage of the new screens). Total now 83.
+
+Not done on purpose: selling is not blocked when an ingredient runs out (it is flagged instead); priced options do not use extra ingredients; suppliers are typed names; loyalty has one simple scheme (no tiers or expiry). Not tried on real devices. The Myanmar wording of the new screens has not been reviewed by a native speaker.

@@ -33,6 +33,7 @@ Screens.guest = {
               <h1>${esc(Store.settings.name)}</h1>
               <div class="small guest-sub">${esc(table.name)} · Menu</div>
             </div>
+            ${I18N.button('lang')}
             <button class="btn" data-act="call">🔔 Call waiter</button>
           </div>
           <div class="chips guest-chips">
@@ -63,6 +64,7 @@ Screens.guest = {
       else if (act === 'add') this.add(root, t.dataset.id);
       else if (act === 'cart') this.openCart(root);
       else if (act === 'call') this.callWaiter();
+      else if (act === 'lang') { I18N.toggle(); this.render(root); }
       else if (act === 'staff') this.staffMenu(root);
     };
   },

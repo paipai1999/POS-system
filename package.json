@@ -1,0 +1,17 @@
+{
+  "name": "restaurant-pos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Restaurant point of sale: runs in a browser, optional LAN server",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "node --test server/test/*.test.js test/client/*.test.js",
+    "test:server": "node --test server/test/*.test.js"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.2"
+  }
+}
