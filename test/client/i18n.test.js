@@ -6,10 +6,13 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 
-const root = path.join(__dirname, '..', '..', 'js');
+const root = path.join(__dirname, '..', '..');
 global.document = { documentElement: {} };
+// Loads the translator and the Myanmar word list files in the order index.html loads them.
 const load = () => {
-  const code = fs.readFileSync(path.join(root, 'i18n.js'), 'utf8').replace('const I18N =', 'globalThis.I18N =') + '\n' + fs.readFileSync(path.join(root, 'i18n-my.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const files = [...html.matchAll(/src="(js\/i18n\/[^"]+)"/g)].map(m => m[1]);
+  const code = files.map(f => fs.readFileSync(path.join(root, f), 'utf8').replace('const I18N =', 'globalThis.I18N =')).join('\n');
   new Function(code)();
   return globalThis.I18N;
 };

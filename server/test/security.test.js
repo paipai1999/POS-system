@@ -49,8 +49,8 @@ test('only the app files are served: never the database, server code or anything
   for (const p of ['/server/server.js', '/server/data/pos.db', '/server/pins.js', '/README.md', '/REPORT.md', '/.gitignore', '/package.json']) {
     assert.equal((await fetch(base + p)).status, 404, p);
   }
-  assert.equal((await fetch(base + '/js/store.js')).status, 200);
-  assert.equal((await fetch(base + '/css/styles.css')).status, 200);
+  assert.equal((await fetch(base + '/js/store/core.js')).status, 200);
+  assert.equal((await fetch(base + '/css/base.css')).status, 200);
 
   // Path traversal has to be sent raw: fetch() would tidy "../" away before it leaves.
   const raw = target => new Promise((resolve, reject) => {

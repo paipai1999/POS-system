@@ -82,7 +82,7 @@ Screens.guest = {
     const inCart = this.inCart(p.id);
     return `
       <div class="menu-card ${avail <= 0 ? 'soldout' : ''}">
-        <div class="emoji">${esc(p.emoji || '🍽️')}</div>
+        ${Photo.img(p, 'photo', 'emoji') || `<div class="emoji">${esc(p.emoji || '🍽️')}</div>`}
         <div class="info">
           <div class="mc-name">${esc(p.name)}</div>
           <div class="desc">${esc(p.description || '')}</div>

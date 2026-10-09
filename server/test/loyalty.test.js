@@ -46,6 +46,7 @@ async function login(name, pin) {
 }
 
 const customer = id => app.db.doc('customers', id);
+const without = (o, key) => { const { [key]: _, ...rest } = o; return rest; };
 const line = (dev, name, qty) => {
   const p = dev.find('products', x => x.name === name)[0];
   return { id: 'l_' + Math.random().toString(36).slice(2), productId: p.id, name: p.name, price: p.price, qty, note: '', sentQty: 0 };
@@ -118,7 +119,7 @@ test('a paid bill earns points, a bill can spend them, and a refund undoes both'
   const o1 = (await cashier.put('orders', order(cashier, [line(cashier, 'Latte', 5)], { customerId: 'c_ann' }))).doc;
   const p1 = await pay(cashier, o1, 21.4);
   assert.equal(p1.status, 'ok', p1.error);
-  assert.deepEqual(p1.doc.loyalty, { customerId: 'c_ann', earned: 2.14, used: 0, balance: 42.14 });
+  assert.deepEqual(without(p1.doc.loyalty, 'prevLastVisit'), { customerId: 'c_ann', earned: 2.14, used: 0, balance: 42.14 });
   let c = customer('c_ann');
   assert.deepEqual([c.points, c.spent, c.visits], [42.14, 21.4, 1]);
   assert.ok(c.lastVisit > 0);
@@ -137,7 +138,7 @@ test('a paid bill earns points, a bill can spend them, and a refund undoes both'
   assert.equal(p2.status, 'ok', p2.error);
   assert.equal(p2.doc.totals.points, 4);
   assert.equal(p2.doc.totals.total, 4.28);
-  assert.deepEqual(p2.doc.loyalty, { customerId: 'c_ann', earned: 0.42, used: 4, balance: 38.56 }, '42.14 − 4 + 0.42');
+  assert.deepEqual(without(p2.doc.loyalty, 'prevLastVisit'), { customerId: 'c_ann', earned: 0.42, used: 4, balance: 38.56 }, '42.14 − 4 + 0.42');
   assert.equal(customer('c_ann').visits, 2);
 
   // Refund bill 2: the 4 points come back, the 0.42 earned goes away, and the visit is not counted.

@@ -1,0 +1,12 @@
+/* Tables of data (lists with rows). */
+.table-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+table.data { width: 100%; border-collapse: collapse; font-size: .92rem; }
+table.data th, table.data td { padding: .65rem .85rem; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; vertical-align: middle; }
+table.data th { font-size: .74rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--panel-2); }
+table.data .num { text-align: right; font-variant-numeric: tabular-nums; }
+table.data tr:last-child td { border-bottom: 0; }
+table.data td.empty { text-align: center; }
+table.data.compact th, table.data.compact td { padding: .45rem .3rem; }
+.wrap-cell { white-space: normal !important; min-width: 200px; }
+.cell-emoji { font-size: 1.2rem; }
+.low-stock { color: var(--warn); font-weight: 700; }

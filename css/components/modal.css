@@ -1,0 +1,15 @@
+/* Dialogs. */
+#modal-root { position: fixed; inset: 0; z-index: 50; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(20, 16, 12, .5); display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.modal { width: 100%; max-width: 460px; max-height: calc(100vh - 2rem); display: flex; flex-direction: column; background: var(--panel); border-radius: 18px; box-shadow: 0 20px 60px rgba(0, 0, 0, .3); }
+.modal.wide { max-width: 620px; }
+.modal-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .85rem 1.1rem; border-bottom: 1px solid var(--line); }
+.modal-head h2 { margin: 0; }
+.modal-body { padding: 1.1rem; overflow-y: auto; }
+.modal-body p:first-child { margin-top: 0; }
+.modal-foot { display: flex; justify-content: flex-end; gap: .5rem; padding: .85rem 1.1rem; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.modal-foot .spacer { flex: 1; }
+.sub { font-size: .95rem; margin: 1.25rem 0 .5rem; }
+ul.plain { list-style: none; padding: 0; margin: 0; }
+ul.plain li { display: flex; justify-content: space-between; padding: .3rem 0; border-bottom: 1px dashed var(--line); }
+.totals-inline { display: flex; justify-content: space-between; padding: .6rem 0; font-size: 1.05rem; }

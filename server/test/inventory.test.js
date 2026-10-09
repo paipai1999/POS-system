@@ -227,3 +227,47 @@ test('a stocktake sets the stock to what was counted and records the difference 
   assert.match(rows.find(r => r.action === 'stocktake').detail, /2 item\(s\) counted/);
   assert.ok(rows.find(r => r.action === 'purchase received'));
 });
+
+test('an option can use extra ingredients: an extra shot uses more beans, and the dish costs more', async () => {
+  const admin = await login('Admin', '1234');
+  const cashier = await login('Maya', '1111');
+  const latte = admin.find('products', p => p.name === 'Latte')[0];
+  const beans = ing('Coffee beans'), milk = ing('Milk');
+  const setOptions = options => admin.put('products', { ...admin.doc('products', latte.id), options });
+
+  for (const bad of [
+    [{ name: 'Shot', price: 0.5, uses: [{ ingredientId: 'nope', qty: 9 }] }],
+    [{ name: 'Shot', price: 0.5, uses: [{ ingredientId: beans.id, qty: 0 }] }],
+    [{ name: 'Shot', price: 0.5, uses: [{ ingredientId: beans.id, qty: 9 }, { ingredientId: beans.id, qty: 3 }] }],
+    [{ name: 'Shot', price: 0.5, uses: Array.from({ length: 7 }, () => ({ ingredientId: beans.id, qty: 1 })) }],
+    [{ name: 'Shot', price: 0.5, uses: [{ ingredientId: { a: 1 }, qty: 9 }] }],
+  ]) assert.equal((await setOptions(bad)).status, 'error', JSON.stringify(bad).slice(0, 70));
+  const ok = await setOptions([{ name: 'Extra shot', price: 0.5, uses: [{ ingredientId: beans.id, qty: 9 }] }, { name: 'Large', price: 1 }]);
+  assert.equal(ok.status, 'ok', ok.error);
+  assert.deepEqual(ok.doc.options[0].uses, [{ ingredientId: beans.id, qty: 9 }]);
+  assert.equal(ok.doc.options[1].uses, undefined, 'an option with no ingredients stays plain');
+
+  await cashier.load();
+  const l = line(cashier, 'Latte', 2);
+  const withShot = { ...l, mods: [{ name: 'Extra shot', price: 0.5 }, { name: 'Large', price: 1 }], price: 5.5 };
+  const o = (await cashier.put('orders', order(cashier, [withShot]))).doc;
+  const beansBefore = ing('Coffee beans').stock, milkBefore = ing('Milk').stock;
+  const paid = await pay(cashier, o, 11.77);        // 2 × 5.50 = 11.00 + 7%
+  assert.equal(paid.status, 'ok', paid.error);
+  assert.equal(ing('Coffee beans').stock, beansBefore - 54, '2 × (18 + 9) g');
+  assert.equal(ing('Milk').stock, milkBefore - 440);
+  const stored = app.db.doc('orders', o.id).items[0];
+  assert.equal(stored.cost, 1.344, '27 g × 0.04 + 220 ml × 0.0012 per cup');
+  assert.deepEqual(stored.used.map(u => u.qty).sort((a, b) => a - b), [54, 440]);
+
+  // A plain latte on another bill still uses the recipe only, and a refund returns exactly what each bill used.
+  const plain = (await cashier.put('orders', order(cashier, [line(cashier, 'Latte', 1)]))).doc;
+  assert.equal((await pay(cashier, plain, 4.28)).status, 'ok');
+  assert.equal(ing('Coffee beans').stock, beansBefore - 54 - 18);
+  await call('/api/verify-pin', { token: cashier.token, method: 'POST', body: { pin: '1234' } });
+  assert.equal((await cashier.put('orders', { ...cashier.doc('orders', o.id), status: 'refunded', refundedBy: admin.user.id })).status, 'ok');
+  assert.equal(ing('Coffee beans').stock, beansBefore - 18, 'only the first bill is put back');
+  assert.equal(ing('Milk').stock, milkBefore - 220);
+  await setOptions([{ name: 'Extra shot', price: 0.5 }, { name: 'Large', price: 1 }]); // back as the other tests expect
+  assert.ok(milk);
+});

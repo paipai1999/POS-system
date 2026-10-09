@@ -1,0 +1,7 @@
+/* The live sync indicator in the top bar. */
+.sync-status { font-size: .78rem; font-weight: 700; padding: .25rem .65rem; border-radius: 999px; white-space: nowrap; }
+.sync-status::before { content: "● "; }
+.sync-status.live { background: rgba(21, 128, 61, .25); color: #86efac; }
+.sync-status.busy { background: rgba(255, 255, 255, .12); color: #e7e0d6; }
+.sync-status.offline { background: var(--danger); color: #fff; animation: pulse 1.5s infinite; }
+@keyframes pulse { 50% { opacity: .65; } }

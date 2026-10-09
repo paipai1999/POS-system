@@ -245,5 +245,32 @@ test('the drawer sums are the same whether the browser or the server works them 
     { status: 'paid', paidAt: 40, totals: { total: 7 }, payment: { method: 'card', amount: 7 } },
   ];
   const sums = computeShift({ openedAt: 8, openingFloat: 50 }, orders);
-  assert.deepEqual(sums, { cashIn: 13.56, cashOut: 4, tips: 1, sales: 19.56, orders: 3, expected: 59.56 });
+  assert.deepEqual(sums, { cashIn: 13.56, cashOut: 4, payouts: 0, spent: 0, bought: 0, ownerIn: 0, ownerOut: 0, received: 0, tips: 1, sales: 19.56, orders: 3, expected: 59.56 });
+  // Cash handed to a supplier out of the till during the shift comes off; other methods, voided or earlier payments do not.
+  const paid = computeShift({ openedAt: 8, openingFloat: 50 }, orders, 2, [
+    { method: 'cash', amount: 10, status: 'paid', date: 15 },
+    { method: 'other', amount: 99, status: 'paid', date: 15 },
+    { method: 'cash', amount: 50, status: 'void', date: 15 },
+    { method: 'cash', amount: 70, status: 'paid', date: 3 },
+  ]);
+  assert.equal(paid.payouts, 10);
+  assert.equal(paid.expected, 49.56);
+
+  // Other cash that left or entered the drawer: cash expenses and purchases, and the owner's cash moves. Only cash counts,
+  // and not voided or earlier records.
+  const more = computeShift({ openedAt: 8, openingFloat: 50 }, orders, 2, [], {
+    expenses: [{ method: 'cash', amount: 5, status: 'active', date: 12 }, { method: 'other', amount: 90, status: 'active', date: 12 }, { method: 'cash', amount: 7, status: 'void', date: 12 }, { method: 'cash', amount: 8, status: 'active', date: 2 }],
+    purchases: [{ payMethod: 'cash', paid: 3.5, total: 9, status: 'received', date: 14 }, { payMethod: 'other', paid: 60, status: 'received', date: 14 }, { payMethod: 'cash', paid: 1, status: 'void', date: 14 }],
+    ownerMoves: [{ type: 'in', method: 'cash', amount: 20, status: 'active', date: 16 }, { type: 'out', method: 'cash', amount: 12, status: 'active', date: 16 }, { type: 'out', method: 'other', amount: 400, status: 'active', date: 16 }],
+  });
+  assert.deepEqual([more.spent, more.bought, more.ownerIn, more.ownerOut], [5, 3.5, 20, 12]);
+  assert.equal(more.expected, 59.56 - 5 - 3.5 + 20 - 12);
+
+  // A customer paying off their account in cash puts cash in; by card, a write-off or a voided payment does not.
+  const paidOff = computeShift({ openedAt: 8, openingFloat: 50 }, orders, 2, [], {
+    customerPayments: [{ method: 'cash', amount: 30, status: 'received', date: 12 }, { method: 'card', amount: 99, status: 'received', date: 12 },
+      { method: 'writeoff', amount: 40, status: 'received', date: 12 }, { method: 'cash', amount: 7, status: 'void', date: 12 }, { method: 'cash', amount: 8, status: 'received', date: 2 }],
+  });
+  assert.equal(paidOff.received, 30);
+  assert.equal(paidOff.expected, 59.56 + 30);
 });

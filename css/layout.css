@@ -1,0 +1,63 @@
+/* The top bar and the page layout (headers, toolbars, cards). */
+.topbar {
+  position: sticky; top: 0; z-index: 10; height: var(--topbar-h);
+  display: flex; align-items: center; gap: 1rem; padding: 0 1rem;
+  background: var(--ink); color: #fff;
+}
+.brand { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.topbar nav { display: flex; gap: .25rem; flex: 1; overflow-x: auto; scrollbar-width: none; }
+.nav-toggle { display: none; border: 0; background: rgba(255, 255, 255, .1); color: #fff; font-size: 1.3rem; min-width: 44px; min-height: 42px; border-radius: 10px; }
+.nav-btn {
+  display: flex; align-items: center; gap: .4rem; border: 0; background: transparent; color: #d6cfc4;
+  padding: .5rem .8rem; border-radius: 10px; white-space: nowrap; font-weight: 600; min-height: 42px;
+}
+.nav-btn:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+.nav-btn.active { background: rgba(255, 255, 255, .15); color: #fff; }
+.badge { background: var(--accent); color: #fff; border-radius: 999px; font-size: .72rem; padding: .05rem .45rem; }
+.who { display: flex; align-items: center; gap: .6rem; white-space: nowrap; font-weight: 600; }
+.who small { display: block; color: #b5ab9d; font-size: .72rem; font-weight: 500; }
+.who .btn { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .25); }
+.who .btn:hover { background: rgba(255, 255, 255, .08); }
+/* Ten menu buttons do not all fit with their words on a normal screen: below 2200px only the open page keeps its word. */
+@media (max-width: 2200px) {
+  .nav-btn:not(.active) span { display: none; }
+  .nav-btn { padding: .5rem .65rem; }
+  .brand { max-width: 140px; }
+}
+@media (max-width: 1150px) {
+  .brand, .who > span { display: none; }
+  .nav-btn { padding: .5rem .5rem; }
+  .topbar { gap: .5rem; }
+}
+/* On a phone or a small tablet the buttons live behind a ☰ button and open as a full list, each with its word (eleven buttons do not fit a narrow bar). */
+@media (max-width: 860px) {
+  .nav-toggle { display: inline-flex; align-items: center; justify-content: center; }
+  .topbar nav { display: none; }
+  .topbar.menu-open nav {
+    display: flex; flex-direction: column; gap: .15rem; position: fixed; top: var(--topbar-h); left: 0; right: 0; z-index: 40;
+    padding: .5rem; background: var(--ink); box-shadow: 0 12px 24px rgba(0, 0, 0, .35); max-height: calc(100vh - var(--topbar-h)); overflow-y: auto;
+  }
+  .topbar.menu-open .nav-btn { width: 100%; justify-content: flex-start; padding: .75rem 1rem; font-size: 1.05rem; }
+  .topbar.menu-open .nav-btn span { display: inline !important; }
+  .topbar .sync-status { margin-left: auto; }
+}
+@media (max-width: 860px) {
+  .brand, .nav-btn span, .who > span { display: none; }
+  .topbar { gap: .5rem; padding: 0 .5rem; }
+}
+
+.main { padding: 1.25rem; max-width: 1400px; margin: 0 auto; }
+.main.screen-login, .main.screen-guest, .main.screen-order { padding: 0; max-width: none; }
+@media (max-width: 600px) { .main { padding: 1rem; } }
+
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.page-head .actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.section-title { margin: 1.75rem 0 .75rem; font-size: 1.05rem; }
+.page-head + .section-title { margin-top: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem 1.1rem; box-shadow: var(--shadow); }
+.toolbar { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+.toolbar .input { width: auto; min-width: 170px; flex: 0 1 260px; }
+.alert-box { padding: .75rem 1rem; border-radius: 12px; background: var(--warn-soft); color: var(--warn); margin-bottom: 1rem; font-weight: 600; }
+.row-actions { display: flex; gap: .4rem; justify-content: flex-end; flex-wrap: wrap; }
+.row-actions.start { justify-content: flex-start; }
+.stack { display: flex; flex-direction: column; gap: .5rem; }

@@ -1,0 +1,11 @@
+/* Menu photos on tiles, in lists, in the editor and on the guest menu. */
+.p-photo { display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 8px; background: var(--panel-2); margin-bottom: .2rem; }
+.p-emoji.photo-missing { font-size: 1.6rem; line-height: 1.2; }
+.cell-photo { width: 36px; height: 36px; object-fit: cover; border-radius: 8px; vertical-align: middle; background: var(--panel-2); }
+.menu-card .photo { width: 84px; height: 84px; object-fit: cover; border-radius: 14px; flex-shrink: 0; background: var(--panel-2); }
+.photo-field { display: flex; align-items: center; gap: .9rem; margin-bottom: 1rem; }
+.photo-preview { width: 96px; height: 96px; flex-shrink: 0; display: grid; place-items: center; overflow: hidden; border-radius: 14px; border: 1px dashed var(--line); background: var(--panel-2); font-size: 2.6rem; text-align: center; }
+.photo-preview .photo-big { width: 100%; height: 100%; object-fit: cover; }
+.photo-preview .photo-big.photo-missing { display: grid; place-items: center; font-size: 2.6rem; }
+.photo-actions { display: flex; flex-direction: column; align-items: flex-start; gap: .45rem; min-width: 0; }
+.btn-row { display: flex; flex-wrap: wrap; gap: .4rem; }

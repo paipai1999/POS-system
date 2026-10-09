@@ -1,0 +1,49 @@
+/* The dashboard: order board and table overview. */
+.stat.late .value { color: var(--danger); }
+.stat.ready .value { color: var(--ok); }
+.dash-board { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .75rem; align-items: start; }
+.dash-col { min-width: 0; padding: .6rem; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); }
+.dash-col h2 { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin: 0 0 .55rem; font-size: .95rem; }
+.dash-col h2 .count { min-width: 26px; padding: 0 .45rem; text-align: center; font-size: .85rem; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; }
+.dash-col.is-ready { background: var(--ok-soft); border-color: #86efac; }
+.dash-list { display: flex; flex-direction: column; gap: .5rem; }
+.dash-list.wide { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.dash-card { display: flex; flex-direction: column; gap: .35rem; min-width: 0; padding: .45rem; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--muted); border-radius: 10px; box-shadow: var(--shadow); }
+.dash-card.cooking { border-left-color: var(--accent); }
+.dash-card.ready { border-left-color: var(--ok); }
+.dash-card.payment { border-left-color: #6d28d9; }
+.dash-card.paid { border-left-color: var(--ok); padding: .6rem .7rem; width: 100%; text-align: left; }
+.dash-card.warn { background: var(--warn-soft); }
+.dash-card.late { background: var(--danger-soft); border-color: #f1c6c6; }
+.dc-main { display: flex; flex-direction: column; gap: .3rem; width: 100%; min-width: 0; padding: .2rem; border: 0; background: none; text-align: left; }
+.dc-top { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; min-width: 0; }
+.dc-top b { overflow-wrap: anywhere; }
+.dc-items { margin: 0; padding: 0; list-style: none; font-size: .86rem; overflow-wrap: anywhere; }
+.dc-meta { font-size: .8rem; color: var(--muted); overflow-wrap: anywhere; }
+.dc-foot { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.dc-time { color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: .3rem .9rem; font-size: .8rem; color: var(--muted); align-items: center; }
+.legend .dot { display: inline-block; width: 11px; height: 11px; margin-right: .3rem; border-radius: 50%; vertical-align: -1px; }
+.dot.s-free { background: #bbf7d0; border: 1px solid #4ade80; }
+.dot.s-ordering { background: #c7d2fe; }
+.dot.s-cooking { background: #fdba74; }
+.dot.s-ready { background: #4ade80; }
+.dot.s-payment { background: #c4b5fd; }
+.floor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: .75rem; }
+.floor-tile { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: .15rem; min-height: 132px; padding: .8rem .9rem; text-align: left; background: var(--panel); border: 2px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.floor-tile:hover { filter: brightness(.98); }
+.ft-name { font-weight: 800; font-size: 1.1rem; overflow-wrap: anywhere; padding-right: 1.6rem; }
+.ft-status { font-size: .8rem; font-weight: 700; padding: .05rem .5rem; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); }
+.ft-meta { font-size: .8rem; color: var(--muted); overflow-wrap: anywhere; }
+.ft-total { margin-top: auto; font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.floor-tile.s-free { border-color: #86efac; background: #f0fdf4; }
+.floor-tile.s-free .ft-status { background: #dcfce7; border-color: #86efac; color: var(--ok); }
+.floor-tile.s-ordering { border-color: #a5b4fc; background: #eef2ff; }
+.floor-tile.s-cooking { border-color: #fdba74; background: var(--accent-soft); }
+.floor-tile.s-ready { border-color: var(--ok); background: var(--ok-soft); box-shadow: 0 0 0 4px rgba(21, 128, 61, .2); }
+.floor-tile.s-payment { border-color: #c4b5fd; background: #f5f3ff; }
+.floor-tile.calling { box-shadow: 0 0 0 4px rgba(180, 83, 9, .3); }
+.floor-tile.late { border-color: var(--danger); }
+@media (max-width: 1500px) { .dash-board { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .dash-board { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .dash-board { grid-template-columns: minmax(0, 1fr); } .floor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

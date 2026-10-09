@@ -1,0 +1,30 @@
+/* The guest menu a customer sees after scanning the QR code. */
+.guest { min-height: 100vh; padding-bottom: 100px; }
+.guest-top { position: sticky; top: 0; z-index: 5; background: var(--ink); color: #fff; }
+.guest-head { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem .6rem; max-width: 1100px; margin: 0 auto; }
+.guest-head h1 { font-size: 1.35rem; }
+.guest-sub { opacity: .75; }
+.guest-head .btn { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .3); }
+.guest-chips { padding: 0 1.25rem .8rem; max-width: 1100px; margin: 0 auto; }
+.guest-chips .chip { background: transparent; color: #e7e0d6; border-color: rgba(255, 255, 255, .25); }
+.guest-chips .chip.active { background: #fff; color: var(--ink); border-color: #fff; }
+.guest-body { padding: .5rem 1.25rem; max-width: 1100px; margin: 0 auto; }
+.menu-section h2 { margin: 1.25rem 0 .75rem; font-size: 1.25rem; }
+.menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: .85rem; }
+.menu-card { display: flex; gap: .9rem; padding: 1rem; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.menu-card.soldout { opacity: .55; }
+.menu-card .emoji { font-size: 2.3rem; width: 64px; height: 64px; display: grid; place-items: center; background: var(--panel-2); border-radius: 14px; flex-shrink: 0; }
+.menu-card .info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mc-name { font-weight: 700; }
+.menu-card .desc { font-size: .85rem; color: var(--muted); margin: .2rem 0 .6rem; }
+.menu-card .foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.menu-card .price { font-weight: 800; color: var(--accent-2); }
+.add-wrap { display: flex; align-items: center; gap: .5rem; }
+.in-cart { font-size: .8rem; color: var(--ok); font-weight: 700; }
+.cart-bar {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: 1rem; width: calc(100% - 2rem); max-width: 520px; z-index: 6;
+  display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border: 0; border-radius: 16px;
+  background: var(--accent); color: #fff; font-weight: 700; font-size: 1.05rem; box-shadow: 0 10px 30px rgba(194, 65, 12, .35);
+}
+.cart-bar.ghost { background: var(--ink); box-shadow: 0 10px 30px rgba(0, 0, 0, .2); }
+.guest-staff { display: block; margin: 2.5rem auto 0; border: 0; background: transparent; color: var(--muted); font-size: .8rem; padding: .5rem 1rem; }

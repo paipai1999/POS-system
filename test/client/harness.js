@@ -40,10 +40,10 @@ async function startServer() {
 }
 
 // One browser tab. `net.up = false` makes every request fail like a dropped Wi-Fi connection.
-async function openApp(base, { apiDown = false, lang = null } = {}) {
+async function openApp(base, { apiDown = false, lang = null, path = '/' } = {}) {
   const net = { up: true, apiDown };
   const prints = [];
-  const dom = await JSDOM.fromURL(base + '/', {
+  const dom = await JSDOM.fromURL(base + path, {
     runScripts: 'dangerously',
     resources: 'usable',
     pretendToBeVisual: true,

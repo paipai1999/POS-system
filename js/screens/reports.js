@@ -24,9 +24,17 @@ Screens.reports = {
     }
   },
 
+  // Bills sold in the period (paid on one of its days), including ones that were refunded later.
   ordersInRange() {
     const [start, end] = this.bounds().map(d => d.getTime());
     return Store.data.orders.filter(o => (o.status === 'paid' || o.status === 'refunded') && o.paidAt >= start && o.paidAt < end);
+  },
+
+  // Bills refunded in the period, whenever they were sold: a refund is taken off on the day it is made, so a month that is
+  // already over never changes.
+  refundsInRange() {
+    const [start, end] = this.bounds().map(d => d.getTime());
+    return Store.data.orders.filter(o => o.status === 'refunded' && (o.refundedAt || o.paidAt) >= start && (o.refundedAt || o.paidAt) < end);
   },
 
   render(root) {
@@ -40,9 +48,9 @@ Screens.reports = {
         .catch(e => { root.innerHTML = `<p class="empty">${esc(e.message)}</p>`; });
       return;
     }
-    const all = this.ordersInRange();
-    const paid = all.filter(o => o.status === 'paid');
-    const refunded = all.filter(o => o.status === 'refunded');
+    const paid = this.ordersInRange();            // sold in the period (some may have been refunded later)
+    const refunded = this.refundsInRange();       // refunded in the period (some may have been sold earlier)
+    const all = [...new Set([...paid, ...refunded])];
     const sum = (arr, f) => rmoney(arr.reduce((s, x) => s + f(x), 0));
     const gross = sum(paid, o => o.totals.total);
     const net = sum(paid, o => o.totals.subtotal - o.totals.discount);
@@ -60,6 +68,8 @@ Screens.reports = {
     const bought = sum(Store.data.purchases.filter(p => p.status === 'received' && p.date >= rangeStart && p.date < rangeEnd), p => p.total);
     const lowIng = Store.lowIngredients();
     const refundTotal = sum(refunded, o => o.totals.total);
+    const refundedCost = refunded.reduce((n, o) => n + o.items.reduce((m, l) => m + (l.cost !== undefined ? l.cost * l.qty : 0), 0), 0);
+    cogs -= refundedCost;
 
     const items = {}, cats = {}, methods = {}, staff = {};
     const hours = Array(24).fill(0);
@@ -118,6 +128,7 @@ Screens.reports = {
         ${bought ? stat('Bought (purchases)', money(bought), 'ingredients received') : ''}
         ${stat('Discounts', money(discounts))}
         ${stat('Refunds', money(refundTotal), `${refunded.length} order${refunded.length === 1 ? '' : 's'}`)}
+        ${refunded.length ? stat('Sales after refunds', money(gross - refundTotal), 'total sales − refunds') : ''}
       </div>
       <div class="report-grid">
         <section class="card">
@@ -168,6 +179,13 @@ Screens.reports = {
   },
 
   exportCSV(orders) {
+    const [start, end] = this.bounds();
+    end.setDate(end.getDate() - 1);
+    downloadFile(`sales_${isoDate(start)}_to_${isoDate(end)}.csv`, this.csv(orders), 'text/csv');
+  },
+
+  // The orders as CSV text (also used by the Orders screen for its filtered list).
+  csv(orders) {
     const cell = v => {
       const s = String(v ?? '');
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -187,9 +205,6 @@ Screens.reports = {
           : o.payment.method,
       ];
     });
-    const csv = [header, ...rows].map(r => r.map(cell).join(',')).join('\n');
-    const [start, end] = this.bounds();
-    end.setDate(end.getDate() - 1);
-    downloadFile(`sales_${isoDate(start)}_to_${isoDate(end)}.csv`, csv, 'text/csv');
+    return [header, ...rows].map(r => r.map(cell).join(',')).join('\n');
   },
 };

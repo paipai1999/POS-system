@@ -1,0 +1,4 @@
+/* The language switch. */
+.lang-btn { white-space: nowrap; }
+.lang-corner { position: fixed; top: .75rem; right: .75rem; }
+:lang(my) { line-height: 1.6; }

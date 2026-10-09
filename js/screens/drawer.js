@@ -4,7 +4,7 @@
 // opening cash + cash taken (bills and tips) − cash paid back in refunds; the difference is recorded.
 Screens.drawer = {
   perm: 'checkout',
-  live: ['shifts', 'orders', 'users'],
+  live: ['shifts', 'orders', 'users', 'supplierPayments', 'expenses', 'purchases', 'ownerMoves'],
   root: null,
 
   render(root) {
@@ -15,7 +15,7 @@ Screens.drawer = {
     const dec = decimalsOf(Store.settings);
     let body;
     if (open) {
-      const sums = computeShift(open, Store.data.orders, dec);
+      const sums = computeShift(open, Store.data.orders, dec, Store.data.supplierPayments, Store.shiftExtras());
       body = `
         <section class="card">
           <h2>Shift open</h2>
@@ -24,6 +24,12 @@ Screens.drawer = {
             <div class="card stat"><div class="label">Cash at the start</div><div class="value">${money(open.openingFloat)}</div></div>
             <div class="card stat"><div class="label">Cash taken</div><div class="value">${money(sums.cashIn)}</div><div class="muted small">${sums.orders} bill${sums.orders === 1 ? '' : 's'}, tips included</div></div>
             <div class="card stat"><div class="label">Cash paid back (refunds)</div><div class="value">${money(sums.cashOut)}</div></div>
+            ${sums.payouts ? `<div class="card stat"><div class="label">Cash paid to suppliers</div><div class="value">${money(sums.payouts)}</div></div>` : ''}
+            ${sums.received ? `<div class="card stat"><div class="label">Cash received on accounts</div><div class="value">${money(sums.received)}</div></div>` : ''}
+            ${sums.bought ? `<div class="card stat"><div class="label">Cash paid for purchases</div><div class="value">${money(sums.bought)}</div></div>` : ''}
+            ${sums.spent ? `<div class="card stat"><div class="label">Cash paid for expenses</div><div class="value">${money(sums.spent)}</div></div>` : ''}
+            ${sums.ownerIn ? `<div class="card stat"><div class="label">Cash put in by the owner</div><div class="value">${money(sums.ownerIn)}</div></div>` : ''}
+            ${sums.ownerOut ? `<div class="card stat"><div class="label">Cash taken out by the owner</div><div class="value">${money(sums.ownerOut)}</div></div>` : ''}
             <div class="card stat"><div class="label">Should be in the drawer</div><div class="value">${money(sums.expected)}</div></div>
           </div>
           <button class="btn primary big" data-act="close-shift">Close shift and count the drawer…</button>
@@ -81,7 +87,7 @@ Screens.drawer = {
 
   closeDialog(shift) {
     const dec = decimalsOf(Store.settings);
-    const expected = () => computeShift(shift, Store.data.orders, dec).expected;
+    const expected = () => computeShift(shift, Store.data.orders, dec, Store.data.supplierPayments, Store.shiftExtras()).expected;
     const refresh = () => {
       const m = Modal.el();
       const counted = m.querySelector('[name=counted]').value;

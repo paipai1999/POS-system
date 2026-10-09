@@ -39,10 +39,12 @@ function describe(col, prev, next, deleted, nameOf = () => null) {
     }
     case 'settings': {
       if (!prev) break;
-      const keys = ['name', 'currency', 'taxRate', 'serviceRate', 'decimals', 'currencyAfter', 'receiptFooter', 'address', 'phone', 'printKitchenTickets'];
+      const keys = ['name', 'currency', 'taxRate', 'serviceRate', 'decimals', 'currencyAfter', 'receiptFooter', 'address', 'phone', 'printKitchenTickets', 'ingredientStock'];
       const d = keys.filter(k => prev[k] !== next[k]).map(k => `${k} ${num(prev[k])} → ${num(next[k])}`);
       const lp = prev.loyalty || {}, ln = next.loyalty || {};
-      for (const k of ['enabled', 'earnPercent', 'maxRedeemPercent']) if (lp[k] !== ln[k]) d.push(`loyalty ${k} ${num(lp[k])} → ${num(ln[k])}`);
+      for (const k of ['enabled', 'earnPercent', 'maxRedeemPercent', 'expiryMonths']) if (lp[k] !== ln[k]) d.push(`loyalty ${k} ${num(lp[k])} → ${num(ln[k])}`);
+      if (JSON.stringify(lp.tiers || []) !== JSON.stringify(ln.tiers || [])) d.push(`member levels changed (${(ln.tiers || []).map(t => t.name).join(', ') || 'none'})`);
+      if (JSON.stringify(lp.visitReward || {}) !== JSON.stringify(ln.visitReward || {})) d.push('visit reward changed');
       if (d.length) add('settings changed', 'settings', d.join('; '));
       break;
     }
@@ -74,15 +76,59 @@ function describe(col, prev, next, deleted, nameOf = () => null) {
       const d = [
         ...diff('points', prev.points, next.points),
         ...diff('discount %', prev.discountPercent || 0, next.discountPercent || 0),
+        ...diff('credit limit', prev.creditLimit || 0, next.creditLimit || 0),
         ...(prev.active !== next.active ? [next.active ? 'activated' : 'deactivated'] : []),
       ];
       if (d.length) add(d.some(x => x.startsWith('points')) ? 'customer points adjusted' : 'customer edited', next.name, d.join('; '));
       break;
     }
+    case 'customerPayments': {
+      if (deleted || !next) break;
+      if (!prev) add(next.method === 'writeoff' ? 'debt written off' : 'customer paid', next.customerName || '', `${num(next.amount)}${next.method === 'writeoff' ? '' : ' (' + next.method + ')'}`);
+      else if (prev.status !== 'void' && next.status === 'void') add('customer payment voided', next.customerName || '', num(next.amount));
+      break;
+    }
+    case 'suppliers': {
+      if (deleted) return [{ action: 'supplier deleted', target: prev?.name || '', detail: '' }];
+      if (!prev) return [{ action: 'supplier added', target: next.name, detail: next.phone || '' }];
+      const d = [...(prev.name !== next.name ? [`renamed from "${prev.name}"`] : []), ...(prev.active !== next.active ? [next.active ? 'activated' : 'deactivated'] : [])];
+      if (d.length) add('supplier edited', next.name, d.join('; '));
+      break;
+    }
+    case 'supplierPayments': {
+      if (deleted || !next) break;
+      if (!prev) add('supplier paid', next.supplierName || '', `${num(next.amount)} (${next.method})`);
+      else if (prev.status !== 'void' && next.status === 'void') add('supplier payment voided', next.supplierName || '', num(next.amount));
+      break;
+    }
     case 'purchases': {
       if (deleted || !next) break;
-      if (!prev) add('purchase received', next.supplier || '', `${next.lines.length} item(s), total ${num(next.total)}`);
+      if (!prev) add('purchase received', next.supplier || '', `${next.lines.length} item(s), total ${num(next.total)}${next.paid < next.total ? `, ${num(next.total - next.paid)} still owed` : ''}`);
       else if (prev.status !== 'void' && next.status === 'void') add('purchase voided', next.supplier || '', `total ${num(next.total)}`);
+      break;
+    }
+    case 'expenses': {
+      if (deleted || !next) break;
+      if (!prev) add('expense added', next.category, `${num(next.amount)} by ${next.method}${next.description ? ': ' + next.description : ''}${next.recurringId ? ' (repeating)' : ''}`);
+      else if (prev.status !== 'void' && next.status === 'void') add('expense voided', next.category, num(next.amount));
+      break;
+    }
+    case 'recurringExpenses': {
+      if (deleted) return [{ action: 'repeating expense removed', target: prev?.category || '', detail: '' }];
+      if (!prev) return [{ action: 'repeating expense added', target: next.category, detail: `${num(next.amount)} on day ${next.day} of each month` }];
+      const d = [...diff('amount', prev.amount, next.amount), ...diff('day', prev.day, next.day), ...(prev.active !== next.active ? [next.active ? 'turned on' : 'turned off'] : [])];
+      if (d.length) add('repeating expense changed', next.category, d.join('; '));
+      break;
+    }
+    case 'ownerMoves': {
+      if (deleted || !next) break;
+      if (!prev) add(next.type === 'in' ? 'owner put money in' : 'owner took money out', next.method, `${num(next.amount)}${next.note ? ': ' + next.note : ''}`);
+      else if (prev.status !== 'void' && next.status === 'void') add('owner money record voided', next.method, num(next.amount));
+      break;
+    }
+    case 'dayCloses': {
+      if (deleted) return [{ action: 'day reopened', target: prev?.id || '', detail: '' }];
+      if (!prev && next) add('day closed', next.id, `net sales ${num(next.summary && next.summary.revenue)}, net profit ${num(next.summary && next.summary.netProfit)}`);
       break;
     }
     case 'stocktakes': {

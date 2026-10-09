@@ -5,6 +5,7 @@
 // says which folders are on a different disk and how fresh their newest copy is.
 const fs = require('fs');
 const path = require('path');
+const photos = require('./photos.js');
 
 const MAX_EXTRA = 2;
 const FILE = /^pos-\d{4}-\d{2}-\d{2}\.db$/;
@@ -41,6 +42,7 @@ function createBackups({ db, dataDir, initialExtra = [] }) {
     for (const dir of [main, ...extraDirs()]) {
       try {
         db.backup(dir, { force, create: dir === main });
+        if (dir !== main) photos.copyTo(dataDir, dir);   // menu pictures are not inside the database file
         errors.delete(dir);
       } catch (e) {
         errors.set(dir, e.code === 'ENOENT' ? 'Folder or drive not found' : e.message);

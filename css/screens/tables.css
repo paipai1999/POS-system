@@ -1,0 +1,21 @@
+/* The tables screen (floor plan tiles and guest requests). */
+.table-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: .85rem; }
+.table-tile {
+  position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: .15rem;
+  min-height: 125px; padding: .9rem 1rem; border-radius: var(--radius); border: 2px solid var(--line);
+  background: var(--panel); text-align: left; box-shadow: var(--shadow);
+}
+.table-tile:hover { border-color: #d6cbbb; }
+.table-tile.busy { border-color: var(--accent); background: var(--accent-soft); }
+.table-tile.alert { box-shadow: 0 0 0 4px rgba(180, 83, 9, .25); }
+.t-name { font-weight: 700; font-size: 1.05rem; margin-bottom: .2rem; }
+.t-total { font-size: 1.25rem; font-weight: 800; margin-top: auto; font-variant-numeric: tabular-nums; }
+.t-meta { font-size: .8rem; color: var(--muted); }
+.t-bell { position: absolute; top: .6rem; right: .7rem; animation: ring 1.4s infinite; }
+@keyframes ring { 0%, 70%, 100% { transform: rotate(0); } 80% { transform: rotate(15deg); } 90% { transform: rotate(-15deg); } }
+.requests { display: grid; gap: .75rem; margin-bottom: 1.5rem; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); }
+.request { border-left: 5px solid var(--warn); }
+.request.call { border-left-color: var(--accent); }
+.request header { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: .4rem; }
+.request ul { margin: 0 0 .6rem; padding-left: 1.1rem; }
+.request p { margin: 0 0 .6rem; }

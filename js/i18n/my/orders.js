@@ -1,0 +1,42 @@
+'use strict';
+
+// Myanmar words for the order history.
+// Keys are the English text exactly as the screens show it; change the right-hand side only.
+Object.assign(I18N.dict, {
+  'Search # or table…': 'နံပါတ် သို့မဟုတ် စားပွဲရှာရန်…',
+  'Today': 'ယနေ့',
+  'Yesterday': 'မနေ့က',
+  '7 days': '၇ ရက်',
+  'This month': 'ယခုလ',
+  'Paid by': 'ပေးချေသည့်နည်း',
+  'No orders found': 'အော်ဒါ မတွေ့ပါ',
+  'Refund': 'ပြန်အမ်းရန်',
+  'Order #…': 'အော်ဒါ #…',
+
+  'All payment methods': 'ငွေပေးချေမှုနည်းလမ်း အားလုံး',
+  'All staff': 'ဝန်ထမ်း အားလုံး',
+  'All tables': 'စားပွဲ အားလုံး',
+  'Newest first': 'အသစ်ဆုံး အရင်',
+  'Oldest first': 'အဟောင်းဆုံး အရင်',
+  'Highest total': 'စုစုပေါင်း အများဆုံး',
+  'Lowest total': 'စုစုပေါင်း အနည်းဆုံး',
+  'Search #, table, dish or customer…': 'နံပါတ်၊ စားပွဲ၊ ဟင်းလျာ သို့မဟုတ် ဖောက်သည် ရှာရန်…',
+  'paid orders': 'ငွေရှင်းပြီး အော်ဒါများ',
+  'Items sold': 'ရောင်းရသော ပစ္စည်း',
+  'Show more': 'ပိုမိုပြရန်',
+  'Open order': 'အော်ဒါဖွင့်ရန်',
+  '🧾 Receipt': '🧾 ပြေစာ',
+  'Opened': 'ဖွင့်ချိန်',
+  'Refunded by': 'ပြန်အမ်းသူ',
+  'Voided': 'ပယ်ဖျက်ချိန်',
+  'Approved by': 'ခွင့်ပြုသူ',
+  'Customer discount': 'ဖောက်သည်လျှော့ဈေး',
+  'TOTAL': 'စုစုပေါင်း',
+  'Tip': 'တစ်ပ်ငွေ',
+  'Points earned': 'ရရှိသောဆုမှတ်',
+  'Sent': 'ပို့ချိန်',
+  'Ready': 'ပြီးချိန်',
+  'Served': 'ချပေးချိန်',
+  'Kitchen time': 'မီးဖိုချောင်ချိန်',
+  'Nothing to export': 'ထုတ်ယူရန် ဘာမှမရှိပါ',
+});

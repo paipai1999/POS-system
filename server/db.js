@@ -10,11 +10,13 @@ const { COLLECTIONS } = require('../js/shared.js');
 const { hashPin } = require('./pins.js');
 
 const SESSION_TTL = 12 * 60 * 60 * 1000;
+const LEDGER_DAYS = 90;   // purchases, expenses… of the last 90 days are sent at sign-in; older ones are fetched when a report needs them
 
 class Database {
   constructor(file) {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     this.file = file;
+    this.dataDir = path.dirname(file);
     this.db = new DatabaseSync(file);
     this.db.exec(`
       PRAGMA journal_mode = WAL;
@@ -133,21 +135,35 @@ class Database {
   snapshotRows(since) {
     return this.db.prepare(`
       SELECT * FROM docs WHERE deleted = 0 AND (
-        col IN ('settings', 'users', 'categories', 'products', 'tables', 'ingredients', 'customers')
-        OR (col IN ('purchases', 'stocktakes') AND json_extract(data, '$.date') >= ?)
+        col IN ('settings', 'users', 'categories', 'products', 'tables', 'ingredients', 'customers', 'suppliers')
+        OR (col IN ('purchases', 'stocktakes', 'supplierPayments', 'expenses', 'ownerMoves', 'customerPayments') AND json_extract(data, '$.date') >= ?)
+        OR col IN ('recurringExpenses', 'dayCloses')
         OR (col = 'orders' AND (json_extract(data, '$.status') = 'open'
-            OR json_extract(data, '$.createdAt') >= ? OR json_extract(data, '$.paidAt') >= ?))
+            OR json_extract(data, '$.createdAt') >= ? OR json_extract(data, '$.paidAt') >= ? OR json_extract(data, '$.refundedAt') >= ?))
         OR (col = 'guestRequests' AND (json_extract(data, '$.status') = 'pending' OR json_extract(data, '$.createdAt') >= ?))
         OR (col = 'kitchenTickets' AND (json_extract(data, '$.status') IN ('new', 'ready') OR json_extract(data, '$.createdAt') >= ?))
         OR (col = 'printJobs' AND json_extract(data, '$.status') IN ('pending', 'printing') AND json_extract(data, '$.createdAt') >= ?)
         OR (col = 'shifts' AND (json_extract(data, '$.closedAt') IS NULL OR json_extract(data, '$.openedAt') >= ?))
-      ) ORDER BY rowid`).all(since, since, Date.now() - 90 * 24 * 60 * 60 * 1000, since, since, Date.now() - 30 * 60 * 1000, Date.now() - 90 * 24 * 60 * 60 * 1000).map(r => this.row(r));
+      ) ORDER BY rowid`).all(Date.now() - LEDGER_DAYS * 24 * 60 * 60 * 1000, since, Date.now() - 90 * 24 * 60 * 60 * 1000, Date.now() - 90 * 24 * 60 * 60 * 1000, since, since, Date.now() - 30 * 60 * 1000, Date.now() - 90 * 24 * 60 * 60 * 1000).map(r => this.row(r));
   }
 
+  // Records dated before this are not sent at sign-in; a device asks for them (GET /api/ledger) when a report needs them.
+  ledgerSince() {
+    return Date.now() - LEDGER_DAYS * 24 * 60 * 60 * 1000;
+  }
+
+  // A refund counts on the day it was made, so a bill sold earlier but refunded in the period is included too.
   ordersBetween(from, to) {
     return this.where('orders',
-      "(json_extract(data, '$.createdAt') BETWEEN ? AND ?) OR (json_extract(data, '$.paidAt') BETWEEN ? AND ?)",
-      from, to, from, to);
+      "(json_extract(data, '$.createdAt') BETWEEN ? AND ?) OR (json_extract(data, '$.paidAt') BETWEEN ? AND ?) OR (json_extract(data, '$.refundedAt') BETWEEN ? AND ?)",
+      from, to, from, to, from, to);
+  }
+
+  // Purchases, supplier payments, stocktakes, expenses and the owner's money moves dated in a period (older than a device holds).
+  ledgerBetween(from, to) {
+    return this.db.prepare(`
+      SELECT * FROM docs WHERE deleted = 0 AND col IN ('purchases', 'stocktakes', 'supplierPayments', 'expenses', 'ownerMoves', 'customerPayments')
+        AND json_extract(data, '$.date') >= ? AND json_extract(data, '$.date') < ? ORDER BY rowid`).all(from, to).map(r => this.row(r));
   }
 
   // ----- sessions (kept in the database so a server restart doesn't sign everyone out) -----

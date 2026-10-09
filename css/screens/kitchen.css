@@ -1,0 +1,21 @@
+/* The kitchen display and the "ready to serve" highlights. */
+.table-tile.ready { border-color: var(--ok); box-shadow: 0 0 0 4px rgba(21, 128, 61, .25); }
+.request.ready { border-left-color: var(--ok); }
+.request.ready.mine { background: var(--ok-soft); }
+.ready-banner { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .5rem .85rem; background: var(--ok-soft); color: var(--ok); font-weight: 700; font-size: .9rem; }
+
+.kds { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: .85rem; align-items: start; }
+.kds-empty { grid-column: 1 / -1; font-size: 1.2rem; }
+.kds-card { display: flex; flex-direction: column; gap: .4rem; background: var(--panel); border: 2px solid var(--line); border-top: 8px solid var(--ok); border-radius: var(--radius); padding: .85rem 1rem 1rem; box-shadow: var(--shadow); }
+.kds-card.warn { border-top-color: #d97706; }
+.kds-card.late { border-top-color: var(--danger); background: #fff7f7; }
+.kds-card header { display: flex; justify-content: space-between; font-size: 1.15rem; }
+.kds-meta { font-size: .8rem; color: var(--muted); }
+.kds-time { font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.kds-card.warn .kds-time { color: #d97706; }
+.kds-card.late .kds-time { color: var(--danger); }
+.kds-items { list-style: none; margin: 0 0 .25rem; padding: 0; font-size: 1.15rem; }
+.kds-items li { padding: .35rem 0; border-bottom: 1px dashed var(--line); }
+.kds-card .btn.big { margin-top: auto; }
+.kds.done .kds-card { border-top-color: var(--muted); opacity: .8; }
+.kds.done .kds-items { font-size: .95rem; }

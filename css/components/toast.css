@@ -1,0 +1,6 @@
+/* Small messages that appear for a moment. */
+.toasts { position: fixed; bottom: 1.25rem; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: .5rem; align-items: center; pointer-events: none; width: max-content; max-width: calc(100% - 2rem); }
+.toast { background: var(--ink); color: #fff; padding: .7rem 1.1rem; border-radius: 12px; box-shadow: 0 6px 20px rgba(0, 0, 0, .2); font-weight: 600; transition: opacity .3s, transform .3s; }
+.toast.ok { background: var(--ok); }
+.toast.error { background: var(--danger); }
+.toast.out { opacity: 0; transform: translateY(8px); }

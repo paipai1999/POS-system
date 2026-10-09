@@ -1,0 +1,36 @@
+'use strict';
+
+// Myanmar words for the activity log (entries are written by the server in English).
+// Keys are the English text exactly as the screens show it; change the right-hand side only.
+Object.assign(I18N.dict, {
+  'signed in': 'ဝင်ရောက်သည်',
+  'sign-in blocked': 'ဝင်ခွင့်ပိတ်ထားသည်',
+  'manager PIN entered': 'မန်နေဂျာပင်နံပါတ် ထည့်သည်',
+  'own PIN changed': 'ကိုယ်ပိုင်ပင်နံပါတ် ပြောင်းသည်',
+  'price changed': 'ဈေးနှုန်း ပြောင်းသည်',
+  'item edited': 'ပစ္စည်း ပြင်သည်',
+  'item created': 'ပစ္စည်းအသစ် ဖန်တီးသည်',
+  'item deleted': 'ပစ္စည်း ဖျက်သည်',
+  'staff created': 'ဝန်ထမ်းအသစ် ထည့်သည်',
+  'staff edited': 'ဝန်ထမ်း ပြင်သည်',
+  'staff deleted': 'ဝန်ထမ်း ဖျက်သည်',
+  'staff PIN/role changed': 'ဝန်ထမ်း ပင်နံပါတ်/ရာထူး ပြောင်းသည်',
+  'settings changed': 'ဆက်တင် ပြောင်းသည်',
+  'table created': 'စားပွဲအသစ် ထည့်သည်',
+  'table deleted': 'စားပွဲ ဖျက်သည်',
+  'table renamed': 'စားပွဲအမည် ပြောင်းသည်',
+  'category created': 'အမျိုးအစားအသစ် ထည့်သည်',
+  'category deleted': 'အမျိုးအစား ဖျက်သည်',
+  'category renamed': 'အမျိုးအစားအမည် ပြောင်းသည်',
+  'order paid': 'အော်ဒါ ငွေရှင်းပြီး',
+  'order voided': 'အော်ဒါ ပယ်ဖျက်သည်',
+  'order refunded': 'အော်ဒါ ပြန်အမ်းသည်',
+  'discount applied': 'လျှော့ဈေး သုံးသည်',
+  'discount removed': 'လျှော့ဈေး ဖယ်သည်',
+  'data exported': 'ဒေတာ ထုတ်ယူသည်',
+  'backup imported': 'အရန်ဖိုင် ထည့်သွင်းသည်',
+  'data reset': 'ဒေတာ ပြန်လည်သတ်မှတ်သည်',
+  'backup folders changed': 'အရန်ဖိုလ်ဒါ ပြောင်းသည်',
+  'printer station added': 'ပရင်တာစခန်း ထည့်သည်',
+  'printer station removed': 'ပရင်တာစခန်း ဖယ်သည်',
+});

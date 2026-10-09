@@ -1,0 +1,13 @@
+/* Receipts, on screen and when printed. */
+.receipt { font: 13px/1.4 "Courier New", "Myanmar Text", "Noto Sans Myanmar", "Padauk", ui-monospace, monospace; color: #000; background: #fff; }
+.modal .receipt { max-width: 320px; margin: 0 auto; padding: 1rem; border: 1px dashed var(--line); }
+.receipt table { width: 100%; border-collapse: collapse; }
+.receipt td { padding: 1px 0; vertical-align: top; }
+.receipt .r { text-align: right; white-space: nowrap; padding-left: 8px; }
+.receipt .c { text-align: center; }
+.receipt .b { font-weight: 700; }
+.receipt .big { font-size: 1.2em; }
+.receipt hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
+.receipt .r-note { font-size: .9em; padding-left: 1em; font-style: italic; }
+.receipt .r-title { margin: 6px 0; letter-spacing: .15em; }
+.kitchen .k-line { font-size: 1.25em; margin: 4px 0; }

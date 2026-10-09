@@ -74,11 +74,29 @@ By default devices talk to the server over plain HTTP, which is fine on a Wi-Fi 
 - **Receipts**: 80 mm receipts and pre-bills with tip and split payments.
 - **Money format**: *Settings → Money format* — US dollar ($1,234.50) or Myanmar kyat (1,500 Ks, no decimals, symbol after), or custom. Changing the format does not convert prices; edit them under Menu & Stock.
 - **Ingredients & recipes** (*Inventory → Ingredients*): list what you cook with (coffee beans in g, milk in ml…) and give each menu item a **recipe**: what one portion uses (*Menu & Stock → edit item → Recipe*). When a bill is paid the ingredients are used up, each dish's **cost** is recorded, and the menu list shows the cost and margin of every item. A refund puts back exactly what was used. Stock may go below zero if you sell without restocking the count; a stocktake sets it right.
-- **Purchases** (*Inventory → Purchases*): record stock you buy (supplier, amount, price paid). The amount goes into stock and each ingredient's cost moves to the weighted average of what you paid. A manager can void a purchase entered by mistake.
+  - **Options that use ingredients**: in the item editor each priced option (extra shot +0.50, oat swap…) can list the extra ingredients it uses, so an extra shot also takes more beans from stock and adds to the dish's cost.
+  - **When an ingredient runs out** (*Settings → When an ingredient runs out*): *Do nothing*, *Warn on the dish* (the menu tile shows "⚠ Running out: Milk" but it can still be sold), or *Stop selling the dishes that need it* (the tile shows "Sold out: Milk", the server refuses to add it to a bill, and guests cannot order it). The count includes what open bills already hold. An ingredient can be left out of this by unticking *Watch this ingredient*. Waiters and cashiers are sent only the list of what each dish is short of, never the ingredient figures.
+- **Purchases and suppliers** (*Inventory → Purchases / Suppliers*): keep a list of suppliers, and record stock you buy (supplier, amount, price paid, and how much you paid now). The amount goes into stock and each ingredient's cost moves to the weighted average of what you paid. Whatever you did not pay is **owed to the supplier** and shown on the Suppliers tab until you record a payment (cash from the till, or bank/other). A cash payment also comes off what the cash drawer should hold at the end of the shift. A supplier's statement lists purchases and payments; a manager can void a purchase or a payment entered by mistake.
 - **Stocktake** (*Inventory → Stocktake*): type what you counted on the shelves; stock is set to your count and the difference, with its value at cost, is kept as a record. Menu items with stock tracking can be counted too.
 - **Customers & loyalty** (*Customers*): a customer list with phone, points, total spent and visits. At checkout, *Choose customer* (or add a new one on the spot). With loyalty switched on in *Settings* (admin), a paid bill earns the customer a percentage of the total as points, and a later bill can be paid partly with points (1 point = 1 unit of money, up to a set share of the bill). A manager can also give a customer a standing discount, which is applied automatically without asking for a manager PIN each time. A refund takes the points back. The receipt shows points used, earned and the balance.
+  - **Member levels**: by total spent (for example Silver from 100, Gold from 300), each level can earn at its own % and give an automatic discount. The checkout shows the customer's level.
+  - **Points lapse** after a number of months without a visit (0 = never). They are cleared the next time the customer pays; a refund of that bill brings them back.
+  - **Visit reward**: every Nth visit (for example the 5th) gets an automatic discount. When a customer qualifies for several discounts (their own, their level's, a visit reward) the best one is used.
+- **Sales on account** (*Customers*, checkout, *Finance → Receivables*): a customer with a **credit limit** (set by a manager in the customer's details) can take the goods now and pay later. At checkout choose the customer and **On account**, for the whole bill or as one part of a split (for example cash for most of it and the rest on account). The server checks the limit, keeps what each customer owes, and refuses a tip on the account part. In *Customers*, **Receive payment** records what they pay (cash goes into the drawer of the open shift; card and bank are recorded too) and **Statement** lists every bill and payment with the balance after each (printable). A manager can **write off** a debt that will not be paid; it counts as an expense (*Bad debts written off*). *Finance → Receivables* lists who owes what and how old it is (0-30, 31-60, 61-90, over 90 days; payments settle the oldest bills first). A sale on account is revenue on the day of the sale but is not money received: the cash flow only shows it when the customer pays, and the financial position shows it as an asset (*Owed by customers*). A refund of such a bill takes the debt back.
 - **Menu & stock**: items, categories, emoji icons, options, on/off sale toggle. Stock is reserved on open orders and deducted at payment, with low-stock alerts. An order cannot claim more than is left.
-- **Reports**: sales, net, tax, discounts, refunds, tips, ingredient cost and profit on items that have a recipe, purchases, best sellers, and sales by category, payment method, server and hour. CSV export.
+- **Reports**: sales, net, tax, discounts, refunds (counted on the day they are made), tips, ingredient cost and profit on items that have a recipe, purchases, best sellers, and sales by category, payment method, server and hour. CSV export.
+- **Menu photos**: in the item editor (*Menu & Stock → edit item → Choose photo*) pick a picture from the phone or PC. The app shrinks it (about 640 px, a few dozen KB) before storing it; with the server the file is kept in `server/data/photos` and copied next to the daily backups. The photo shows on the order screen tile, the item list and the guest menu; items without one keep their emoji, and a picture that cannot be loaded falls back to the emoji. A backup file carries the pictures inside it, so it restores on another PC.
+- **Dashboard** (*Dashboard*): a live overview for the floor. **Orders** shows every open order by stage (ordering → in the kitchen → ready to serve → waiting for payment) plus what was paid today, with timers that turn amber and red; **Tables** shows every table at a glance (free, ordering, cooking, ready, waiting for payment, guest calling) with how long it has been seated, and filters.
+- **Order history** (*Orders*): filter by period (today … custom dates), status, payment method, server and table; search by number, table, dish or customer; sort; totals for what is shown; "Show more" for long lists. Click any order for the full story (times, who, items with options and notes, discount and who approved it, payment, loyalty, kitchen timings, ingredient cost for managers) with Receipt / Open / Refund. **Export CSV** saves exactly the filtered list.
+- **Finance** (*Finance*, managers and admins): the financial statements, each with its own CSV and Print, and one button for all statements as separate files for the accountant (Excel opens Myanmar text correctly).
+  - **Profit & loss**: gross sales, discounts, refunds, net sales, service charge, cost of goods, gross profit, expenses by category and net profit, compared with the period before. The cost of goods comes from the recipes (plus stock lost or found in stocktakes) or from what was bought; the screen warns when many dishes have no recipe, because profit then looks higher than it is. Tax and tips are not income and are left out.
+  - **Cash flow**: money in and out by cash / card / bank-wallet: customers' payments, refunds, purchases paid, supplier payments, expenses and the owner's money.
+  - **Financial position**: cash and bank (from the opening balances in *Settings → Finance setup* plus every movement since), ingredients on the shelf, what is owed to suppliers, and the net position.
+  - **Tax**: tax charged on sales by rate (less refunds), tax paid on purchases and expenses (when entered), and the difference to pay or claim.
+  - **Expenses**: rent, salaries, utilities… by category (the list is in Settings), paid in cash from the till, by card or by bank/wallet, with the tax included if you want it tracked. **Repeating expenses** (rent, salaries) are recorded automatically once a month by the server (never from the till); a voided one is not brought back. **Owner money** records money put in or taken out. Records are voided, not edited.
+  - **Daily close**: closes a day and freezes its figures (the server works them out itself, from the records). After that nothing dated in that day can be added or voided (expenses, purchases, supplier payments, owner money); only an admin can reopen the day, and the activity log keeps a note. The report can be printed.
+  - **Controls**: who gave discounts, made refunds and voided bills, with the big ones listed so they can be checked.
+  - A **cash expense**, a **cash purchase** and the owner's **cash** moves count in the cash drawer: they come off (or go into) what the drawer should hold at the end of the shift. A refund is taken off on the day it is made, not on the day of the original sale, so a month that is over never changes.
 - **Staff & roles**: Admin, Manager, Cashier, Waiter and Kitchen, each with their own PIN.
 - **Guest ordering**: on the guest's own phone via the table QR code, or on a restaurant tablet in guest mode. Waiters accept requests into the table's order. (Guests order items at their base price; a waiter adds options.)
 
@@ -91,12 +109,14 @@ By default devices talk to the server over plain HTTP, which is fine on a Wi-Fi 
 | Take payments, cash drawer        | ✓ | ✓ | ✓ |   |   |
 | Approve voids, refunds, discounts | ✓ | ✓ |   |   |   |
 | Menu & stock, reports             | ✓ | ✓ |   |   |   |
+| Finance: statements, expenses, owner money, daily close, controls | ✓ | ✓ |   |   |   |
+| Reopen a closed day, finance setup (Settings) | ✓ |   |   |   |   |
 | Staff, settings (incl. loyalty), activity log, backups | ✓ |   |   |   |   |
-| Inventory, recipes and costs, purchases, stocktake | ✓ | ✓ |   |   |   |
+| Inventory, recipes and costs, purchases, suppliers and payments, stocktake | ✓ | ✓ |   |   |   |
 | Customers: add, choose at checkout, use points | ✓ | ✓ | ✓ |   |   |
 | Set a customer's points or standing discount | ✓ | ✓ |   |   |   |
 
-In multi-device mode the server enforces these rules, and also what each role is sent: a waiter's phone never receives other people's payments, the kitchen screen never receives prices, and only managers receive ingredients, recipes, costs and purchases (cashiers see customers, because they take payment; waiters do not).
+In multi-device mode the server enforces these rules, and also what each role is sent: a waiter's phone never receives other people's payments, the kitchen screen never receives prices, and only managers receive ingredients, recipes, costs, purchases, suppliers, expenses and the other finance records (cashiers see customers, because they take payment, and the amount of cash paid out of or put into the till during their shift: supplier payments, cash purchases, cash expenses and the owner's cash moves; waiters do not).
 
 ## Security notes
 
@@ -109,39 +129,47 @@ In multi-device mode the server enforces these rules, and also what each role is
 ## Not included
 
 - Paying a bill in instalments over time (leaving a balance open). A bill can be split by items or paid by several methods at once.
-- Selling is never blocked when an ingredient has run out (the food was served anyway); running low is shown in Inventory and Reports instead.
-- Priced options (extra shot…) do not use extra ingredients yet, only the item's recipe is used. Suppliers are typed names, not a separate list. Loyalty is one simple scheme (earn %, spend up to a %), with no tiers or expiry.
+- Stopping sales when an ingredient runs out is optional (off by default for old data, "warn" for new installs). The check uses the dish's recipe and its options' ingredients; devices that are not sent ingredient figures rely on the server's list, so a dish is marked short only when there is not enough for even one portion.
+- Paying a supplier cannot be more than what is owed (there is no advance payment), and there is no multi-currency. Tax on purchases and expenses is only what you type in ("Tax included in the price"); the Tax statement is a worksheet for your accountant, not a tax return.
+- Finance has no bank reconciliation, no payroll or tips payout screen (record them as expenses; use the category "Tips paid to staff", which is left out of profit) and no budgets. Sales on account have no due dates, interest or reminders, and a tip cannot be put on account. Cost of goods from recipes covers only dishes that have a recipe.
+- Loyalty is one scheme with member levels; there is no per-customer points history screen (the activity log records manual changes) and no birthday or time-limited offers.
 - Receipts and kitchen tickets are printed in English: thermal printers often cannot print Myanmar script. Menu and staff names print as you typed them.
-- The Myanmar word list (`js/i18n-my.js`) was written without a native review; please have a Myanmar-speaking colleague read it once and edit any word that sounds unnatural.
+- The Myanmar word lists (`js/i18n/my/`) were written without a native review; please have a Myanmar-speaking colleague read it once and edit any word that sounds unnatural.
 
 ## Development
 
 ```
 npm install                 # once; installs jsdom, used only by the browser tests
-npm test                    # server tests + browser tests (83 tests)
+npm test                    # server tests + browser tests (see the count printed at the end)
 npm run test:server         # server tests only (no install needed)
 set PORT=3001 && node server\server.js    # run on another port
 ```
 
 ```
-index.html
-css/styles.css
-js/shared.js          roles, demo data, bill/payment/stock/recipe/purchase/loyalty rules (used by the browser AND the server)
-js/store.js           data model, local mode (localStorage)
-js/sync.js            server mode: snapshot, live updates, offline queue, printer station
-js/ui.js              modal, toasts, PIN prompts, receipts, printing
-js/i18n.js, i18n-my.js   Myanmar interface (word list + rules)
-js/app.js             start-up, routing, top bar, permissions, live alerts
-js/screens/*.js       one file per screen
-js/vendor/qrcode.min.js   QR code generator (MIT)
-server/server.js      HTTP server, API, live event streams, security headers
-server/sync.js        server-side rules: permissions, versions, bills, stock, shifts, guests
-server/db.js          SQLite storage, sessions, audit log
-server/pins.js        PIN hashing, demo-PIN detection
-server/backups.js     daily copies + USB/cloud folders
-server/audit.js       what goes into the activity log
-server/make-cert.js   makes a self-signed HTTPS certificate
-test/client/          the real app clicked through in jsdom (incl. offline queue)
-server/test/          API, live-sync, security, backup, money and feature tests
-*.bat                 start, auto-start, firewall, counter PC helpers (Windows)
+index.html              loads the scripts and stylesheets below, in this order
+css/                    base.css, layout.css, components/ (forms, modal, receipt, photo…), screens/ (one file per screen), i18n-my.css
+js/shared/              rules used by the browser AND the server: core (roles, rounding), bill, inventory (recipes, purchases, stocktake),
+                        loyalty, payments, shifts (cash drawer), dataset (demo data). js/shared.js gathers them for Node.
+js/finance/             financial statements, pure functions used by the browser and the server: profit-loss, cash-flow, tax, controls,
+                        position, daily (the daily close), recurring (monthly expenses), receivables (customer accounts, ageing).
+                        js/finance.js gathers them for Node.
+js/store/               data model: core (load/save, local mode), orders, guest, shifts, inventory, finance, credit
+js/sync/                server mode: core, session (sign-in), push (offline queue), pull (live updates), history (older records), guest, station
+js/ui/                  dom helpers, format (money, dates), modal, receipt, print, photo, charts
+js/app/                 registry (screens + menu), core (start-up, routing), topbar, live (alerts), session
+js/i18n/                engine.js (the translator) and my/ (the Myanmar word list: one file per screen, plus patterns.js)
+js/screens/             one file per screen, or one folder when a screen is big (checkout/, customers/, inventory/, order/, products/, settings/, finance/)
+js/vendor/qrcode.min.js QR code generator (MIT)
+js/dev/ui-audit.js      developer tool: finds text spilling out of cards in a real browser (see its header)
+server/server.js        starts the server and wires the pieces together
+server/routes/          the /api endpoints: public.js (no sign-in), staff.js, admin.js
+server/rules/           business rules for every change: apply.js (version checks, one rule per collection, audit), access.js (who may see
+                        what), orders.js, inventory.js, suppliers.js, customers.js, shifts.js, staff.js, catalog.js, settings.js,
+                        floor.js, ledger.js (expenses, owner money, daily close), receivables.js (customers paying their accounts), guest.js
+server/http/            sending JSON, reading bodies, static files and photos
+server/auth.js, realtime.js, network.js   sessions and PIN lock-out, live event streams, addresses and HTTPS
+server/db.js, pins.js, backups.js, audit.js, photos.js, make-cert.js
+test/client/            the real app clicked through in jsdom (incl. offline queue, dashboard, order history, photos, finance)
+server/test/            API, live-sync, security, backup, money, ledger, finance and feature tests
+*.bat                   start, auto-start, firewall, counter PC helpers (Windows)
 ```
