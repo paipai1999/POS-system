@@ -14,8 +14,8 @@ Object.assign(Screens.products, {
               <td><b>${esc(c.name)}</b></td>
               <td class="num">${Store.data.products.filter(p => p.categoryId === c.id).length}</td>
               <td><div class="row-actions">
-                <button class="btn small" data-act="up" data-id="${c.id}" ${i === 0 ? 'disabled' : ''} aria-label="Move up">↑</button>
-                <button class="btn small" data-act="down" data-id="${c.id}" ${i === cats.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button>
+                <button class="btn small" data-act="up" data-id="${c.id}" ${i === 0 ? 'disabled' : ''} aria-label="Move up">${icon('arrow-up', 1)}</button>
+                <button class="btn small" data-act="down" data-id="${c.id}" ${i === cats.length - 1 ? 'disabled' : ''} aria-label="Move down">${icon('arrow-down', 1)}</button>
                 <button class="btn small" data-act="edit-cat" data-id="${c.id}">Rename</button>
                 <button class="btn small danger" data-act="del-cat" data-id="${c.id}">Delete</button>
               </div></td>

@@ -40,7 +40,7 @@ const Checkout = {
     const s = Store.settings;
     const d = order.discount;
     const credit = this.creditInfo();
-    const methods = [['cash', '💵 Cash'], ['card', '💳 Card'], ['other', '📱 Other'], ...(credit ? [['credit', '🧾 On account']] : []), ['split', '➗ Split']];
+    const methods = [['cash', `${icon('banknote')} Cash`], ['card', `${icon('credit-card')} Card`], ['other', `${icon('smartphone')} Other`], ...(credit ? [['credit', `${icon('receipt')} On account`]] : []), ['split', `${icon('divide')} Split`]];
     if (this.method === 'credit' && !credit) this.method = 'cash';   // the customer was changed or removed
     const fmt = n => (n === '' ? '' : esc(n));
 
@@ -120,7 +120,7 @@ const Checkout = {
         <div class="field-label">Customer</div>
         <div class="cust-line">
           <span>${cust
-            ? `👤 <b>${esc(cust.name)}</b>${level ? ` · ${esc(level.name)}` : ''}${loy.enabled ? ` · ${qtyText(pointsOf(cust, s))} points${lapsed ? ` (${qtyText(cust.points)} expired)` : ''}` : ''}${cd.percent ? ` · ${cd.percent}% off (${esc(discountReason(cd))})` : ''}`
+            ? `${icon('user')} <b>${esc(cust.name)}</b>${level ? ` · ${esc(level.name)}` : ''}${loy.enabled ? ` · ${qtyText(pointsOf(cust, s))} points${lapsed ? ` (${qtyText(cust.points)} expired)` : ''}` : ''}${cd.percent ? ` · ${cd.percent}% off (${esc(discountReason(cd))})` : ''}`
             : '<span class="muted">No customer on this bill</span>'}</span>
           <span class="row-actions">
             <button class="btn small" data-act="pick-customer">${cust ? 'Change' : 'Choose customer'}</button>
@@ -155,7 +155,7 @@ const Checkout = {
           <p class="muted small">The whole bill goes on their account and is paid later. A tip cannot be put on account.</p>` : ''}
         ${this.method === 'split' ? `
           <p class="muted small">Enter how much is paid by each method. The amounts must add up to the total to pay.${credit ? ` <span>${esc(credit.customer.name)} can put up to ${money(credit.room)} on account.</span>` : ''}</p>
-          ${[['cash', '💵 Cash'], ['card', '💳 Card'], ['other', '📱 Other'], ...(credit ? [['credit', '🧾 On account']] : [])].map(([k, label]) => `
+          ${[['cash', `${icon('banknote')} Cash`], ['card', `${icon('credit-card')} Card`], ['other', `${icon('smartphone')} Other`], ...(credit ? [['credit', `${icon('receipt')} On account`]] : [])].map(([k, label]) => `
             <div class="split-row">
               <span>${label}</span>
               <input class="input" name="split-${k}" type="number" min="0" step="${moneyStep()}" inputmode="decimal" placeholder="0" value="${fmt(this.split[k])}">

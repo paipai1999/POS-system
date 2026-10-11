@@ -6,16 +6,16 @@
 const Screens = {};
 
 const NAV = [
-  { id: 'tables', label: 'Tables', icon: '🪑', perm: 'tables' },
-  { id: 'dashboard', label: 'Dashboard', icon: '📋', perm: 'tables' },
-  { id: 'kitchen', label: 'Kitchen', icon: '👨‍🍳', perm: 'kitchen' },
-  { id: 'orders', label: 'Orders', icon: '🧾', perm: 'orders' },
-  { id: 'drawer', label: 'Cash drawer', icon: '💰', perm: 'checkout' },
-  { id: 'products', label: 'Menu & Stock', icon: '📦', perm: 'products' },
-  { id: 'inventory', label: 'Inventory', icon: '🧂', perm: 'products' },
-  { id: 'customers', label: 'Customers', icon: '👤', perm: 'checkout' },
-  { id: 'reports', label: 'Reports', icon: '📊', perm: 'reports' },
-  { id: 'finance', label: 'Finance', icon: '💹', perm: 'reports' },
-  { id: 'users', label: 'Staff', icon: '👥', perm: 'users' },
-  { id: 'settings', label: 'Settings', icon: '⚙️', perm: 'settings' },
+  { id: 'tables', label: 'Tables', icon: 'layout-grid', perm: 'tables' },
+  { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', perm: 'tables' },
+  { id: 'kitchen', label: 'Kitchen', icon: 'chef-hat', perm: 'kitchen' },
+  { id: 'orders', label: 'Orders', icon: 'receipt', perm: 'orders' },
+  { id: 'drawer', label: 'Cash drawer', icon: 'wallet', perm: 'checkout' },
+  { id: 'products', label: 'Menu & Stock', icon: 'package', perm: 'products' },
+  { id: 'inventory', label: 'Inventory', icon: 'clipboard-list', perm: 'products' },
+  { id: 'customers', label: 'Customers', icon: 'user', perm: 'checkout' },
+  { id: 'reports', label: 'Reports', icon: 'bar-chart', perm: 'reports' },
+  { id: 'finance', label: 'Finance', icon: 'trending-up', perm: 'reports' },
+  { id: 'users', label: 'Staff', icon: 'users', perm: 'users' },
+  { id: 'settings', label: 'Settings', icon: 'settings', perm: 'settings' },
 ];

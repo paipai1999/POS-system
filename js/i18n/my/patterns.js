@@ -9,6 +9,9 @@ I18N.patterns.push(
   [/^(.+) will be marked void and no longer counted$/, '$1 ကို ပယ်ဖျက်ပြီး မရေတွက်တော့ပါ'],
   [/^(.+) is already closed, so nothing can be added to it\. Ask an admin to reopen that day, or record it for today$/, '$1 ကို ပိတ်ပြီးဖြစ်၍ ထပ်ထည့်၍ မရပါ။ အက်ဒမင်အား ထိုနေ့ကို ပြန်ဖွင့်ခိုင်းပါ၊ သို့မဟုတ် ယနေ့အတွက် မှတ်ပါ'],
   [/^(.+) is already closed, so this (?:expense|purchase|payment|record) cannot be voided\. Ask an admin to reopen that day, or record it for today$/, '$1 ကို ပိတ်ပြီးဖြစ်၍ ပယ်ဖျက်၍ မရပါ။ အက်ဒမင်အား ထိုနေ့ကို ပြန်ဖွင့်ခိုင်းပါ၊ သို့မဟုတ် ယနေ့အတွက် မှတ်ပါ'],
+  // dashboard overview
+  [/^vs (.+) yesterday so far$/, 'မနေ့ ဤအချိန်အထိ $1 နှင့် နှိုင်းယှဉ်'],
+  [/^(\d+)% margin$/, 'အမြတ်ကွာဟချက် $1%'],
   // time
   [/^just now$/, 'ယခုလေးတင်'],
   [/^Showing (\d+) of (\d+)$/, '$2 ခုအနက် $1 ခု ပြထားသည်'],

@@ -9,10 +9,10 @@ Object.assign(Screens.order, {
       title: `Order #${orderNo(order)}`,
       body: `
         <div class="stack">
-          <button class="btn block" data-act="note">📝 Order note</button>
-          <button class="btn block" data-act="move">🔀 Move to another table</button>
-          <button class="btn block" data-act="split" ${order.items.length > 1 || order.items.some(l => l.qty > 1) ? '' : 'disabled'}>✂️ Split the bill</button>
-          <button class="btn block danger" data-act="void">🗑️ Void order</button>
+          <button class="btn block" data-act="note">${icon('file-text')} Order note</button>
+          <button class="btn block" data-act="move">${icon('shuffle')} Move to another table</button>
+          <button class="btn block" data-act="split" ${order.items.length > 1 || order.items.some(l => l.qty > 1) ? '' : 'disabled'}>${icon('scissors')} Split the bill</button>
+          <button class="btn block danger" data-act="void">${icon('trash')} Void order</button>
         </div>`,
       actions: {
         note: () => this.editOrderNote(),

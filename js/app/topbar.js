@@ -8,16 +8,17 @@ Object.assign(App, {
     const ready = this.can('tables') ? Store.readyTickets().length : 0;
     const active = this.screen === 'order' ? 'tables' : this.screen;
     $('#topbar').innerHTML = `
-      <div class="brand">🍽️ ${esc(Store.settings.name)}</div>
-      <button class="nav-toggle" data-nav="menu" aria-label="Menu" aria-expanded="false">☰</button>
+      <div class="brand">${icon('utensils')} ${esc(Store.settings.name)}</div>
+      <button class="nav-toggle" data-nav="menu" aria-label="Menu" aria-expanded="false">${icon('menu', 1.3)}</button>
       <nav>
         ${NAV.filter(n => this.can(n.perm)).map(n => `
           <button class="nav-btn ${active === n.id ? 'active' : ''}" data-nav="${n.id}" title="${n.label}">
-            ${n.icon} <span>${I18N.navLabel(n)}</span>${n.id === 'tables' && pending + ready ? `<b class="badge">${pending + ready}</b>` : ''}
+            ${icon(n.icon)} <span>${I18N.navLabel(n)}</span>${n.id === 'tables' && pending + ready ? `<b class="badge">${pending + ready}</b>` : ''}
           </button>`).join('')}
       </nav>
       ${Store.server ? '<span id="sync-status" class="sync-status"></span>' : ''}
       <div class="who">
+        ${Theme.button()}
         ${I18N.button('lang')}
         <span>${esc(this.user.name)}<small>${ROLES[this.user.role].label}</small></span>
         <button class="btn small" data-nav="logout">Log out</button>

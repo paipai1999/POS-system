@@ -3,6 +3,15 @@
 // Myanmar words for the dashboard.
 // Keys are the English text exactly as the screens show it; change the right-hand side only.
 Object.assign(I18N.dict, {
+  // Overview tab
+  'Overview': 'အနှစ်ချုပ်',
+  'Sales today': 'ယနေ့ ရောင်းရငွေ',
+  'Average bill': 'ပျမ်းမျှ ဘီလ်',
+  'Profit on recipe items': 'ချက်ပြုတ်နည်းပါ ပစ္စည်းများ အမြတ်',
+  'Right now': 'ယခုအချိန်',
+  'Last 7 days': 'လွန်ခဲ့သော ၇ ရက်',
+  'No sales yet': 'ရောင်းချမှု မရှိသေးပါ',
+  'vs previous 7 days': 'ယခင် ၇ ရက်နှင့် နှိုင်းယှဉ်',
   'Dashboard': 'ဒက်ရှ်ဘုတ်',
   'Open orders': 'ဖွင့်ထားသော အော်ဒါများ',
   'In the kitchen': 'မီးဖိုချောင်တွင်',

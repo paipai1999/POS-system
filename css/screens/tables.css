@@ -5,7 +5,7 @@
   min-height: 125px; padding: .9rem 1rem; border-radius: var(--radius); border: 2px solid var(--line);
   background: var(--panel); text-align: left; box-shadow: var(--shadow);
 }
-.table-tile:hover { border-color: #d6cbbb; }
+.table-tile:hover { border-color: var(--line-strong); }
 .table-tile.busy { border-color: var(--accent); background: var(--accent-soft); }
 .table-tile.alert { box-shadow: 0 0 0 4px rgba(180, 83, 9, .25); }
 .t-name { font-weight: 700; font-size: 1.05rem; margin-bottom: .2rem; }

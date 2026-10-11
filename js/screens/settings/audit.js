@@ -52,7 +52,7 @@ Object.assign(Screens.settings, {
       <section class="card">
                 <h2>Activity log</h2>
                 <p class="muted small">A record of who changed prices, stock, staff, settings and tax, who voided, refunded or discounted an order, and who signed in or downloaded the data. It cannot be edited and is kept for 13 months.</p>
-                <button class="btn" data-act="audit">📜 View activity log</button>
+                <button class="btn" data-act="audit">${icon('file-text')} View activity log</button>
               </section>`;
   }
 });

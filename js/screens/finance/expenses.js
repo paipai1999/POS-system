@@ -34,8 +34,8 @@
     return `
       <div class="toolbar">
         <button class="btn primary" data-act="new-expense">＋ Add expense</button>
-        <button class="btn" data-act="new-recurring">🔁 Repeating expense</button>
-        <button class="btn" data-act="new-owner">👤 Owner money in / out</button>
+        <button class="btn" data-act="new-recurring">${icon('repeat')} Repeating expense</button>
+        <button class="btn" data-act="new-owner">${icon('user')} Owner money in / out</button>
       </div>
       <div class="stats compact">
         <div class="card stat"><div class="label">Expenses</div><div class="value">${money(total)}</div><div class="muted small">${active.length} <span>records</span></div></div>
@@ -51,7 +51,7 @@
           <tbody>${expenses.map(e => `
             <tr class="${e.status === 'void' ? 'is-void' : ''}">
               <td>${esc(f.dayText(e.date))}</td>
-              <td><span>${esc(e.category)}</span>${e.recurringId ? ' <span title="Repeating expense" aria-hidden="true">🔁</span>' : ''}</td>
+              <td><span>${esc(e.category)}</span>${e.recurringId ? ` <span title="Repeating expense" aria-hidden="true">${icon('repeat')}</span>` : ''}</td>
               <td class="wrap">${esc([e.description, e.payee].filter(Boolean).join(' · '))}${e.note ? `<div class="muted small">${esc(e.note)}</div>` : ''}${e.by && e.by !== 'system' ? `<div class="muted small">${esc(who(e.by))}</div>` : ''}</td>
               <td>${METHOD_LABEL[e.method] || esc(e.method)}</td>
               <td class="num">${money(e.amount)}${e.taxAmount ? `<div class="muted small"><span>Tax</span> ${money(e.taxAmount)}</div>` : ''}</td>

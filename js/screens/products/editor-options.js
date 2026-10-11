@@ -14,14 +14,14 @@ Object.assign(Screens.products, {
         <div class="opt-head">
           <input class="input" data-role="o-name" placeholder="Option name, e.g. Extra shot" maxlength="30" value="${esc(o.name)}">
           <input class="input" type="number" min="0" step="${moneyStep()}" inputmode="decimal" data-role="o-price" placeholder="Extra price" value="${esc(o.price)}">
-          <button class="icon-btn" data-act="o-del" data-oi="${oi}" aria-label="Remove option">✕</button>
+          <button class="icon-btn" data-act="o-del" data-oi="${oi}" aria-label="Remove option">${icon('x')}</button>
         </div>
         ${o.uses.map((u, ui) => `
           <div class="line-row recipe opt-use" data-oi="${oi}" data-ui="${ui}">
             <select class="input" data-role="u-ing">${this.ingredientOptions(ings, u.ingredientId)}</select>
             <input class="input" type="number" min="0" step="any" inputmode="decimal" placeholder="Extra amount" data-role="u-qty" value="${esc(u.qty)}">
             <span class="unit">${esc(unitOf(u.ingredientId))}</span>
-            <button class="icon-btn" data-act="u-del" data-oi="${oi}" data-ui="${ui}" aria-label="Remove">✕</button>
+            <button class="icon-btn" data-act="u-del" data-oi="${oi}" data-ui="${ui}" aria-label="Remove">${icon('x')}</button>
           </div>`).join('')}
         <button class="btn small" data-act="u-add" data-oi="${oi}" ${ings.length ? '' : 'disabled'}>＋ Uses an ingredient</button>
       </div>`).join('');

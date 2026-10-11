@@ -13,7 +13,7 @@ Screens.login = {
     root.innerHTML = `
       <div class="login-wrap">
         <div class="login-card">
-          <div class="login-brand">🍽️</div>
+          <div class="login-brand">${icon('utensils')}</div>
           <h1>${esc(Store.settings.name)}</h1>
           <p class="muted">${st.userId ? 'Enter your PIN' : 'Tap your name to sign in'}</p>
           <div class="user-grid">
@@ -29,12 +29,12 @@ Screens.login = {
           </div>
           <div class="keypad ${st.userId ? '' : 'disabled'}">
             ${['1', '2', '3', '4', '5', '6', '7', '8', '9', 'back', '0', 'ok'].map(k => `
-              <button data-act="key" data-key="${k}" class="${k === 'ok' ? 'go' : ''}" aria-label="${k}">${k === 'back' ? '⌫' : k === 'ok' ? '✓' : k}</button>`).join('')}
+              <button data-act="key" data-key="${k}" class="${k === 'ok' ? 'go' : ''}" aria-label="${k}">${k === 'back' ? icon('delete', 1.3) : k === 'ok' ? icon('check', 1.3) : k}</button>`).join('')}
           </div>
           ${demo ? '<p class="login-hint">Demo PINs: Admin 1234 · Maya (cashier) 1111 · Leo (waiter) 2222 · Kitchen 3333.<br>Change them under Staff.</p>' : ''}
         </div>
-        ${Store.server ? '' : '<p class="muted small single-note">Single-device mode: data stays in this browser. For several devices, use the POS server (see README).</p><button class="guest-link" data-act="guest">📖 Open guest menu</button>'}
-        <div class="lang-corner">${I18N.button('lang')}</div>
+        ${Store.server ? '' : `<p class="muted small single-note">Single-device mode: data stays in this browser. For several devices, use the POS server (see README).</p><button class="guest-link" data-act="guest">${icon('book-open')} Open guest menu</button>`}
+        <div class="lang-corner">${Theme.button()} ${I18N.button('lang')}</div>
       </div>`;
     st.error = false;
 
@@ -45,6 +45,7 @@ Screens.login = {
       else if (t.dataset.act === 'key') this.press(root, t.dataset.key);
       else if (t.dataset.act === 'guest') { st.userId = null; st.pin = ''; App.go('guest'); }
       else if (t.dataset.act === 'lang') { I18N.toggle(); this.render(root); }
+      else if (t.dataset.act === 'theme') Theme.toggle();
     };
     App.keyHandler = e => {
       if (/^\d$/.test(e.key)) this.press(root, e.key);

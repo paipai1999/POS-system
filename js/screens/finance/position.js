@@ -21,7 +21,7 @@
     const { rows, p } = model();
     return `
       ${p.configured ? '' : `
-        <p class="alert-box">⚠️ <span>The opening balances are not set. Without them the cash and bank figures only show the money that moved since the first record. Enter them in Settings → Finance setup.</span></p>`}
+        <p class="alert-box">${icon('alert')} <span>The opening balances are not set. Without them the cash and bank figures only show the money that moved since the first record. Enter them in Settings → Finance setup.</span></p>`}
       <div class="table-wrap">
         <table class="data statement">
           <thead><tr><th>${p.configured ? `<span>Balances from</span> ${esc(Screens.finance.dayText(p.startDate))}` : 'Since the first record'}</th><th class="num">Now</th></tr></thead>

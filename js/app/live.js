@@ -30,12 +30,12 @@ Object.assign(App, {
       if (!d) continue;
       if (ev.col === 'guestRequests' && ev.isNew && d.status === 'pending' && this.can('guest')) {
         const t = Store.table(d.tableId);
-        toast(`🔔 ${t ? t.name : 'A table'}: ${d.kind === 'call' ? 'guest is calling a waiter' : 'new guest order'}`, 'ok');
+        toast(`${t ? t.name : 'A table'}: ${d.kind === 'call' ? 'guest is calling a waiter' : 'new guest order'}`, 'ok');
         beep();
       }
       if (ev.col === 'kitchenTickets') {
         if (d.status === 'ready' && (!ev.before || ev.before.status !== 'ready') && this.user && d.staffId === this.user.id) {
-          toast(`🍽️ ${d.where} #${orderNo(Store.order(d.orderId) || d)} is ready to serve`, 'ok');
+          toast(`${d.where} #${orderNo(Store.order(d.orderId) || d)} is ready to serve`, 'ok');
           beep(2);
           if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
         }

@@ -17,7 +17,7 @@ Object.assign(Screens.order, {
         <button class="product-tile ${out ? 'soldout' : ''}" data-act="add" data-id="${p.id}" ${out ? 'disabled' : ''}>
           ${Photo.img(p, 'p-photo', 'p-emoji') || `<span class="p-emoji">${esc(p.emoji || '🍽️')}</span>`}
           <span class="p-name">${esc(p.name)}</span>
-          ${short ? `<span class="p-stock low">${out ? 'Sold out' : '⚠ Running out'}: ${esc(p.lacks.join(', '))}</span>`
+          ${short ? `<span class="p-stock low">${out ? 'Sold out' : `${icon('alert')} Running out`}: ${esc(p.lacks.join(', '))}</span>`
             : p.trackStock ? `<span class="p-stock ${avail <= p.lowStock ? 'low' : ''}">${out ? 'Sold out' : avail + ' left'}</span>` : ''}
           <span class="p-price">${money(p.price)}</span>
         </button>`;

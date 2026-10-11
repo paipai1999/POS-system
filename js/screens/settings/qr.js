@@ -38,7 +38,7 @@ Object.assign(Screens.settings, {
         <label class="field"><span>Address in the codes</span>
           <select class="input" name="base">${options.map(a => `<option>${esc(a)}</option>`).join('')}</select></label>
         <div data-role="preview" class="qr-preview"></div>`,
-      footer: '<button class="btn" data-act="__close">Close</button><button class="btn primary" data-act="print">🖨️ Print</button>',
+      footer: `<button class="btn" data-act="__close">Close</button><button class="btn primary" data-act="print">${icon('printer')} Print</button>`,
       actions: {
         __change: e => { if (e.target.name === 'base') render(e.target.value); },
         print: () => printLocal(this.sheetHTML(Modal.el().querySelector('[name=base]').value), true),
@@ -81,8 +81,8 @@ Object.assign(Screens.settings, {
                 <h2>Printing</h2>
                 <p class="muted small">Print a test page after connecting a printer: it checks the paper width, the paper cut and Myanmar text. In the print window choose the receipt printer, paper size 80 mm and margins "None".</p>
                 <div class="stack">
-                  <button class="btn" data-act="test-print-here">🖨️ Print test page on this device</button>
-                  ${server ? `<button class="btn" data-act="test-print-station" ${Station.active || !Sync.stations ? 'disabled' : ''}>🖨️ Send test page to the printer station</button>` : ''}
+                  <button class="btn" data-act="test-print-here">${icon('printer')} Print test page on this device</button>
+                  ${server ? `<button class="btn" data-act="test-print-station" ${Station.active || !Sync.stations ? 'disabled' : ''}>${icon('printer')} Send test page to the printer station</button>` : ''}
                 </div>
               </section>`;
   }

@@ -40,6 +40,8 @@ test('orders move across the board as they are taken, sent, cooked, served and p
   admin.click('[data-nav=dashboard]');
   await admin.until(() => admin.screen() === 'dashboard');
   assert.match(admin.text('.page-head h1'), /Dashboard/);
+  admin.click('[data-act=tab][data-tab=orders]');   // an admin lands on the Overview tab
+  await admin.until(() => admin.$$('.dash-col').length === 5, { what: 'the order board' });
   assert.equal(admin.$$('.dash-card').length, 0, 'quiet to start with');
   assert.equal(admin.$$('.dash-col').length, 5);
   const col = n => admin.$$('.dash-col')[n];
@@ -128,8 +130,34 @@ test('Myanmar: the dashboard words are translated', opts, async () => {
   await admin.until(() => admin.screen() === 'dashboard');
   await admin.sleep(100);
   const latin = sel => admin.$$(sel).map(e => e.textContent.trim()).filter(x => /[A-Za-z]/.test(x));
+  assert.deepEqual(latin('.page-head h1, .page-head .seg button, .kpi .label, .kpi .muted, .now-title, .chip, .ov-grid h2'), [], 'overview');
+  admin.click('[data-act=tab][data-tab=orders]');
+  await admin.sleep(100);
   assert.deepEqual(latin('.page-head h1, .page-head .seg button, .stats .label, .dash-col h2 span:first-child, .dash-col .empty'), []);
   admin.click('[data-act=tab][data-tab=tables]');
   await admin.sleep(100);
   assert.deepEqual(latin('.stats .label, .stats .muted, .seg button, .legend span, .floor-tile .ft-status, .floor-tile .ft-meta'), []);
+});
+
+test('the overview shows today against yesterday, the week and the charts', opts, async () => {
+  const admin = await open();
+  await admin.signIn('Admin', '482915');
+  admin.click('[data-nav=dashboard]');
+  await admin.until(() => admin.screen() === 'dashboard');
+  await admin.until(() => admin.$('.kpis'), { what: 'the overview' });
+  assert.ok(admin.$('.page-head .seg .active[data-tab=overview]'));
+  assert.equal(admin.$$('.kpi').length, 4);
+  assert.match(admin.text('.kpis'), /Sales today/);
+  assert.match(admin.text('.now-strip'), /Right now/);
+  assert.ok(admin.$('.ov-grid .cols'), 'the 7-day chart');
+  for (const name of ['Last 7 days', 'Best sellers', 'Sales by category', 'Payment methods']) assert.match(admin.text('.ov-grid'), new RegExp(name));
+});
+
+test('a waiter lands on the order board, not the overview', opts, async () => {
+  const waiter = await open();
+  await waiter.signIn('Leo', '618204');
+  waiter.click('[data-nav=dashboard]');
+  await waiter.until(() => waiter.screen() === 'dashboard');
+  assert.equal(waiter.$('[data-tab=overview]'), null);
+  assert.ok(waiter.$('.dash-board'));
 });

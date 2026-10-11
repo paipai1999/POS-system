@@ -103,7 +103,8 @@ window.UIAudit = (() => {
     click('[data-act=pay-supplier]:not([disabled])'); await check('pay supplier'); closeModal();
     click('[data-act=supplier-statement]'); await check('supplier statement'); closeModal();
     await go('customers'); await check('customers'); click('[data-act=edit]'); await check('customer dialog'); closeModal();
-    await go('dashboard'); await check('dashboard');
+    await go('dashboard'); await check('dashboard: overview');
+    click('[data-act=tab][data-tab=orders]'); await check('dashboard: orders');
     click('[data-act=tab][data-tab=tables]'); await check('dashboard: tables'); click('[data-act=tab][data-tab=orders]');
     await go('orders'); click('tr.clickable'); await check('order details'); closeModal();
 

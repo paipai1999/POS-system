@@ -16,7 +16,7 @@ Object.assign(I18N.dict, {
   'In stock': 'လက်ကျန်',
   'Low-stock alert at': 'လက်ကျန်နည်းသတိပေးချက်',
   'Low stock': 'လက်ကျန်နည်း',
-  'All tracked items are well stocked 👍': 'ခြေရာခံထားသော ပစ္စည်းအားလုံး လုံလောက်ပါသည် 👍',
+  'All tracked items are well stocked': 'ခြေရာခံထားသော ပစ္စည်းအားလုံး လုံလောက်ပါသည်',
   'Update stock': 'လက်ကျန် ပြင်ရန်',
   'Change by': 'ပြောင်းလဲမည့်ပမာဏ',
   'e.g. 10 or -2': 'ဥပမာ – 10 သို့မဟုတ် -2',

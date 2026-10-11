@@ -14,6 +14,7 @@
 //   daily.js        the figures frozen by the daily close
 //   recurring.js    monthly expenses that repeat (rent, salaries)
 //   receivables.js  what customers owe for bills on account: statements and ageing
+//   overview.js     the owner's first look: today vs yesterday, the week, hours, best sellers
 module.exports = Object.assign({},
   require('./finance/core.js'),
   require('./finance/profit-loss.js'),
@@ -23,5 +24,6 @@ module.exports = Object.assign({},
   require('./finance/position.js'),
   require('./finance/daily.js'),
   require('./finance/recurring.js'),
-  require('./finance/receivables.js')
+  require('./finance/receivables.js'),
+  require('./finance/overview.js')
 );

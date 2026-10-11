@@ -31,7 +31,7 @@ Object.assign(Screens.products, {
           <div class="photo-preview" data-role="photo-preview"></div>
           <div class="photo-actions">
             <div class="btn-row">
-              <button class="btn small" data-act="photo-pick">📷 Choose photo</button>
+              <button class="btn small" data-act="photo-pick">${icon('camera')} Choose photo</button>
               <button class="btn small" data-act="photo-clear" ${photo ? '' : 'hidden'}>Remove photo</button>
             </div>
             <input type="file" accept="image/*" data-role="photo-file" hidden>

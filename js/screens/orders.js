@@ -137,7 +137,7 @@ Screens.orders = {
     root.innerHTML = `
       <div class="page-head">
         <h1>${waiter ? 'My orders' : 'Orders'}</h1>
-        <div class="actions"><button class="btn" data-act="csv">⬇️ Export CSV</button></div>
+        <div class="actions"><button class="btn" data-act="csv">${icon('download')} Export CSV</button></div>
       </div>
       <div class="toolbar">
         <div class="seg">
@@ -261,7 +261,7 @@ Screens.orders = {
       footer: `
         <button class="btn" data-act="__close">Close</button><span class="spacer"></span>
         ${o.status === 'open' && App.can('tables') ? '<button class="btn" data-act="open">Open order</button>' : ''}
-        ${o.status === 'paid' || o.status === 'refunded' ? '<button class="btn primary" data-act="receipt">🧾 Receipt</button>' : ''}
+        ${o.status === 'paid' || o.status === 'refunded' ? `<button class="btn primary" data-act="receipt">${icon('receipt')} Receipt</button>` : ''}
         ${o.status === 'paid' && App.can('checkout') ? '<button class="btn danger" data-act="refund">Refund</button>' : ''}`,
       actions,
     });

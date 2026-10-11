@@ -7,7 +7,7 @@ function printHTML(html, kind = 'receipt') {
   if (Store.server && Sync.token && !Station.active && Sync.stations > 0) {
     Store.data.printJobs.push({ id: uid('j_'), html, kind, status: 'pending', createdAt: Date.now(), by: App.user ? App.user.id : null });
     Store.save();
-    toast('🖨️ Sent to the counter printer', 'ok');
+    toast('Sent to the counter printer', 'ok');
     return;
   }
   printLocal(html, kind === 'sheet');

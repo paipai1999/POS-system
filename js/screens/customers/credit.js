@@ -91,7 +91,7 @@ Object.assign(Screens.customers, {
       wide: true,
       body: html(),
       footer: `<button class="btn" data-act="__close">Close</button><span class="spacer"></span>
-        <button class="btn" data-act="print">🖨️ Print</button>
+        <button class="btn" data-act="print">${icon('printer')} Print</button>
         ${st.owing > 0 ? '<button class="btn primary" data-act="receive">Receive payment</button>' : ''}`,
       actions: {
         print: () => printLocal(html(), true),

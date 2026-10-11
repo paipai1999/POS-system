@@ -31,7 +31,7 @@ Object.assign(Screens.inventory, {
         ${stat('Ingredients', Store.data.ingredients.length)}
         ${stat('Running low', low.length)}
       </div>
-      ${low.length ? `<div class="alert-box">⚠️ Running low: ${low.map(i => `${esc(i.name)} (${qtyText(i.stock)} ${esc(i.unit)})`).join(', ')}</div>` : ''}
+      ${low.length ? `<div class="alert-box">${icon('alert')} Running low: ${low.map(i => `${esc(i.name)} (${qtyText(i.stock)} ${esc(i.unit)})`).join(', ')}</div>` : ''}
       <p class="muted small">When an ingredient runs out: <b>${{ off: 'nothing happens', warn: 'the dishes that need it show a warning', block: 'the dishes that need it cannot be sold' }[ingredientStockMode(Store.settings)]}</b> (change in Settings).</p>
       <p class="muted small">Stock goes up with purchases, down when a dish that uses the ingredient is paid, and is corrected by a stocktake. Set what each dish uses under <b>Menu &amp; Stock</b>.</p>
       <div class="toolbar"><input class="input" type="search" data-role="q" placeholder="Search ingredients…" value="${esc(this.state.q)}"></div>

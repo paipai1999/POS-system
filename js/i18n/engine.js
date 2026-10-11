@@ -31,6 +31,7 @@ const I18N = {
 
   apply(lang) {
     this.lang = lang;
+    if (!this.plainKeysDone) { this.plainKeysDone = true; this.addPlainKeys(); }
     document.documentElement.lang = lang === 'my' ? 'my' : 'en';
     if (lang === 'my') {
       this.walk(document.body);
@@ -46,7 +47,7 @@ const I18N = {
 
   // The switch shown on the sign-in screen, the top bar and the guest menu. Its label is never translated.
   button(act = 'lang') {
-    return `<button class="btn small lang-btn" data-act="${act}" data-nav="${act}" data-no-i18n title="Language / ဘာသာစကား">🌐 ${this.lang === 'my' ? 'English' : 'မြန်မာ'}</button>`;
+    return `<button class="btn small lang-btn" data-act="${act}" data-nav="${act}" data-no-i18n title="Language / ဘာသာစကား">${icon('globe')} ${this.lang === 'my' ? 'English' : 'မြန်မာ'}</button>`;
   },
 
   toggle() { this.set(this.lang === 'my' ? 'en' : 'my'); },
@@ -58,6 +59,17 @@ const I18N = {
   },
 
   // Translate one piece of text; returns null when there is nothing to change.
+  // The word lists were written when buttons began with an emoji ("🖨️ Print"); they now begin with an SVG icon, so the text is
+  // just "Print". Each entry that starts with an emoji or symbol also gets a copy without it (on both sides), unless one exists.
+  LEAD: /^[\p{Extended_Pictographic}\u2190-\u21FF\u2700-\u27BF\uFE0F\u200D\s]+/u,
+  addPlainKeys() {
+    for (const [k, v] of Object.entries(this.dict)) {
+      if (!this.LEAD.test(k)) continue;
+      const plain = k.replace(this.LEAD, '');
+      if (plain.length > 1 && this.dict[plain] == null) this.dict[plain] = String(v).replace(this.LEAD, '');
+    }
+  },
+
   tr(text) {
     const norm = String(text).replace(/\s+/g, ' ').trim();
     if (norm.length < 2 || !/[A-Za-z]/.test(norm) || /^https?:/i.test(norm)) return null;

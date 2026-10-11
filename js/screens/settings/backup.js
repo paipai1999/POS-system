@@ -10,7 +10,7 @@ Object.assign(Screens.settings, {
       if (this.root.querySelector('[data-role=backup-status]') !== box) return;
       this.showBackupStatus(box, st);
     } catch (e) {
-      box.innerHTML = `<div class="alert-box">⚠️ ${esc(e.message)}</div>`;
+      box.innerHTML = `<div class="alert-box">${icon('alert')} ${esc(e.message)}</div>`;
     }
   },
 
@@ -18,7 +18,7 @@ Object.assign(Screens.settings, {
     const age = f => (f.at ? `last copy ${timeAgo(f.at)}` : 'no copy yet');
     box.innerHTML = `
       ${st.safe ? '<div class="ok-box">✓ A recent copy is on a different disk or drive.</div>'
-        : '<div class="alert-box">⚠️ All backups are on the disk of this PC itself. If the disk fails, the data and the backups are lost together. Add a USB drive or a cloud-synced folder below.</div>'}
+        : `<div class="alert-box">${icon('alert')} All backups are on the disk of this PC itself. If the disk fails, the data and the backups are lost together. Add a USB drive or a cloud-synced folder below.</div>`}
       <ul class="plain backup-list">
         ${st.folders.map(f => `
           <li>
@@ -133,12 +133,12 @@ Object.assign(Screens.settings, {
                 ${server ? `
                   <div data-role="backup-status" class="backup-status"><p class="muted small">Checking backups…</p></div>
                   <div class="stack">
-                    <button class="btn" data-act="backup-now">💾 Back up now</button>
-                    <button class="btn" data-act="backup-folders">📁 Backup folders (USB / cloud)…</button>
+                    <button class="btn" data-act="backup-now">${icon('save')} Back up now</button>
+                    <button class="btn" data-act="backup-folders">${icon('folder')} Backup folders (USB / cloud)…</button>
                   </div>` : ''}
                 <div class="stack spaced">
-                  <button class="btn" data-act="export">⬇️ Export backup</button>
-                  <label class="btn">⬆️ Import backup<input type="file" accept=".json,application/json" data-role="import" hidden></label>
+                  <button class="btn" data-act="export">${icon('download')} Export backup</button>
+                  <label class="btn">${icon('upload')} Import backup<input type="file" accept=".json,application/json" data-role="import" hidden></label>
                   <button class="btn danger" data-act="reset">Reset to demo data</button>
                 </div>
               </section>`;

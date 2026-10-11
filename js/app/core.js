@@ -24,6 +24,7 @@ const App = {
       if (!b) return;
       if (b.dataset.nav === 'menu') $('#topbar').classList.toggle('menu-open'); // the ☰ button on phones
       else if (b.dataset.nav === 'lang') { I18N.toggle(); this.render(); }
+      else if (b.dataset.nav === 'theme') Theme.toggle();
       else if (b.dataset.nav === 'logout') this.logout();
       else this.go(b.dataset.nav);
     });
@@ -57,7 +58,7 @@ const App = {
       if (this.user) {
         this.user = Store.user(this.user.id);
         if (!this.user || !this.user.active) return this.logout();
-        if (this.can('guest') && Store.pendingRequests().length > before) toast('🔔 New guest request', 'ok');
+        if (this.can('guest') && Store.pendingRequests().length > before) toast('New guest request', 'ok');
       }
       this.render();
     });
@@ -82,7 +83,7 @@ const App = {
         Screens.guest.state.locked = true;
         return this.go('guest');
       } catch (e) {
-        $('#main').innerHTML = `<div class="login-wrap"><div class="login-card"><div class="login-brand">🍽️</div><h1>Sorry</h1><p class="muted">${esc(e.message)}</p></div></div>`;
+        $('#main').innerHTML = `<div class="login-wrap"><div class="login-card"><div class="login-brand">${icon('utensils')}</div><h1>Sorry</h1><p class="muted">${esc(e.message)}</p></div></div>`;
         return;
       }
     }

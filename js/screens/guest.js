@@ -33,8 +33,9 @@ Screens.guest = {
               <h1>${esc(Store.settings.name)}</h1>
               <div class="small guest-sub">${esc(table.name)} · Menu</div>
             </div>
+            ${Theme.button()}
             ${I18N.button('lang')}
-            <button class="btn" data-act="call">🔔 Call waiter</button>
+            <button class="btn" data-act="call">${icon('bell')} Call waiter</button>
           </div>
           <div class="chips guest-chips">
             <button class="chip ${st.cat === 'all' ? 'active' : ''}" data-act="cat" data-id="all">All</button>
@@ -65,6 +66,7 @@ Screens.guest = {
       else if (act === 'cart') this.openCart(root);
       else if (act === 'call') this.callWaiter();
       else if (act === 'lang') { I18N.toggle(); this.render(root); }
+      else if (act === 'theme') Theme.toggle();
       else if (act === 'staff') this.staffMenu(root);
     };
   },
@@ -169,7 +171,7 @@ Screens.guest = {
         st.note = '';
         this.render(root);
         Modal.open({
-          title: 'Order sent 🎉',
+          title: 'Order sent',
           body: '<p>Thank you! A waiter will confirm your order shortly.</p>',
           footer: '<button class="btn primary" data-act="__close">Back to menu</button>',
         });
@@ -181,7 +183,7 @@ Screens.guest = {
   callWaiter() {
     const tableId = this.state.tableId;
     if (Store.pendingRequests().some(r => r.kind === 'call' && r.tableId === tableId)) {
-      return toast('A waiter has already been called 👍');
+      return toast('A waiter has already been called');
     }
     confirmDialog({
       title: 'Call a waiter?',
@@ -189,7 +191,7 @@ Screens.guest = {
       okLabel: 'Call waiter',
       onOk: () => {
         Store.addGuestRequest({ kind: 'call', tableId, items: [], note: '' })
-          .then(() => toast('A waiter is on the way 👍', 'ok'))
+          .then(() => toast('A waiter is on the way', 'ok'))
           .catch(e => toast(e.message, 'error'));
       },
     });
@@ -219,11 +221,11 @@ Screens.guest = {
     root.innerHTML = `
       <div class="login-wrap">
         <div class="login-card">
-          <div class="login-brand">📖</div>
+          <div class="login-brand">${icon('book-open')}</div>
           <h1>Guest menu</h1>
           <p class="muted">Staff: choose which table this device is for.</p>
           <div class="user-grid">
-            ${tables.map(t => `<button class="user-tile" data-act="table" data-id="${t.id}"><span class="avatar">🪑</span><span>${esc(t.name)}</span></button>`).join('')
+            ${tables.map(t => `<button class="user-tile" data-act="table" data-id="${t.id}"><span class="avatar">${icon('layout-grid', 1)}</span><span>${esc(t.name)}</span></button>`).join('')
               || '<p class="empty">No tables yet. Add some in Settings.</p>'}
           </div>
           <button class="btn" data-act="cancel">Cancel</button>

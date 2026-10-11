@@ -3,5 +3,5 @@
 .sync-status::before { content: "● "; }
 .sync-status.live { background: rgba(21, 128, 61, .25); color: #86efac; }
 .sync-status.busy { background: rgba(255, 255, 255, .12); color: #e7e0d6; }
-.sync-status.offline { background: var(--danger); color: #fff; animation: pulse 1.5s infinite; }
+.sync-status.offline { background: var(--danger-solid); color: #fff; animation: pulse 1.5s infinite; }
 @keyframes pulse { 50% { opacity: .65; } }

@@ -18,7 +18,36 @@
   --radius: 14px;
   --shadow: 0 1px 2px rgba(31, 27, 22, .06), 0 4px 14px rgba(31, 27, 22, .05);
   --topbar-h: 60px;
-  font-family: system-ui, -apple-system, "Segoe UI", "Myanmar Text", "Noto Sans Myanmar", "Padauk", Roboto, sans-serif;
+  --accent-hover: #9a3412;
+  /* surfaces and fills */
+  --field: #fff;                 /* inputs */
+  --chrome: #1f1b16;             /* top bar, guest header: dark in both themes, text on it is --on-chrome */
+  --chrome-2: #1f1b16;           /* raised dark things: toast, floating cart bar */
+  --on-chrome: #fff;
+  --chrome-text: #d6cfc4;
+  --chrome-muted: #b5ab9d;
+  --sel-bg: #1f1b16;             /* a selected segment / chip / avatar */
+  --sel-ink: #fff;
+  --track: #efe9e0;              /* bar tracks, muted pills */
+  --switch-off: #d6cfc4;
+  --accent-track: #e8cdbd;
+  --accent-glow: #fbe3d3;
+  --line-strong: #d6cbbb;
+  /* tinted status colours (borders and fills) */
+  --ok-line: #86efac;
+  --accent-line: #fdba74;
+  --danger-line: #f1c6c6;
+  --indigo-soft: #eef2ff;
+  --indigo-line: #a5b4fc;
+  --violet-soft: #f5f3ff;
+  --violet-line: #c4b5fd;
+  --free-soft: #f0fdf4;
+  --late-bg: #fff7f7;
+  --danger-solid: #b91c1c;       /* filled buttons with white text */
+  --ok-solid: #15803d;
+  color-scheme: light;
+  /* Inter is bundled (css/fonts) so every device looks the same without internet; Myanmar script falls through to the system fonts. */
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", "Myanmar Text", "Noto Sans Myanmar", "Padauk", Roboto, sans-serif;
   color: var(--ink);
 }
 
@@ -37,3 +66,59 @@ h2 { font-size: 1.05rem; margin: 0 0 .75rem; }
 .spaced { margin-top: 1rem; }
 .empty { color: var(--muted); text-align: center; padding: 2rem 1rem; margin: 0; }
 .empty.small { padding: 1rem; }
+
+/* Dark theme. js/ui/theme.js sets data-theme="dark" (the device's choice, or the person's own with the switch in the top bar).
+   Screen only: paper and printed receipts always use the light colours above. */
+@media screen {
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #12100d;
+    --panel: #1c1815;
+    --panel-2: #231f1a;
+    --ink: #f1ece4;
+    --muted: #a39a8d;
+    --line: #38322b;
+    --accent: #ea580c;
+    --accent-2: #fb923c;
+    --accent-hover: #c2410c;
+    --accent-soft: rgba(234, 88, 12, .18);
+    --ok: #4ade80;
+    --ok-soft: rgba(74, 222, 128, .14);
+    --warn: #fbbf24;
+    --warn-soft: rgba(251, 191, 36, .14);
+    --danger: #f87171;
+    --danger-soft: rgba(248, 113, 113, .15);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 14px rgba(0, 0, 0, .3);
+    --field: #14110e;
+    --chrome: #0c0a08;
+    --chrome-2: #3a342d;
+    --sel-bg: #f1ece4;
+    --sel-ink: #1c1815;
+    --track: #2d2822;
+    --switch-off: #4a443c;
+    --accent-track: #5a2a14;
+    --accent-glow: rgba(234, 88, 12, .18);
+    --line-strong: #4d463d;
+    --ok-line: rgba(74, 222, 128, .4);
+    --accent-line: rgba(251, 146, 60, .45);
+    --danger-line: rgba(248, 113, 113, .4);
+    --indigo-soft: rgba(129, 140, 248, .14);
+    --indigo-line: rgba(129, 140, 248, .45);
+    --violet-soft: rgba(167, 139, 250, .14);
+    --violet-line: rgba(167, 139, 250, .45);
+    --free-soft: rgba(74, 222, 128, .08);
+    --late-bg: rgba(248, 113, 113, .12);
+  }
+  :root[data-theme="dark"] .modal { box-shadow: 0 20px 60px rgba(0, 0, 0, .6); }
+  :root[data-theme="dark"] .modal-backdrop { background: rgba(0, 0, 0, .65); }
+}
+
+/* Icons (js/ui/icons.js): drawn with the text colour, sized in em, aligned with the text beside them. */
+.ico { display: inline-block; flex: none; vertical-align: -.2em; }
+.btn .ico, .nav-btn .ico, .chip .ico { margin-inline-end: .1em; }
+.icon-btn .ico { vertical-align: middle; }
+.login-brand .ico { width: 40px; height: 40px; padding: 8px; box-sizing: content-box; color: #fff; background: var(--accent); border-radius: 16px; }
+.avatar .ico { width: 1.3rem; height: 1.3rem; }
+.keypad button .ico { vertical-align: middle; }
+.t-bell { display: inline-flex; gap: 2px; }
+.brand .ico { color: var(--accent); vertical-align: -.25em; margin-inline-end: .15em; }

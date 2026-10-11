@@ -35,7 +35,7 @@ const Modal = {
     root.innerHTML = `
       <div class="modal-backdrop">
         <div class="modal ${wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
-          <header class="modal-head"><h2>${esc(title)}</h2>${locked ? '' : '<button class="icon-btn" data-act="__close" aria-label="Close">✕</button>'}</header>
+          <header class="modal-head"><h2>${esc(title)}</h2>${locked ? '' : `<button class="icon-btn" data-act="__close" aria-label="Close">${icon('x')}</button>`}</header>
           <div class="modal-body">${body}</div>
           ${footer ? `<footer class="modal-foot">${footer}</footer>` : ''}
         </div>

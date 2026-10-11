@@ -63,7 +63,7 @@
       title: 'Daily close',
       wide: true,
       body: reportHTML(key, close.summary, close),
-      footer: '<button class="btn" data-act="__close">Close</button><button class="btn primary" data-act="print">🖨️ Print</button>',
+      footer: `<button class="btn" data-act="__close">Close</button><button class="btn primary" data-act="print">${icon('printer')} Print</button>`,
       actions: { print: () => printLocal(reportHTML(key, close.summary, close), true) },
     });
   }
@@ -80,14 +80,14 @@
       <div class="toolbar">
         <label class="field inline"><span>Day</span><input class="input" type="date" data-role="day" value="${key}" max="${isoDate(new Date())}"></label>
         ${close
-          ? `<span class="pill paid">🔒 <span>Closed</span></span>
+          ? `<span class="pill paid">${icon('lock')} <span>Closed</span></span>
              <button class="btn" data-act="view-close">View report</button>
              ${App.can('settings') ? '<button class="btn danger" data-act="reopen">Reopen this day</button>' : ''}`
           : `<span class="pill open"><span>Open</span></span>
-             <button class="btn primary" data-act="close-day" ${openShift || future ? 'disabled' : ''}>🔒 Close this day…</button>`}
+             <button class="btn primary" data-act="close-day" ${openShift || future ? 'disabled' : ''}>${icon('lock')} Close this day…</button>`}
       </div>
       ${close ? `<p class="muted small"><span>Closed by</span> ${esc(who(close.closedBy))} · ${fmtDateTime(close.closedAt)}${close.note ? ` · ${esc(close.note)}` : ''}</p>` : ''}
-      ${!close && openShift ? '<p class="alert-box">⚠️ <span>A shift from this day is still open. Close the cash drawer first.</span></p>' : ''}
+      ${!close && openShift ? `<p class="alert-box">${icon('alert')} <span>A shift from this day is still open. Close the cash drawer first.</span></p>` : ''}
       ${!close ? '<p class="muted small">These figures can still change until the day is closed. Closing freezes them: nothing dated in this day can be added or voided afterwards.</p>' : ''}
       <div class="table-wrap">${tableHTML(summary)}</div>
       <h2 class="section-title">Closed days</h2>

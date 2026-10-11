@@ -10,6 +10,7 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8',
 };
 
 const notFound = res => { res.writeHead(404, SECURITY_HEADERS); res.end('Not found'); };

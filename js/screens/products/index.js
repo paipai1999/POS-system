@@ -29,7 +29,7 @@ Screens.products = {
         </div>
       </div>
       ${st.tab === 'items' ? `
-        ${low.length ? `<div class="alert-box">⚠️ Low stock: ${low.map(p => `${esc(p.name)} (${p.stock})`).join(', ')}</div>` : ''}
+        ${low.length ? `<div class="alert-box">${icon('alert')} Low stock: ${low.map(p => `${esc(p.name)} (${p.stock})`).join(', ')}</div>` : ''}
         <div class="toolbar">
           <input class="input" type="search" data-role="q" placeholder="Search items…" value="${esc(st.q)}">
           <select class="input" data-role="cat">

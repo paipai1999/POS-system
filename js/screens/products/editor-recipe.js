@@ -19,7 +19,7 @@ Object.assign(Screens.products, {
         <select class="input" data-role="rc-ing">${this.ingredientOptions(ings, r.ingredientId)}</select>
         <input class="input" type="number" min="0" step="any" inputmode="decimal" placeholder="Amount" data-role="rc-qty" value="${esc(r.qty)}">
         <span class="unit">${esc(unitOf(r.ingredientId))}</span>
-        <button class="icon-btn" data-act="rc-del" data-i="${i}" aria-label="Remove">✕</button>
+        <button class="icon-btn" data-act="rc-del" data-i="${i}" aria-label="Remove">${icon('x')}</button>
       </div>`).join('');
 
     // Cost per portion and what is left of the price, shown under the rows.

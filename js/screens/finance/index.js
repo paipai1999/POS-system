@@ -51,9 +51,9 @@ Screens.finance = {
       <div class="page-head">
         <h1>Finance</h1>
         <div class="actions">
-          ${tab.csv ? '<button class="btn" data-act="export-csv">⬇️ Export CSV</button>' : ''}
-          ${st.tab === 'pl' ? '<button class="btn" data-act="export-pack">⬇️ All statements (CSV)</button>' : ''}
-          <button class="btn" data-act="print">🖨️ Print</button>
+          ${tab.csv ? `<button class="btn" data-act="export-csv">${icon('download')} Export CSV</button>` : ''}
+          ${st.tab === 'pl' ? `<button class="btn" data-act="export-pack">${icon('download')} All statements (CSV)</button>` : ''}
+          <button class="btn" data-act="print">${icon('printer')} Print</button>
         </div>
       </div>
       <nav class="tabs" role="tablist">

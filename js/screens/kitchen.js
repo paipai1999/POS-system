@@ -21,7 +21,7 @@ Screens.kitchen = {
         <h1>Kitchen</h1>
         <div class="actions"><span class="muted">${queue.length} ticket${queue.length === 1 ? '' : 's'} waiting</span></div>
       </div>
-      <div class="kds">${queue.map(t => this.card(t)).join('') || '<p class="empty kds-empty">No orders waiting 🎉</p>'}</div>
+      <div class="kds">${queue.map(t => this.card(t)).join('') || '<p class="empty kds-empty">No orders waiting</p>'}</div>
       ${ready.length ? `
         <h2 class="section-title">Ready — waiting for pickup</h2>
         <div class="kds done">${ready.map(t => this.readyCard(t)).join('')}</div>` : ''}`;
@@ -62,8 +62,8 @@ Screens.kitchen = {
         <ul class="kds-items">
           ${t.items.map(l => `<li><b>${l.qty}×</b> ${esc(l.name)}${l.mods && l.mods.length ? `<div class="line-note">${esc('+ ' + l.mods.join(', '))}</div>` : ''}${l.note ? `<div class="line-note">» ${esc(l.note)}</div>` : ''}</li>`).join('')}
         </ul>
-        ${t.note ? `<div class="order-note">📝 ${esc(t.note)}</div>` : ''}
-        <button class="btn primary big" data-act="ready" data-id="${t.id}">✓ Ready</button>
+        ${t.note ? `<div class="order-note">${icon('file-text')} ${esc(t.note)}</div>` : ''}
+        <button class="btn primary big" data-act="ready" data-id="${t.id}">${icon('check')} Ready</button>
       </div>`;
   },
 
@@ -72,7 +72,7 @@ Screens.kitchen = {
       <div class="kds-card is-ready">
         ${this.head(t)}
         <ul class="kds-items">${t.items.map(l => `<li><b>${l.qty}×</b> ${esc(l.name)}</li>`).join('')}</ul>
-        <button class="btn small" data-act="undo" data-id="${t.id}">↩ Not ready</button>
+        <button class="btn small" data-act="undo" data-id="${t.id}">${icon('undo')} Not ready</button>
       </div>`;
   },
 };

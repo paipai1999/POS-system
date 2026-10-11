@@ -56,7 +56,7 @@ Object.assign(Screens.settings, {
                 <div class="list">
                   ${Store.data.tables.map(t => `
                     <div class="list-row">
-                      <span>🪑 ${esc(t.name)}</span>
+                      <span>${icon('layout-grid')} ${esc(t.name)}</span>
                       <div class="row-actions">
                         <button class="btn small" data-act="rename-table" data-id="${t.id}">Rename</button>
                         <button class="btn small danger" data-act="del-table" data-id="${t.id}">Delete</button>
@@ -68,7 +68,7 @@ Object.assign(Screens.settings, {
                   <button class="btn" data-act="add-table">Add table</button>
                 </div>
                 <div class="spaced">
-                  <button class="btn" data-act="qr" ${server && Store.data.tables.length ? '' : 'disabled'}>🔳 Print table QR codes</button>
+                  <button class="btn" data-act="qr" ${server && Store.data.tables.length ? '' : 'disabled'}>${icon('qr-code')} Print table QR codes</button>
                   ${server ? '' : '<p class="muted small">QR ordering needs the POS server (see README).</p>'}
                 </div>
               </section>`;

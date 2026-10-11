@@ -103,7 +103,7 @@ Screens.reports = {
     root.innerHTML = `
       <div class="page-head">
         <h1>Reports</h1>
-        <div class="actions"><button class="btn" data-act="csv" ${all.length ? '' : 'disabled'}>⬇️ Export CSV</button></div>
+        <div class="actions"><button class="btn" data-act="csv" ${all.length ? '' : 'disabled'}>${icon('download')} Export CSV</button></div>
       </div>
       <div class="toolbar">
         <div class="seg">
@@ -161,8 +161,8 @@ Screens.reports = {
         <section class="card">
           <h2>Low stock</h2>
           ${low.length || lowIng.length
-            ? `<table class="data compact"><tbody>${low.map(p => `<tr><td>${esc(p.emoji)} ${esc(p.name)}</td><td class="num low-stock">${p.stock} left</td></tr>`).join('')}${lowIng.map(i => `<tr><td>🧂 ${esc(i.name)}</td><td class="num low-stock">${qtyText(i.stock)} ${esc(i.unit)} left</td></tr>`).join('')}</tbody></table>`
-            : '<p class="empty small">All tracked items are well stocked 👍</p>'}
+            ? `<table class="data compact"><tbody>${low.map(p => `<tr><td>${esc(p.emoji)} ${esc(p.name)}</td><td class="num low-stock">${p.stock} left</td></tr>`).join('')}${lowIng.map(i => `<tr><td>${icon('clipboard-list', 1)} ${esc(i.name)}</td><td class="num low-stock">${qtyText(i.stock)} ${esc(i.unit)} left</td></tr>`).join('')}</tbody></table>`
+            : '<p class="empty small">All tracked items are well stocked</p>'}
         </section>
       </div>`;
 

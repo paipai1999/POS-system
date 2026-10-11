@@ -10,16 +10,16 @@ Object.assign(Screens.order, {
     const ready = Store.readyTickets().some(k => k.orderId === order.id);
     return `
       <div class="ticket-head">
-        <button class="btn small" data-act="back">← Tables</button>
+        <button class="btn small" data-act="back">${icon('arrow-left')} Tables</button>
         <div class="grow">
           <div class="t-title">${esc(whereLabel(order))}</div>
           <div class="muted small">#${orderNo(order)} · ${esc(staff ? staff.name : '')} · ${fmtTime(order.createdAt)}</div>
-          ${order.customerId && Store.customer(order.customerId) ? `<div class="small">👤 ${esc(Store.customer(order.customerId).name)}</div>` : ''}
+          ${order.customerId && Store.customer(order.customerId) ? `<div class="small">${icon('user')} ${esc(Store.customer(order.customerId).name)}</div>` : ''}
         </div>
         <button class="icon-btn" data-act="more" title="More options" aria-label="More options">⋯</button>
       </div>
-      ${ready ? '<div class="ready-banner">🍽️ Food is ready in the kitchen <button class="btn small" data-act="served">Mark served</button></div>' : ''}
-      ${order.note ? `<div class="order-note">📝 ${esc(order.note)}</div>` : ''}
+      ${ready ? `<div class="ready-banner">${icon('utensils')} Food is ready in the kitchen <button class="btn small" data-act="served">Mark served</button></div>` : ''}
+      ${order.note ? `<div class="order-note">${icon('file-text')} ${esc(order.note)}</div>` : ''}
       <div class="ticket-lines">
         ${empty ? '<p class="empty">Tap menu items to add them</p>' : order.items.map(l => `
           <div class="line">
@@ -39,8 +39,8 @@ Object.assign(Screens.order, {
       </div>
       <div class="totals">${totalsHTML(t)}</div>
       <div class="ticket-actions">
-        <button class="btn" data-act="send" ${unsent ? '' : 'disabled'}>🍳 Send${unsent ? ` (${unsent})` : ''}</button>
-        <button class="btn" data-act="bill" ${empty ? 'disabled' : ''}>🧾 Print bill</button>
+        <button class="btn" data-act="send" ${unsent ? '' : 'disabled'}>${icon('send')} Send${unsent ? ` (${unsent})` : ''}</button>
+        <button class="btn" data-act="bill" ${empty ? 'disabled' : ''}>${icon('receipt')} Print bill</button>
         ${App.can('checkout') ? `<button class="btn primary big span-2" data-act="pay" ${empty ? 'disabled' : ''}>Pay ${money(t.total)}</button>` : ''}
       </div>`;
   },

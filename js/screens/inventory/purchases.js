@@ -40,7 +40,7 @@ Object.assign(Screens.inventory, {
         <input class="input" type="number" min="0" step="any" inputmode="decimal" placeholder="Amount" data-role="qty" value="${esc(l.qty)}">
         <span class="unit">${esc(unitOf(l.ingredientId))}</span>
         <input class="input" type="number" min="0" step="${moneyStep()}" inputmode="decimal" placeholder="Price paid" data-role="total" value="${esc(l.total)}">
-        <button class="icon-btn" data-act="del" data-i="${i}" aria-label="Remove">✕</button>
+        <button class="icon-btn" data-act="del" data-i="${i}" aria-label="Remove">${icon('x')}</button>
       </div>`).join('');
     const sumText = () => {
       const total = state.lines.reduce((n, l) => n + (parseFloat(l.total) || 0), 0);

@@ -1,11 +1,11 @@
 'use strict';
 
-// Live overview of the floor. Orders tab: every open order by stage (ordering → in the kitchen → ready to serve → waiting
+// Live overview of the floor. Overview tab (js/screens/dashboard-overview.js): the day's numbers and charts. Orders tab: every open order by stage (ordering → in the kitchen → ready to serve → waiting
 // for payment) plus what was paid today. Tables tab: every table at a glance, with how long it has been seated.
 Screens.dashboard = {
   perm: 'tables',
   live: ['orders', 'tables', 'guestRequests', 'kitchenTickets', 'users', 'settings'],
-  state: { tab: 'orders', filter: 'all' },
+  state: { tab: null, filter: 'all' },
   timer: null,
   root: null,
 
@@ -22,7 +22,15 @@ Screens.dashboard = {
     return d.getTime();
   },
 
-  // Everything the two tabs need, worked out once per render.
+  // The tab shown: the owner's Overview for people who may see takings, otherwise the order board.
+  currentTab() {
+    const st = this.state;
+    const overview = App.can('reports');
+    if (st.tab === 'overview' && !overview) return 'orders';
+    return st.tab || (overview ? 'overview' : 'orders');
+  },
+
+  // Everything the tabs need, worked out once per render.
   gather() {
     const tickets = Store.data.kitchenTickets;
     const open = Store.openOrders().map(o => {
@@ -44,17 +52,18 @@ Screens.dashboard = {
     this.root = root;
     const st = this.state;
     const g = this.gather();
+    const tab = this.currentTab();
+    const tabs = [...(App.can('reports') ? [['overview', 'Overview']] : []), ['orders', 'Orders'], ['tables', 'Tables']];
     root.innerHTML = `
       <div class="page-head">
         <h1>Dashboard</h1>
         <div class="actions">
           <div class="seg">
-            <button data-act="tab" data-tab="orders" class="${st.tab === 'orders' ? 'active' : ''}">Orders</button>
-            <button data-act="tab" data-tab="tables" class="${st.tab === 'tables' ? 'active' : ''}">Tables</button>
+            ${tabs.map(([k, label]) => `<button data-act="tab" data-tab="${k}" class="${tab === k ? 'active' : ''}">${label}</button>`).join('')}
           </div>
         </div>
       </div>
-      ${st.tab === 'orders' ? this.ordersHTML(g) : this.tablesHTML(g)}`;
+      ${tab === 'overview' ? this.overviewHTML(g) : tab === 'orders' ? this.ordersHTML(g) : this.tablesHTML(g)}`;
 
     root.onclick = e => {
       const t = e.target.closest('[data-act]');
@@ -96,9 +105,9 @@ Screens.dashboard = {
     const oldest = list => (list.length ? this.minutes(list[0].since) : 0);
     const money$ = App.can('checkout') || App.can('reports');
     const paidTotal = g.paid.reduce((n, o) => n + Store.totals(o).total, 0);
-    const column = (icon, title, list, card, cls = '') => `
+    const column = (ic, title, list, card, cls = '') => `
       <section class="dash-col ${cls}">
-        <h2><span>${icon} ${title}</span><span class="count">${list.length}</span></h2>
+        <h2><span>${icon(ic)} ${title}</span><span class="count">${list.length}</span></h2>
         <div class="dash-list">${list.map(card).join('') || '<p class="empty small">Nothing here</p>'}</div>
       </section>`;
     return `
@@ -110,11 +119,11 @@ Screens.dashboard = {
         ${money$ ? this.stat('Paid today', g.paid.length, money(paidTotal)) : ''}
       </div>
       <div class="dash-board">
-        ${column('✏️', 'Ordering', ordering, x => this.orderCard(x))}
-        ${column('👨‍🍳', 'In the kitchen', cooking, x => this.orderCard(x))}
-        ${column('🍽️', 'Ready to serve', ready, x => this.orderCard(x), 'is-ready')}
-        ${column('💳', 'Waiting for payment', payment, x => this.orderCard(x))}
-        ${column('✅', 'Paid today', g.paid.slice(0, 12), o => this.paidCard(o), 'is-paid')}
+        ${column('pencil', 'Ordering', ordering, x => this.orderCard(x))}
+        ${column('chef-hat', 'In the kitchen', cooking, x => this.orderCard(x))}
+        ${column('utensils', 'Ready to serve', ready, x => this.orderCard(x), 'is-ready')}
+        ${column('credit-card', 'Waiting for payment', payment, x => this.orderCard(x))}
+        ${column('circle-check', 'Paid today', g.paid.slice(0, 12), o => this.paidCard(o), 'is-paid')}
       </div>`;
   },
 
@@ -130,10 +139,10 @@ Screens.dashboard = {
         <button class="dc-main" data-act="order" data-id="${o.id}">
           <span class="dc-top"><b>${esc(whereLabel(o))}</b><span class="muted">#${orderNo(o)}</span></span>
           <ul class="dc-items">${lines}${o.items.length > 3 ? `<li class="muted">+ ${o.items.length - 3} more</li>` : ''}${o.items.length ? '' : '<li class="muted">No items yet</li>'}</ul>
-          <span class="dc-meta">${esc(staff ? staff.name : '')}${o.customerId && Store.customer(o.customerId) ? ` · 👤 ${esc(Store.customer(o.customerId).name)}` : ''}</span>
-          <span class="dc-foot"><span class="dc-time"><span aria-hidden="true">🕒</span> <span>${timeAgo(since)}</span></span><b>${money(total)}</b></span>
+          <span class="dc-meta">${esc(staff ? staff.name : '')}${o.customerId && Store.customer(o.customerId) ? ` · ${icon('user', 1)} ${esc(Store.customer(o.customerId).name)}` : ''}</span>
+          <span class="dc-foot"><span class="dc-time"><span aria-hidden="true">${icon('clock', 1)}</span> <span>${timeAgo(since)}</span></span><b>${money(total)}</b></span>
         </button>
-        ${ticket ? `<button class="btn small primary" data-act="served" data-id="${ticket.id}">✓ Served</button>` : ''}
+        ${ticket ? `<button class="btn small primary" data-act="served" data-id="${ticket.id}">${icon('check')} Served</button>` : ''}
       </div>`;
   },
 
@@ -143,7 +152,7 @@ Screens.dashboard = {
       <button class="dash-card paid dc-main" data-act="paid" data-id="${o.id}">
         <span class="dc-top"><b>${esc(whereLabel(o))}</b><span class="muted">#${orderNo(o)}</span></span>
         <span class="dc-meta">${esc(staff ? staff.name : '')}${o.payment ? ` · ${esc(PAY_METHODS[o.payment.method] || '')}` : ''}</span>
-        <span class="dc-foot"><span class="dc-time"><span aria-hidden="true">🕒</span> <span>${timeAgo(o.paidAt)}</span></span><b>${money(Store.totals(o).total)}</b></span>
+        <span class="dc-foot"><span class="dc-time"><span aria-hidden="true">${icon('clock', 1)}</span> <span>${timeAgo(o.paidAt)}</span></span><b>${money(Store.totals(o).total)}</b></span>
       </button>`;
   },
 
@@ -184,7 +193,7 @@ Screens.dashboard = {
         ${shown.map(r => this.floorTile(r)).join('') || (tables.length ? '<p class="empty">No tables match</p>' : '<p class="empty">No tables yet. Add some in Settings.</p>')}
       </div>
       ${takeaways.length && st.filter !== 'free' ? `
-        <h2 class="section-title">🥡 Takeaway orders</h2>
+        <h2 class="section-title">${icon('shopping-bag')} Takeaway orders</h2>
         <div class="dash-list wide">${takeaways.map(x => this.orderCard(x)).join('')}</div>` : ''}`;
   },
 
@@ -200,7 +209,7 @@ Screens.dashboard = {
           <span class="ft-meta">${x.items} item${x.items === 1 ? '' : 's'} · ${esc(staff ? staff.name : '')}</span>
           <span class="ft-meta"><span>Seated</span> <span>${timeAgo(x.order.createdAt)}</span></span>
           <span class="ft-total">${money(x.total)}</span>` : '<span class="ft-meta">Tap to start an order</span>'}
-        ${calling || status === 'ready' ? `<span class="t-bell">${status === 'ready' ? '🍽️' : ''}${calling ? '🔔' : ''}</span>` : ''}
+        ${calling || status === 'ready' ? `<span class="t-bell">${status === 'ready' ? icon('utensils', 1) : ''}${calling ? icon('bell', 1) : ''}</span>` : ''}
       </button>`;
   },
 };

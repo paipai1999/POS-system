@@ -8,7 +8,7 @@
 .kds-empty { grid-column: 1 / -1; font-size: 1.2rem; }
 .kds-card { display: flex; flex-direction: column; gap: .4rem; background: var(--panel); border: 2px solid var(--line); border-top: 8px solid var(--ok); border-radius: var(--radius); padding: .85rem 1rem 1rem; box-shadow: var(--shadow); }
 .kds-card.warn { border-top-color: #d97706; }
-.kds-card.late { border-top-color: var(--danger); background: #fff7f7; }
+.kds-card.late { border-top-color: var(--danger); background: var(--late-bg); }
 .kds-card header { display: flex; justify-content: space-between; font-size: 1.15rem; }
 .kds-meta { font-size: .8rem; color: var(--muted); }
 .kds-time { font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; }

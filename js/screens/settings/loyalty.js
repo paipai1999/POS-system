@@ -28,7 +28,7 @@ Object.assign(Screens.settings, {
         <input class="input" data-f="minSpent" type="number" min="0" step="any" placeholder="From spent" value="${esc(t.minSpent)}">
         <input class="input" data-f="earnPercent" type="number" min="0" max="100" step="0.5" placeholder="Earn %" value="${esc(t.earnPercent ?? '')}">
         <input class="input" data-f="discountPercent" type="number" min="0" max="100" step="0.5" placeholder="Discount %" value="${esc(t.discountPercent ?? '')}">
-        <button class="icon-btn" data-act="tier-del" data-i="${i}" aria-label="Remove">✕</button>
+        <button class="icon-btn" data-act="tier-del" data-i="${i}" aria-label="Remove">${icon('x')}</button>
       </div>`).join('') || '<p class="muted small">No levels yet.</p>';
   },
 

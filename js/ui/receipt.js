@@ -98,7 +98,7 @@ function showReceipt(orderId, { title = 'Receipt', onClose = null } = {}) {
   Modal.open({
     title,
     body: `${change ? `<div class="change">Change due <span>${money(change)}</span></div>` : ''}<div data-role="receipt" data-order="${esc(orderId)}">${receiptHTML(order)}</div>`,
-    footer: `<button class="btn" data-act="__close">Done</button><button class="btn primary" data-act="print">🖨️ Print</button>`,
+    footer: `<button class="btn" data-act="__close">Done</button><button class="btn primary" data-act="print">${icon('printer')} Print</button>`,
     // Printed from the current copy of the bill, which in server mode gains the points earned a moment after payment.
     actions: { print: () => { const o = Store.order(orderId); if (o) printHTML(receiptHTML(o)); } },
     onClose,
