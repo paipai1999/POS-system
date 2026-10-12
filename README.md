@@ -57,7 +57,7 @@ Devices keep working. The top bar shows **Offline · N waiting**, and changes ar
 - **Daily backups:** a copy is saved every day in `server/data/backups` (newest 30 kept). **That is the same disk as the data**, so it does not protect against a failed disk.
 - **Backup to a USB drive or cloud folder:** **Settings → Data & backup → Backup folders**. Enter the full path of up to two existing folders (a USB drive, or a OneDrive / Google Drive / Dropbox folder). A copy is saved there every day, and the screen shows when each folder last got one and warns if a drive is unplugged or all copies are on the same disk. **Back up now** makes a fresh copy immediately.
 - **Moving data:** **Settings → Export / Import backup** moves data between machines (including from single-device mode to the server).
-- **Activity log:** **Settings → Activity log** lists who changed prices, stock, staff, settings or tax, who voided, refunded or discounted a bill, who closed a shift with a difference, and who signed in or downloaded the data. It cannot be edited and is kept for 13 months.
+- **Activity log:** **Settings → Activity log** lists who changed prices, stock, staff, settings or tax, who voided, refunded or discounted a bill, who took items off a bill after they were sent to the kitchen, who closed a shift with a difference, and who signed in or downloaded the data. It cannot be edited and is kept for 13 months.
 
 ### HTTPS (optional)
 
@@ -69,7 +69,7 @@ By default devices talk to the server over plain HTTP, which is fine on a Wi-Fi 
 - **Ordering**: category and search menu, quantities, per-item kitchen notes, order notes, and **priced options** (extra shot +0.50, large +1.00 …) that you define per item under Menu & Stock.
 - **Split the bill**: ⋯ → *Split the bill* moves chosen items onto a separate bill that is paid on its own.
 - **Kitchen display**: live ticket queue with timers that turn amber after 10 minutes and red after 20. **Ready** notifies the waiter.
-- **Checkout**: % or fixed discount (manager approval), tax, optional service charge, an optional **tip**, and payment by cash, card, other, or **split between methods** (for example 2,000 cash and the rest by card). Cash shows quick-cash buttons and the change due. The server recalculates every bill itself.
+- **Checkout**: % or fixed discount (manager approval), tax, optional service charge, an optional **tip**, and payment by cash, card, other, or **split between methods** (for example 2,000 cash and the rest by card). Cash shows quick-cash buttons and the change due. The server recalculates every bill itself, and it refuses to take items off a bill once they were sent to the kitchen unless a manager approves (a manager signed in, or a manager's PIN typed on that device).
 - **Cash drawer**: *Cash drawer → Start shift* with the cash in the drawer; at the end *Close shift*, count the cash, and the POS shows the difference against what should be there (opening cash + cash taken − cash refunds). Past shifts are listed.
 - **Receipts**: 80 mm receipts and pre-bills with tip and split payments.
 - **Money format**: *Settings → Money format* — US dollar ($1,234.50) or Myanmar kyat (1,500 Ks, no decimals, symbol after), or custom. Changing the format does not convert prices; edit them under Menu & Stock.

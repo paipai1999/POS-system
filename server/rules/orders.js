@@ -9,9 +9,14 @@ const json = v => JSON.stringify(v ?? null);
 
 function cleanItems(items) {
   if (!Array.isArray(items) || items.length > 200) reject('Invalid order items');
+  const ids = new Set();
   for (const l of items) {
     if (!isObj(l) || !Number.isInteger(l.qty) || l.qty < 1 || l.qty > 999 || typeof l.price !== 'number' || l.price < 0) {
       reject('Invalid order line');
+    }
+    if (typeof l.id === 'string') {                       // lines are matched by id, so one id on two lines could hide a removal
+      if (ids.has(l.id)) reject('Invalid order line');
+      ids.add(l.id);
     }
     if (l.mods !== undefined && (!Array.isArray(l.mods) || l.mods.length > 8 ||
         l.mods.some(m => !isObj(m) || typeof m.name !== 'string' || typeof m.price !== 'number'))) {
@@ -19,6 +24,38 @@ function cleanItems(items) {
     }
   }
 }
+
+const sentOf = l => Math.max(0, Number(l.sentQty) || 0);   // how many of a line were sent to the kitchen
+
+// The items of the stored bill `prev` that the new version `items` no longer has, counting only what was already sent to
+// the kitchen. A line whose "sent" count was lowered counts too: that is the first step of taking it off later.
+function sentItemsRemoved(prev, items) {
+  const now = new Map(items.map(l => [l.id, l]));
+  const out = [];
+  for (const old of prev.items) {
+    const sent = sentOf(old);
+    if (!sent) continue;
+    const cur = now.get(old.id);
+    const kept = cur ? Math.min(cur.qty, sentOf(cur)) : 0;
+    if (kept < sent) out.push({ name: old.name, qty: sent - kept });
+  }
+  return out;
+}
+
+// Food that went to the kitchen cannot just disappear from the bill. As on the screen, a manager does it, or a manager
+// types their PIN on this device first. Returns that manager.
+function sentItemsApprover(db, ctx) {
+  if (can(ctx.user, 'manage')) return ctx.user;
+  for (const id of ctx.approvers ? ctx.approvers() : []) {
+    const approver = db.doc('users', id);
+    if (approver && can(approver, 'manage')) return approver;
+  }
+  return reject('Manager approval required to take off items that were already sent to the kitchen');
+}
+
+// A kitchen ticket that has not been voided means the kitchen was told to cook for this bill.
+const hasKitchenTicket = (db, orderId) =>
+  db.where('kitchenTickets', "json_extract(data, '$.orderId') = ? AND COALESCE(json_extract(data, '$.status'), '') != 'void'", orderId).length > 0;
 
 // Line prices are copied from the menu when an item is added and never change afterwards, so a device
 // cannot invent a price: a new line must match the menu, an existing line must keep its price.
@@ -164,7 +201,8 @@ function prepareOrder(db, ctx, id, prev, data, deleted, changed) {
   const { user } = ctx;
   need(user, 'tables');
   if (deleted) {
-    if (prev && (prev.status !== 'open' || prev.items.some(l => l.sentQty > 0))) reject('Only unsent open orders can be removed');
+    // "Sent" is also checked against the kitchen's own tickets, because a device could leave the sent counts at zero.
+    if (prev && (prev.status !== 'open' || prev.items.some(l => sentOf(l) > 0) || hasKitchenTicket(db, id))) reject('Only unsent open orders can be removed');
     return null;
   }
   cleanItems(data.items);
@@ -197,6 +235,9 @@ function prepareOrder(db, ctx, id, prev, data, deleted, changed) {
   if (data.number == null && data.items.length) data.number = nextOrderNo(db);
 
   checkLinePrices(db, prev, data.items);
+  // (A void takes the whole bill off and has its own approval below.)
+  const removedSent = prev && data.status !== 'void' ? sentItemsRemoved(prev, data.items) : [];
+  const sentApprover = removedSent.length ? sentItemsApprover(db, ctx) : null;
   if (data.status === 'open') { checkStock(db, prev, data); checkIngredients(db, prev, data); }
 
   if (data.discount && json(data.discount) !== json(prev && prev.discount)) {
@@ -239,6 +280,12 @@ function prepareOrder(db, ctx, id, prev, data, deleted, changed) {
     needApproval(db, ctx, data.voidedBy);
   } else if (data.status !== 'open') {
     reject('Invalid order status');
+  }
+  if (removedSent.length) {   // written last: a change that is refused above must leave no entry behind
+    db.addAudit({
+      user, action: 'sent items removed', target: `#${prev.number ?? '–'}${prev.tableName ? ' ' + prev.tableName : ''}`,
+      detail: `${removedSent.map(r => `${r.qty} x ${r.name}`).join(', ')} taken off after being sent to the kitchen; approved by ${sentApprover.name}`,
+    });
   }
   return data;
 }
