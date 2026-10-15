@@ -23,5 +23,6 @@ Object.assign(I18N.dict, {
   'That PIN is too easy to guess. Choose another.': 'ထိုပင်နံပါတ်သည် ခန့်မှန်းရလွယ်ပါသည်။ အခြားတစ်ခု ရွေးပါ။',
   'That PIN is already used by someone else': 'ထိုပင်နံပါတ်ကို အခြားသူ သုံးနေပြီးဖြစ်ပါသည်',
   'Too many wrong PINs. Wait 30 seconds and try again.': 'ပင်နံပါတ် အကြိမ်များစွာ မှားနေပါသည်။ ၃၀ စက္ကန့်စောင့်ပြီး ပြန်ကြိုးစားပါ။',
+  'Too many PIN changes. Wait a few minutes and try again.': 'ပင်နံပါတ် အကြိမ်များစွာ ပြောင်းထားပါသည်။ ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ။',
   'Please sign in again': 'ထပ်မံ ဝင်ပါ',
 });

@@ -137,6 +137,13 @@ I18N.patterns.push(
   [/^Payment( \(cash\))?( \(void\))?( · .+)?$/, 'ငွေပေးချေမှု$1$2$3'],
   [/^Only (.+) is owed to (.+)$/, '$2 ကို $1 သာ ပေးရန်ကျန်သည်'],
   [/^(.+) is still owed money\. Pay it first, or deactivate the supplier instead$/, '$1 ကို ငွေပေးရန်ကျန်နေသည်။ အရင်ပေးပါ၊ သို့မဟုတ် ပေးသွင်းသူကို ရပ်ဆိုင်းပါ'],
+  // the lock after too many wrong PINs (the wait is in seconds up to a minute and a half, then in minutes)
+  [/^Too many wrong PINs for (.+)\. Wait (\d+) seconds and try again$/, '$1 အတွက် ပင်နံပါတ် အကြိမ်များစွာ မှားနေပါသည်။ $2 စက္ကန့် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
+  [/^Too many wrong PINs for (.+)\. Wait (\d+) minutes and try again$/, '$1 အတွက် ပင်နံပါတ် အကြိမ်များစွာ မှားနေပါသည်။ $2 မိနစ် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
+  [/^Too many wrong PINs entered from (.+)'s sign-in\. Wait (\d+) seconds and try again$/, '$1 ၏ ဝင်ရောက်မှုမှ ပင်နံပါတ် အကြိမ်များစွာ မှားထည့်ထားပါသည်။ $2 စက္ကန့် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
+  [/^Too many wrong PINs entered from (.+)'s sign-in\. Wait (\d+) minutes and try again$/, '$1 ၏ ဝင်ရောက်မှုမှ ပင်နံပါတ် အကြိမ်များစွာ မှားထည့်ထားပါသည်။ $2 မိနစ် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
+  [/^Too many wrong PINs entered here\. Wait (\d+) seconds and try again$/, 'ဤနေရာတွင် ပင်နံပါတ် အကြိမ်များစွာ မှားထည့်ထားပါသည်။ $1 စက္ကန့် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
+  [/^Too many wrong PINs entered here\. Wait (\d+) minutes and try again$/, 'ဤနေရာတွင် ပင်နံပါတ် အကြိမ်များစွာ မှားထည့်ထားပါသည်။ $1 မိနစ် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
   // role + description in the role drop-down
   [/^(Admin|Manager|Cashier|Waiter|Kitchen) — (.+)$/, '$1 — $2']
 );

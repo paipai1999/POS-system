@@ -5,6 +5,9 @@
 Object.assign(I18N.dict, {
   'signed in': 'ဝင်ရောက်သည်',
   'sign-in blocked': 'ဝင်ခွင့်ပိတ်ထားသည်',
+  'account locked': 'အကောင့်ကို ခေတ္တပိတ်ထားသည်',
+  'PIN change refused': 'ပင်နံပါတ်ပြောင်းခြင်း ငြင်းပယ်သည်',
+  'sent items removed': 'ပို့ပြီးသားပစ္စည်း ဖယ်ရှားသည်',
   'manager PIN entered': 'မန်နေဂျာပင်နံပါတ် ထည့်သည်',
   'own PIN changed': 'ကိုယ်ပိုင်ပင်နံပါတ် ပြောင်းသည်',
   'price changed': 'ဈေးနှုန်း ပြောင်းသည်',

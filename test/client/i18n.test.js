@@ -51,6 +51,17 @@ test('sentences with numbers and names are translated around the data', () => {
   assert.equal(I18N.tr('  Tables  '), '  စားပွဲများ  ', 'spaces around the text are kept');
 });
 
+test('the messages about too many wrong PINs are translated, with the name and the wait kept', () => {
+  const cases = {
+    'Too many wrong PINs. Wait 30 seconds and try again.': 'ပင်နံပါတ် အကြိမ်များစွာ မှားနေပါသည်။ ၃၀ စက္ကန့်စောင့်ပြီး ပြန်ကြိုးစားပါ။',
+    'Too many wrong PINs for Maya. Wait 60 seconds and try again.': 'Maya အတွက် ပင်နံပါတ် အကြိမ်များစွာ မှားနေပါသည်။ 60 စက္ကန့် စောင့်ပြီး ပြန်ကြိုးစားပါ။',
+    'Too many wrong PINs for Maya. Wait 5 minutes and try again.': 'Maya အတွက် ပင်နံပါတ် အကြိမ်များစွာ မှားနေပါသည်။ 5 မိနစ် စောင့်ပြီး ပြန်ကြိုးစားပါ။',
+    "Too many wrong PINs entered from Leo's sign-in. Wait 30 seconds and try again.": 'Leo ၏ ဝင်ရောက်မှုမှ ပင်နံပါတ် အကြိမ်များစွာ မှားထည့်ထားပါသည်။ 30 စက္ကန့် စောင့်ပြီး ပြန်ကြိုးစားပါ။',
+    'Too many wrong PINs entered here. Wait 2 minutes and try again.': 'ဤနေရာတွင် ပင်နံပါတ် အကြိမ်များစွာ မှားထည့်ထားပါသည်။ 2 မိနစ် စောင့်ပြီး ပြန်ကြိုးစားပါ။',
+  };
+  for (const [en, my] of Object.entries(cases)) assert.equal(I18N.tr(en), my, en);
+});
+
 test('anything unknown stays as it is, and what people typed is never invented into something else', () => {
   for (const typed of ['Espresso', 'Pancake Stack', 'Table 12', 'Lemonade', 'မုန့်ဟင်းခါး', '12', '$4.50', 'a@b.com']) assert.equal(I18N.tr(typed), null, typed);
   assert.equal(I18N.tr(''), null);

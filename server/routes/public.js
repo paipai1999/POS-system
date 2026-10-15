@@ -30,8 +30,15 @@ const routes = {
     auth.checkLock(ip);
     const { userId, pin } = await readJSON(req);
     const user = typeof userId === 'string' ? db.doc('users', userId) : null;
-    if (!user || !user.active || !pinMatches(user, pin)) { auth.pinFailed(ip, user ? user.name : ''); throw new HttpError(401, 'Incorrect PIN'); }
+    const key = user && user.active ? 'login:' + user.id : null;   // (only real people get a count, so the list cannot grow with made-up ids)
+    if (key) auth.checkGuard(key, `for ${user.name}`);
+    if (!key || !pinMatches(user, pin)) {
+      auth.pinFailed(ip, user ? user.name : '');
+      if (key) auth.guardFailed(key, user.name, ip);
+      throw new HttpError(401, 'Incorrect PIN');
+    }
     auth.clearFailures(ip);
+    auth.guardCleared(key);
     db.addAudit({ user, action: 'signed in', detail: `from ${ip}` });
     sendJSON(res, 200, { token: db.createSession(user.id), user: rules.stripUser(user), mustChangePin: hasDemoPin(user, DEMO_PINS) });
   },
@@ -41,10 +48,18 @@ const routes = {
     const { db, auth } = app;
     const ip = req.socket.remoteAddress;
     auth.checkLock(ip);
+    // Signed in: the count follows that person. A table tablet in guest mode has nobody signed in and shares one count.
+    const session = auth.authenticate(req, url);
+    const key = session ? 'verify:' + session.user.id : 'verify:guest';
+    auth.checkGuard(key, session ? `entered from ${session.user.name}'s sign-in` : 'entered here');
     const { pin } = await readJSON(req);
     const user = db.all('users').find(u => u.active && pinMatches(u, pin));
-    if (!user) { auth.pinFailed(ip); throw new HttpError(401, 'Wrong PIN'); }
-    const session = auth.authenticate(req, url);
+    if (!user) {
+      auth.pinFailed(ip);
+      auth.guardFailed(key, session ? session.user.name : 'staff PIN box (nobody signed in)', ip);
+      throw new HttpError(401, 'Wrong PIN');
+    }
+    auth.guardCleared(key);
     db.addAudit({ user: session ? session.user : null, action: 'manager PIN entered', target: user.name, detail: 'approval check' });
     auth.clearFailures(ip);
     if (session) auth.approve(session.token, user.id);
