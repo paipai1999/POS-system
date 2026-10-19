@@ -5,3 +5,4 @@ tr.needs-check td { background: var(--warn-soft); }
 @media (max-width: 480px) {
   .clock-btn span { display: none; }
 }
+tr.total-row td { border-top: 2px solid var(--line-strong); }

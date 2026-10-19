@@ -27,8 +27,9 @@ async function lastDays(t) {
   t.click('[data-act=range][data-range=custom]');
   await t.until(() => t.$('[data-role=from]'));
   t.type('[data-role=from]', isoDay(new Date(Date.now() - 4 * 24 * HOUR)));
+  await t.until(() => t.$('[data-role=to]') && !t.$('.empty:not(.small)'), { what: 'older bills to be fetched' });   // (the bills of an older period are loaded first)
   t.type('[data-role=to]', isoDay(new Date()));
-  await t.until(() => /Custom/.test(t.text('.seg .active')));
+  await t.until(() => /Custom/.test(t.text('.seg .active') || ''));
 }
 const rows = t => t.$$('.table-wrap').flatMap(w => [...w.querySelectorAll('tbody tr')]).map(r => r.textContent.replace(/\s+/g, ' ').trim());
 
@@ -189,6 +190,41 @@ test('hourly pay is set on the Staff form and turns hours into wages', opts, asy
   await t.until(() => db().doc('users', leo.id).hourlyRate === undefined, { what: 'the pay to be cleared' });
 });
 
+test('tips: collected, paid out, own and shared by hours, and the kitchen can be left out of the pool', opts, async () => {
+  const leo = db().all('users').find(u => u.name === 'Leo');
+  const maya = db().all('users').find(u => u.name === 'Maya');
+  const bill = (id, who, tip, ago) => db().put('orders', id, {
+    id, number: 900 + Number(id.slice(-1)), status: 'paid', staffId: who.id, cashierId: maya.id, createdAt: Date.now() - ago - HOUR, paidAt: Date.now() - ago, items: [],
+    totals: { subtotal: 20, discount: 0, points: 0, service: 0, tax: 0, total: 20 }, payment: { method: 'cash', amount: 20, tip },
+  });
+  const kit = db().all('users').find(u => u.name === 'Kitchen');
+  db().put('attendance', 'kitshift', { id: 'kitshift', userId: kit.id, userName: 'Kitchen', in: Date.now() - 30 * HOUR, out: Date.now() - 26 * HOUR, by: kit.id });
+  bill('tipo1', leo, 3, 2 * HOUR); bill('tipo2', leo, 2, 3 * HOUR); bill('tipo3', maya, 1, 4 * HOUR);
+  db().put('expenses', 'tipx1', { id: 'tipx1', date: Date.now() - HOUR, category: 'Tips paid to staff', amount: 2, method: 'cash', status: 'active', note: '', by: maya.id });
+
+  const t = await open();
+  await t.signIn('Admin', '582913');
+  t.click('[data-nav=attendance]');
+  await t.until(() => t.screen() === 'attendance');
+  await lastDays(t);
+  await t.until(() => t.$$('.section-title').some(h => /^Tips$/.test(h.textContent.trim())), { what: 'the tips section' });
+  const stats = () => t.$$('.stats.compact .stat').map(c => c.textContent.replace(/\s+/g, ' ').trim()).join(' | ');
+  assert.match(stats(), /Tips collected\s*\$6\.00\s*3 bills/);
+  assert.match(stats(), /Paid out to staff\s*\$2\.00/);
+  assert.match(stats(), /Still to pay\s*\$4\.00/);
+  const table = () => t.$$('.table-wrap').map(w => [...w.querySelectorAll('tbody tr')].map(r => r.textContent.replace(/\s+/g, ' ').trim())).find(rs => rs.some(r => /^Total/.test(r)));
+  const leoRow = table().find(r => /^Leo/.test(r));
+  assert.match(leoRow, /^Leo 2 \$5\.00 /, 'two bills with tips, $5 in all');
+  assert.match(table().find(r => /^Total/.test(r)), /^Total\s*3\s*\$6\.00/);
+  const sharesTo = () => table().filter(r => !/^Total/.test(r)).map(r => Number((r.match(/\$([\d.]+)$/) || [])[1] || 0)).reduce((n, v) => n + v, 0);
+  assert.ok(Math.abs(sharesTo() - 6) < 0.011, `the shares add up to the pool: ${sharesTo()}`);
+  assert.ok(table().some(r => /^Kitchen/.test(r) && /\$[\d.]+$/.test(r)), 'the kitchen shares by default');
+  t.click('[data-role=kitchen]');
+  await t.until(() => !table().some(r => /^Kitchen/.test(r) && /\$[\d.]+$/.test(r)), { what: 'the kitchen to leave the pool' });
+  assert.ok(Math.abs(sharesTo() - 6) < 0.011, 'still adds up');
+  assert.match(t.text('#main'), /record the payment in Finance → Expenses/);
+});
+
 test('Myanmar: the clock, the screen and the form are translated', opts, async () => {
   const t = await open({ lang: 'my' });
   await t.signIn('Admin', '582913');
@@ -200,7 +236,7 @@ test('Myanmar: the clock, the screen and the form are translated', opts, async (
   await t.until(() => t.screen() === 'attendance');
   await lastDays(t);
   await t.sleep(80);
-  assert.deepEqual(latin('.page-head h1, .page-head .btn, .toolbar .seg button, .stats .label, .section-title, .data th, .pill, .empty, .onshift'), []);
+  assert.deepEqual(latin('.page-head h1, .page-head .btn, .toolbar .seg button, .stats .label, .section-title, .data th, .pill, .empty, .onshift, .check, p.muted.small span, .total-row td:first-child'), []);
   t.click('[data-act=new]');
   await t.until(() => t.get('Modal.isOpen'));
   await t.sleep(80);

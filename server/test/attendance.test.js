@@ -402,3 +402,65 @@ test('clocking in again after forgetting to clock out closes the old shift and f
     assert.deepEqual(report.forgotten, []);
   } finally { await t.stop(); }
 });
+
+// ----- tips -----
+
+const bill = (id, staff, tip, over = {}) => ({ id, status: 'paid', staffId: staff, cashierId: 'maya', paidAt: at(3, 13), totals: { subtotal: 20, discount: 0, points: 0, service: 0, tax: 0, total: 20 }, payment: { method: 'cash', amount: 20, ...(tip ? { tip } : {}) }, ...over });
+const paidOut = (amount, over = {}) => ({ id: 'tp' + amount, date: at(5), category: 'Tips paid to staff', amount, method: 'cash', status: 'active', ...over });
+
+test('tips: each person\'s own tips come from the bills they took; refunded tips stay, voided and open bills do not count', () => {
+  const orders = [
+    bill('t1', 'leo', 3), bill('t2', 'leo', 2, { payment: { method: 'card', amount: 20, tip: 2 } }), bill('t3', 'maya', 1.5),
+    bill('t4', 'leo', 0), bill('t5', 'leo', 9, { status: 'void' }), bill('t6', 'leo', 9, { status: 'open', paidAt: null }),
+    bill('t7', 'leo', 9, { paidAt: at(12) }), bill('t8', 'zed', 4, { status: 'refunded', refundedAt: at(4, 12) }),
+  ];
+  const r = F.tipsReport(WEEK, { users: staff, orders, attendance: [] }, SETTINGS);
+  assert.equal(r.total, 10.5, '3 + 2 + 1.5 + 4 (a refund gives back the bill, not the tip)');
+  assert.equal(r.bills, 4);
+  const own = Object.fromEntries(r.people.map(p => [p.name, [p.bills, p.own]]));
+  assert.deepEqual(own, { Leo: [2, 5], Zed: [1, 4], Maya: [1, 1.5] });
+  assert.deepEqual(r.byMethod, { cash: 8.5, card: 2, other: 0 });
+  assert.equal(r.canShare, false, 'no hours: nothing to share by');
+  assert.deepEqual(r.withoutHours.sort(), ['Leo', 'Maya', 'Zed']);
+  assert.ok(r.people.every(p => p.share === 0));
+  assert.equal(r.paidOut, 0);
+  assert.equal(r.toPay, 10.5);
+});
+
+test('tips: paying tips out is counted, and a voided payout is not', () => {
+  const data = { users: staff, orders: [bill('t1', 'leo', 10)], attendance: [], expenses: [paidOut(6), paidOut(3, { status: 'void' }), paidOut(7, { date: at(20) }), { ...paidOut(5), category: 'Rent' }] };
+  const r = F.tipsReport(WEEK, data, SETTINGS);
+  assert.equal(r.paidOut, 6);
+  assert.equal(r.toPay, 4);
+});
+
+test('tips: the shared pool is divided by hours worked and always adds up to the pool', () => {
+  const data = { users: staff, orders: [bill('t1', 'leo', 10), bill('t2', 'leo', 0.01)], attendance: sheet };
+  const r = F.tipsReport(WEEK, data, SETTINGS);
+  assert.equal(r.total, 10.01);
+  assert.equal(r.poolHours, 23.5);
+  const share = Object.fromEntries(r.people.map(p => [p.name, p.share]));
+  assert.deepEqual(Object.keys(share).sort(), ['Leo', 'Maya', 'Zed']);
+  assert.equal(Object.values(share).reduce((n, v) => n + v, 0).toFixed(2), '10.01', 'to the cent, whatever the rounding');
+  assert.ok(Math.abs(share.Leo - 10.01 * 11.5 / 23.5) < 0.011);
+  assert.ok(Math.abs(share.Maya - 10.01 * 8 / 23.5) < 0.011);
+  assert.ok(Math.abs(share.Zed - 10.01 * 4 / 23.5) < 0.011);
+  assert.equal(r.people.find(p => p.name === 'Maya').own, 0, 'she took no bill with a tip but still shares');
+  assert.deepEqual(r.withoutHours, []);
+
+  // Leaving the kitchen out of the pool.
+  const floor = F.tipsReport(WEEK, data, SETTINGS, { excludeRoles: ['kitchen'] });
+  assert.equal(floor.poolHours, 19.5);
+  assert.equal(floor.people.find(p => p.name === 'Zed').share, 0);
+  assert.equal(floor.people.reduce((n, p) => n + p.share, 0).toFixed(2), '10.01');
+});
+
+test('tips: a forgotten clock-out does not take a share, and no tips is an empty report', () => {
+  const data = { users: staff, orders: [bill('t1', 'leo', 6)], attendance: [shift('a', 'leo', 2, 9, 13), shift('f', 'maya', 3, 9, null)] };
+  const r = F.tipsReport(WEEK, data, SETTINGS, {});
+  assert.equal(r.people.find(p => p.name === 'Leo').share, 6, 'Maya\'s shift has no real end, so it counts for nothing');
+  assert.equal(r.people.find(p => p.name === 'Maya')?.share || 0, 0);
+  const none = F.tipsReport(WEEK, { users: staff, orders: [], attendance: sheet }, SETTINGS);
+  assert.deepEqual([none.total, none.bills, none.canShare, none.toPay], [0, 0, true, 0]);
+  assert.ok(none.people.every(p => p.share === 0 && p.own === 0));
+});

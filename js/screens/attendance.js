@@ -6,9 +6,9 @@
 Screens.attendance = {
   perm: 'manage',
 
-  live: ['attendance', 'users', 'settings'],
+  live: ['attendance', 'users', 'settings', 'orders', 'expenses'],
 
-  state: { range: 'week', from: isoDate(new Date()), to: isoDate(new Date()) },
+  state: { range: 'week', from: isoDate(new Date()), to: isoDate(new Date()), kitchenShares: true },
 
   root: null,
 
@@ -39,14 +39,16 @@ Screens.attendance = {
 
   report() { return Finance.attendanceReport(this.bounds(), Store.data, Store.settings); },
 
+  tips() { return Finance.tipsReport(this.bounds(), Store.data, Store.settings, { excludeRoles: this.state.kitchenShares ? [] : ['kitchen'] }); },
+
   render(root) {
     this.root = root;
     const st = this.state;
-    // In server mode a device holds only the last weeks of records; an older period is fetched first.
+    // In server mode a device holds only the last weeks of records; an older period is fetched first (the bills too, for the tips).
     const from = this.bounds()[0];
-    if (!Sync.ledgerLoaded(from)) {
+    if (!Sync.historyLoaded(from)) {
       root.innerHTML = '<div class="page-head"><h1>Staff hours</h1></div><p class="empty">Loading time sheets…</p>';
-      Sync.loadLedger(from)
+      Sync.loadHistory(from)
         .then(() => { if (App.screen === 'attendance') this.render(root); })
         .catch(e => { root.innerHTML = `<p class="empty">${esc(e.message)}</p>`; });
       return;
@@ -59,7 +61,7 @@ Screens.attendance = {
       <div class="page-head">
         <h1>Staff hours</h1>
         <div class="actions">
-          <button class="btn" data-act="csv" ${rep.shifts.length ? '' : 'disabled'}>${icon('download')} Export CSV</button>
+          <button class="btn" data-act="csv" ${rep.shifts.length || this.tips().total > 0 ? '' : 'disabled'}>${icon('download')} Export CSV</button>
           <button class="btn primary" data-act="new">＋ Add a shift</button>
         </div>
       </div>
@@ -112,6 +114,7 @@ Screens.attendance = {
             </tr>`).join('')}
           </tbody>
         </table></div>` : '<p class="empty small">No shifts in this period</p>'}
+      ${this.tipsHTML()}
       <p class="muted small spaced">Staff clock themselves in and out with the clock button in the menu bar; the time is the server's. A shift counts on the day it started. A shift left running for more than 16 hours is taken to be a forgotten clock-out and counts for nothing until you correct it. Wages are hours × the hourly pay set under Staff, before any tax or deduction.</p>`;
 
     root.onclick = e => {
@@ -127,7 +130,43 @@ Screens.attendance = {
     root.onchange = e => {
       const role = e.target.dataset.role;
       if (role === 'from' || role === 'to') { st[role] = e.target.value; this.render(root); }
+      else if (role === 'kitchen') { st.kitchenShares = e.target.checked; this.render(root); }
     };
+  },
+
+  // Tips of the period: collected, paid out, and how each person's amount comes out by their own bills and by shared hours.
+  tipsHTML() {
+    const tp = this.tips();
+    if (!(tp.total > 0) && !(tp.paidOut > 0)) return `<h2 class="section-title">Tips</h2><p class="empty small">No tips in this period</p>`;
+    const stat = (label, value, sub = '') => `<div class="card stat"><div class="label">${label}</div><div class="value">${value}</div>${sub ? `<div class="muted small">${sub}</div>` : ''}</div>`;
+    return `
+      <h2 class="section-title">Tips</h2>
+      <div class="stats compact">
+        ${stat('Tips collected', money(tp.total), `${tp.bills} bill${tp.bills === 1 ? '' : 's'}`)}
+        ${stat('Paid out to staff', money(tp.paidOut))}
+        ${stat('Still to pay', money(tp.toPay))}
+      </div>
+      <label class="check"><input type="checkbox" data-role="kitchen" ${this.state.kitchenShares ? 'checked' : ''}> Kitchen staff share in the pool</label>
+      <div class="table-wrap"><table class="data compact">
+        <thead><tr><th>Name</th><th class="num">Bills with a tip</th><th class="num">Own tips</th><th class="num">Hours</th><th class="num">Shared by hours</th></tr></thead>
+        <tbody>${tp.people.map(p => `
+          <tr>
+            <td><b>${esc(p.name)}</b></td>
+            <td class="num">${p.bills || '<span class="muted">–</span>'}</td>
+            <td class="num">${p.own ? money(p.own) : '<span class="muted">–</span>'}</td>
+            <td class="num">${p.hours > 0 ? hoursText(p.hours) : '<span class="muted">–</span>'}</td>
+            <td class="num">${p.share > 0 ? `<b>${money(p.share)}</b>` : '<span class="muted">–</span>'}</td>
+          </tr>`).join('')}
+          <tr class="total-row"><td><b>Total</b></td><td class="num">${tp.bills}</td><td class="num"><b>${money(tp.total)}</b></td><td class="num">${tp.canShare ? hoursText(tp.poolHours) : ''}</td><td class="num">${tp.canShare ? `<b>${money(tp.total)}</b>` : ''}</td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted small">
+        <span>Own tips are the tips on the bills each person took. Shared by hours divides all the tips of the period by the hours people worked, so a tip is shared with whoever was on shift.</span>
+        ${tp.canShare ? '' : '<span>Nobody has hours in this period yet, so there is nothing to share by.</span>'}
+        ${tp.withoutHours.length ? `<span>${tp.withoutHours.map(esc).join(', ')} took tips but have no hours recorded, so they have no share.</span>` : ''}
+        <span>Choose whichever way you pay tips out; then record the payment in Finance → Expenses, category “Tips paid to staff” (it is not a cost of the restaurant).</span>
+        ${tp.byMethod.cash && (tp.byMethod.card || tp.byMethod.other) ? `<span>Of the tips, ${money(tp.byMethod.cash)} was handed over in cash and ${money(tp.byMethod.card + tp.byMethod.other)} by card or another way.</span>` : ''}
+      </p>`;
   },
 
   editedTitle(r) {
@@ -200,6 +239,7 @@ Screens.attendance = {
   exportCSV() {
     const [a, b] = this.bounds();
     const rep = this.report();
+    const tp = this.tips();
     const h = n => Math.round(n * 100) / 100;
     const cell = v => {
       const s = String(v ?? '');
@@ -212,6 +252,8 @@ Screens.attendance = {
       [],
       ['Date', 'Name', 'In', 'Out', 'Break (min)', 'Hours', 'Note', 'Corrected by a manager'],
       ...rep.shifts.map(r => [isoDate(new Date(r.in)), r.name, fmtTime(r.in), r.out == null ? '' : `${isoDate(new Date(r.out))} ${fmtTime(r.out)}`, r.breakMinutes || '', r.forgotten ? 'no clock-out' : h(r.hours), r.note || '', r.edited ? 'yes' : '']),
+      ...(tp.total > 0 ? [[], ['Tips'], ['Name', 'Bills with a tip', 'Own tips', 'Hours', 'Shared by hours'],
+        ...tp.people.map(p => [p.name, p.bills, p.own, h(p.hours), p.share]), ['Total', tp.bills, tp.total, h(tp.poolHours), tp.canShare ? tp.total : ''], ['Paid out', '', tp.paidOut], ['Still to pay', '', tp.toPay]] : []),
     ];
     downloadFile(`staff-hours_${isoDate(new Date(a))}_to_${isoDate(new Date(b - 1))}.csv`, rows.map(r => r.map(cell).join(',')).join('\n'), 'text/csv');
   },
