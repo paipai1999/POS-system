@@ -65,6 +65,7 @@
         p('Sparkling Water', 'Cold Drinks', 2.0, '💧', '330 ml bottle', 40),
       ],
       tables: Array.from({ length: 10 }, (_, i) => ({ id: uid('t_'), name: 'Table ' + (i + 1), guestCode: guestCode() })),
+      reservations: [],
       orders: [],
       guestRequests: [],
       kitchenTickets: [],

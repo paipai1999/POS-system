@@ -7,6 +7,7 @@ const Screens = {};
 
 const NAV = [
   { id: 'tables', label: 'Tables', icon: 'layout-grid', perm: 'tables' },
+  { id: 'reservations', label: 'Reservations', icon: 'calendar', perm: 'tables' },
   { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', perm: 'tables' },
   { id: 'kitchen', label: 'Kitchen', icon: 'chef-hat', perm: 'kitchen' },
   { id: 'orders', label: 'Orders', icon: 'receipt', perm: 'orders' },

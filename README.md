@@ -69,6 +69,7 @@ By default devices talk to the server over plain HTTP, which is fine on a Wi-Fi 
 
 - **Tables & takeaway**: table map with live totals, time open, assigned server, and move-table.
 - **Ordering**: category and search menu, quantities, per-item kitchen notes, order notes, and **priced options** (extra shot +0.50, large +1.00 …) that you define per item under Menu & Stock.
+- **Reservations** (*Reservations*): take a booking (name, phone, guests, date and time, table, how long to hold it, a note), see the day's list with who is late, and **seat** a booking, which opens the bill at its table. A table that is booked within the next two hours shows who is coming on the table map. Two waiting bookings can never hold the same table at the same time: the server refuses the second and says who has it (every device can book at once without double-booking). Cancelling or marking a no-show frees the table; a waiter cannot undo that, a manager can. Bookings are in backups and the activity log, are never sent to the kitchen screen or to guests, and work in single-device mode too.
 - **Split the bill**: ⋯ → *Split the bill* moves chosen items onto a separate bill that is paid on its own.
 - **Kitchen display**: live ticket queue with timers that turn amber after 10 minutes and red after 20. **Ready** notifies the waiter.
 - **Checkout**: % or fixed discount (manager approval), tax, optional service charge, an optional **tip**, and payment by cash, card, other, or **split between methods** (for example 2,000 cash and the rest by card). **Payment names** (*Settings → Payment names*: KBZPay, Wave Pay, AYA Pay, bank transfer…) let the cashier say which wallet an *Other* payment went through; the name shows on the receipt, in the order list and in the reports (and in the dashboard's payment mix), while the money still counts as bank / other in the cash flow. Cash shows quick-cash buttons and the change due. The server recalculates every bill itself, and it refuses to take items off a bill once they were sent to the kitchen unless a manager approves (a manager signed in, or a manager's PIN typed on that device).
@@ -111,6 +112,8 @@ By default devices talk to the server over plain HTTP, which is fine on a Wi-Fi 
 | Permission                        | Admin | Manager | Cashier | Waiter | Kitchen |
 |-----------------------------------|:-----:|:-------:|:-------:|:------:|:-------:|
 | Tables, orders, guest requests    | ✓ | ✓ | ✓ | ✓ (open orders + own) |   |
+| Reservations: take, change, cancel, seat | ✓ | ✓ | ✓ | ✓ |   |
+| Reservations: delete one, reopen a seated / cancelled / no-show one | ✓ | ✓ |   |   |   |
 | Kitchen display (tickets only)    | ✓ | ✓ |   |   | ✓ |
 | Take payments, cash drawer        | ✓ | ✓ | ✓ |   |   |
 | Approve voids, refunds, discounts | ✓ | ✓ |   |   |   |

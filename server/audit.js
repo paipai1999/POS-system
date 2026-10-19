@@ -53,6 +53,14 @@ function describe(col, prev, next, deleted, nameOf = () => null) {
       if (!prev) return [{ action: 'table created', target: next.name, detail: '' }];
       if (prev.name !== next.name) add('table renamed', next.name, `from "${prev.name}"`);
       break;
+    case 'reservations': {
+      const when = t => new Date(t).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+      if (deleted) return [{ action: 'reservation deleted', target: prev?.name || '', detail: prev ? when(prev.at) : '' }];
+      if (!prev) return [{ action: 'reservation made', target: next.name, detail: `${next.guests} guest${next.guests === 1 ? '' : 's'}, ${when(next.at)}` }];
+      if (prev.status !== next.status && ['cancelled', 'noshow'].includes(next.status)) add(next.status === 'noshow' ? 'reservation no-show' : 'reservation cancelled', next.name, when(next.at));
+      else if (prev.at !== next.at || prev.tableId !== next.tableId || prev.guests !== next.guests) add('reservation changed', next.name, when(next.at));
+      break;
+    }
     case 'categories':
       if (deleted) return [{ action: 'category deleted', target: prev?.name || '', detail: '' }];
       if (!prev) return [{ action: 'category created', target: next.name, detail: '' }];

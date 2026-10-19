@@ -164,7 +164,8 @@ class Database {
         OR (col = 'kitchenTickets' AND (json_extract(data, '$.status') IN ('new', 'ready') OR json_extract(data, '$.createdAt') >= ?))
         OR (col = 'printJobs' AND json_extract(data, '$.status') IN ('pending', 'printing') AND json_extract(data, '$.createdAt') >= ?)
         OR (col = 'shifts' AND (json_extract(data, '$.closedAt') IS NULL OR json_extract(data, '$.openedAt') >= ?))
-      ) ORDER BY rowid`).all(Date.now() - LEDGER_DAYS * 24 * 60 * 60 * 1000, since, Date.now() - 90 * 24 * 60 * 60 * 1000, Date.now() - 90 * 24 * 60 * 60 * 1000, since, since, Date.now() - 30 * 60 * 1000, Date.now() - 90 * 24 * 60 * 60 * 1000).map(r => this.row(r));
+        OR (col = 'reservations' AND (json_extract(data, '$.status') = 'booked' OR json_extract(data, '$.at') >= ?))
+      ) ORDER BY rowid`).all(Date.now() - LEDGER_DAYS * 24 * 60 * 60 * 1000, since, Date.now() - 90 * 24 * 60 * 60 * 1000, Date.now() - 90 * 24 * 60 * 60 * 1000, since, since, Date.now() - 30 * 60 * 1000, Date.now() - 90 * 24 * 60 * 60 * 1000, since).map(r => this.row(r));
   }
 
   // Records dated before this are not sent at sign-in; a device asks for them (GET /api/ledger) when a report needs them.

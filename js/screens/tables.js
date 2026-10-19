@@ -2,7 +2,7 @@
 
 Screens.tables = {
   perm: 'tables',
-  live: ['orders', 'tables', 'guestRequests', 'kitchenTickets', 'users', 'settings'],
+  live: ['orders', 'tables', 'guestRequests', 'kitchenTickets', 'users', 'settings', 'reservations'],
 
   render(root) {
     const pending = App.can('guest') ? Store.pendingRequests() : [];
@@ -90,13 +90,15 @@ Screens.tables = {
     const food = o && ready.some(k => k.orderId === o.id);
     const items = o ? o.items.reduce((n, l) => n + l.qty, 0) : 0;
     const staff = o && Store.user(o.staffId);
+    const booked = Store.nextReservationFor(t.id);
     return `
-      <button class="table-tile ${o ? 'busy' : ''} ${alert ? 'alert' : ''} ${food ? 'ready' : ''}" data-act="table" data-id="${t.id}">
+      <button class="table-tile ${o ? 'busy' : ''} ${alert ? 'alert' : ''} ${food ? 'ready' : ''} ${booked ? 'booked' : ''}" data-act="table" data-id="${t.id}">
         <span class="t-name">${esc(t.name)}</span>
         ${o ? `
           <span class="t-meta">${items} item${items === 1 ? '' : 's'} · ${timeAgo(o.createdAt)}</span>
           <span class="t-meta">${esc(staff ? staff.name : '')}</span>
           <span class="t-total">${money(Store.totals(o).total)}</span>` : '<span class="t-meta">Free</span>'}
+        ${booked ? `<span class="t-booked" title="${esc(booked.name)}">${icon('calendar', 1)} ${fmtTime(booked.at)} · ${esc(booked.name)} (${booked.guests})</span>` : ''}
         ${alert || food ? `<span class="t-bell">${food ? icon('utensils', 1) : ''}${alert ? icon('bell', 1) : ''}</span>` : ''}
       </button>`;
   },

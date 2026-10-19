@@ -160,6 +160,13 @@ I18N.patterns.push(
   // payment names
   [/^"(.+)" is already a payment method\. Choose another name$/, '“$1” သည် ငွေပေးချေနည်း ဖြစ်ပြီးသားဖြစ်သည်။ အခြားအမည် ရွေးပါ'],
   [/^At most (\d+) payment names$/, 'ငွေပေးချေမှုအမည် $1 ခုအထိသာ ထားနိုင်သည်'],
+  // reservations
+  [/^Delete the booking for (.+)$/, '$1 ၏ ကြိုတင်မှာမှုကို ဖျက်မလား'],
+  [/^Seat (.+)$/, '$1 ကို ထိုင်စေရန်'],
+  [/^Choose a free table for (\d+) guests$/, '$1 ဦးအတွက် လွတ်နေသောစားပွဲကို ရွေးပါ'],
+  [/^(.+) is already booked (.+)–(.+) for (.+)$/, '$1 ကို $2–$3 အတွက် $4 က ကြိုတင်မှာထားပြီးဖြစ်သည်'],
+  [/^Guests must be between 1 and (\d+)$/, 'ဧည့်သည်အရေအတွက်သည် ၁ မှ $1 အတွင်း ဖြစ်ရမည်'],
+  [/^The table is held for (\d+) to (\d+) minutes$/, 'စားပွဲကို မိနစ် $1 မှ $2 အတွင်း ထိန်းထားနိုင်သည်'],
   // role + description in the role drop-down
   [/^(Admin|Manager|Cashier|Waiter|Kitchen) — (.+)$/, '$1 — $2']
 );
