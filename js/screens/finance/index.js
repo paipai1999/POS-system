@@ -3,14 +3,14 @@
 // Finance (managers and admins): the financial statements and the money records behind them.
 // This file is the screen itself: the tabs, loading older records, and sending clicks to the right tab.
 //   period.js       the period (today, this month, custom…) and the "compared with" period
-//   profit-loss.js  kpis.js  patterns.js  menu.js  cash-flow.js  position.js  tax.js  expenses.js  daily-close.js  controls.js     one file per tab
+//   profit-loss.js  kpis.js  patterns.js  menu.js  cash-flow.js  position.js  tax.js  expenses.js  daily-close.js  controls.js  branches.js     one file per tab
 //   export.js       CSV files and printing
 //
 // A tab is an object registered in Screens.finance.tabs:
 //   { label, uses: 'period' | 'now' | 'day', perm?, needFrom?(f), html(f), csv?(f), actions?: { name: (f, target) => … }, changes?: { role: (f, target) => … } }
 // `perm` hides the tab from people without that permission; `needFrom` says how far back its records must reach (a moment).
 // `f` is this screen. `uses` says which period the tab works on: the chosen period, "as of now", or one calendar day.
-const FINANCE_TAB_ORDER = ['pl', 'kpis', 'patterns', 'menu', 'cash', 'position', 'tax', 'receivables', 'expenses', 'close', 'controls'];
+const FINANCE_TAB_ORDER = ['pl', 'kpis', 'patterns', 'menu', 'cash', 'position', 'tax', 'receivables', 'expenses', 'close', 'controls', 'branches'];
 
 Screens.finance = {
   perm: 'reports',

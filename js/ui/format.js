@@ -3,8 +3,10 @@
 // How numbers, money, dates and order labels are shown.
 
 // Amounts follow the Settings: symbol before or after the number, 2 or 0 decimals, thousands separated by commas.
-function money(n) {
-  const s = Store.settings;
+function money(n) { return moneyWith(Store.settings, n); }
+
+// The same, in the money of any shop's settings (used when several shops are shown together).
+function moneyWith(s, n) {
   const dec = decimalsOf(s);
   const v = roundTo(n, dec);
   const body = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });

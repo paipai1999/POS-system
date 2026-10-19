@@ -74,3 +74,10 @@ button.link { padding: 0; border: 0; background: none; color: var(--accent-2); f
 .kpi { display: flex; flex-direction: column; gap: .25rem; align-items: flex-start; }
 .kpi .pill { margin-top: .2rem; }
 .kpi-hint { margin-top: .15rem; }
+
+/* Branches: the backup files being compared. */
+.branch-files { display: grid; gap: .4rem; margin: .5rem 0 1rem; }
+.branch-files li { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.branch-files .input { width: auto; flex: 1 1 12rem; max-width: 22rem; }
+.branch-table tr.best td { background: var(--ok-soft); }
+.branch-table .neg { color: var(--danger); }

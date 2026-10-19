@@ -19,6 +19,7 @@
 //   menu.js         menu engineering: stars, plowhorses, puzzles and dogs
 //   attendance.js   staff hours and wages from the time sheets
 //   tips.js         tips by person and the pool shared by hours worked
+//   branches.js     several shops side by side, each from its own backup file
 //   kpis.js         business health: food, labour and prime cost, rent, net margin, break-even
 module.exports = Object.assign({},
   require('./finance/core.js'),
@@ -35,5 +36,6 @@ module.exports = Object.assign({},
   require('./finance/menu.js'),
   require('./finance/attendance.js'),
   require('./finance/tips.js'),
-  require('./finance/kpis.js')
+  require('./finance/kpis.js'),
+  require('./finance/branches.js')
 );
