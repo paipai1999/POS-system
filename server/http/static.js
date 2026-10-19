@@ -19,6 +19,7 @@ const notFound = res => { res.writeHead(404, SECURITY_HEADERS); res.end('Not fou
 function servePhoto(req, res, url, dataDir) {
   let name = '';
   try { name = decodeURIComponent(url.pathname.slice('/photos/'.length)); } catch (e) { /* not found below */ }
+  if (name.includes('\0')) return notFound(res);
   const f = photos.read(dataDir, name);
   if (!f) return notFound(res);
   res.writeHead(200, { ...SECURITY_HEADERS, 'Content-Type': f.type, 'Content-Length': f.buf.length, 'Cache-Control': 'public, max-age=31536000, immutable' });
@@ -30,6 +31,7 @@ function servePhoto(req, res, url, dataDir) {
 function serveStatic(req, res, url, { testDir = null } = {}) {
   let rel;
   try { rel = decodeURIComponent(url.pathname); } catch (e) { rel = ''; }
+  if (rel.includes('\0')) return notFound(res);   // a null byte makes fs.readFile throw; no file name has one
   if (rel === '/') rel = '/index.html';
   let base = ROOT;
   if (testDir && rel.startsWith('/__test/')) { base = path.resolve(testDir); rel = rel.slice('/__test'.length); }

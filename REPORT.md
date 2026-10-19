@@ -127,12 +127,15 @@ Everything above is on this PC only. The last push to GitHub (bb69382) was befor
 
 Everything below is committed and pushed to GitHub (branch `ccr-e7e52610-2azu9a`); the suite went from 171 to 372 tests. Not merged into `main` and no pull request was opened.
 
-### Security (from the review you asked for)
+### Security (the review you asked for; the numbers are those of that review)
 | # | Finding | Fix |
 |---|---------|-----|
-| 1 | PIN guessing was limited per network address only: a guesser could alternate with a valid login to reset the count, and a PIN could be tried through the PIN-change and the manager-approval boxes | Per-account escalating lock (30 s, 1, 2, 5 minutes) that no other person's login resets; the PIN-change and manager-approval boxes have their own counts; the lock is reported in the activity log |
-| 2 | Items already sent to the kitchen could be taken off a bill without a manager | The server refuses it unless a manager approved (signed in, or a manager's PIN typed on that device) |
-| 3 | A demo PIN (1234, 1111…) could still be used for everything if a modified browser skipped the PIN-change dialog | The server itself allows nothing but the PIN change until the PIN is replaced |
+| 1 | **A waiter could discover the admin's PIN** through the PIN-change box (it said "already used by someone else" and never counted failures), then sign in as Admin | The PIN-change box now counts and locks failed attempts, so it can no longer be used to guess |
+| 2 | **Items already sent to the kitchen could be taken off a bill without a manager** (the screen asked, the server did not) | The server refuses it unless a manager approved (signed in, or a manager's PIN typed on that device), and logs it |
+| 3 | **PIN guessing** was limited per network address only: alternating with a valid login or using a second address avoided the lock, and the manager-approval box tests a PIN against everyone | Per-account escalating lock (30 s, then 1, 2 and 5 minutes) that no other person's login resets, plus a shared lock for the approval box (also when nobody is signed in, as on a table tablet); lock-outs are in the activity log |
+| 4 | **Demo PINs were only enforced in the browser** | The server itself allows nothing but the PIN change until the demo PIN is replaced |
+| 6 | **`/js/%00` crashed the file handler** (a 500 and a stack trace in the log; no data leaked) | A null byte in a path is a 404 now (fixed at the very end of this round; the other items were fixed earlier) |
+| 5 | A manager's approval covers 10 minutes of actions on that session, not one specific void | **Not changed**: a design trade-off, not a bug; it is worth knowing about |
 
 ### Reliability
 - **System health** (*Settings*, with a ⚠ mark in the top bar for admins): every backup is opened and checked as soon as it is made (a damaged copy is discarded and reported); stale or missing backups, all backups on the same disk as the data, low disk space and demo PINs are named in plain words.

@@ -63,6 +63,10 @@ test('only the app files are served: never the database, server code or anything
   for (const t of ['/js/../server/server.js', '/js/%2e%2e/server/server.js', '/js/..%2fserver/server.js', '/js/..%2fserver%2fdata%2fpos.db', '/css/..%2f..%2f..%2fwindows%2fwin.ini', '/css/../../../../windows/win.ini']) {
     assert.match(await raw(t), / 404 /, t);
   }
+  // A null byte used to make the file read throw (a 500 and a stack trace in the log); it is simply not a file now.
+  for (const t of ['/js/%00', '/css/%00.css', '/%00', '/js/store/core.js%00.png', '/photos/%00', '/photos/a%00.png']) {
+    assert.match(await raw(t), / 404 /, t);
+  }
 });
 
 test('the session token is not accepted in a way that lets other sites use it', async () => {
