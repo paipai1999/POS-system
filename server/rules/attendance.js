@@ -4,19 +4,19 @@
 // Anyone signed in can clock themselves in and out, and only themselves. The server's clock decides when: a device cannot
 // choose its own times. A recorded shift can only be changed or deleted by a manager (a forgotten clock-out, a missed shift),
 // and every such change is written to the activity log.
-const { attendanceProblem, attendanceOverlap, ATTENDANCE_MAX_BREAK } = require('../../js/shared.js');
+const { attendanceProblem, attendanceOverlap, ATTENDANCE_MAX_BREAK, ATTENDANCE_STALE } = require('../../js/shared.js');
 const { reject, need, can, cleanText } = require('../base.js');
 
 const clock = t => new Date(t).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
 
-function prepareAttendance(db, ctx, id, prev, data, deleted) {
+function prepareAttendance(db, ctx, id, prev, data, deleted, changed) {
   const me = ctx.user;
   if (!me || !me.active) reject('You do not have permission to do that');
   const manager = can(me, 'manage');
-  const all = db.all('attendance');
   const now = Date.now();
 
   if (deleted) { need(me, 'manage'); return null; }
+  let all = db.all('attendance');
 
   let doc;
   if (!prev) {
@@ -29,7 +29,13 @@ function prepareAttendance(db, ctx, id, prev, data, deleted) {
       doc = { id, userId: person.id, userName: person.name, in: Number(data.in), out: data.out == null ? null : Number(data.out), by: me.id, edited: true };
     } else {
       // Clocking in: now, for yourself.
-      if (all.some(e => e.userId === me.id && e.out == null)) reject('You are already clocked in');
+      const open = all.find(e => e.userId === me.id && e.out == null);
+      if (open) {
+        if (now - open.in <= ATTENDANCE_STALE) reject('You are already clocked in');
+        // The last shift was never ended. It is closed with a placeholder end and flagged, and a manager sets the real one.
+        changed.push(db.put('attendance', open.id, { ...open, out: open.in + 60000, autoClosed: true }));
+        all = db.all('attendance');
+      }
       doc = { id, userId: me.id, userName: me.name, in: now, out: null, by: me.id };
       if (data.out != null) reject('Clock out when the shift is over');
     }
@@ -37,6 +43,7 @@ function prepareAttendance(db, ctx, id, prev, data, deleted) {
     // The only change a person can make is to end their own running shift.
     if (prev.userId !== me.id || prev.out != null) reject('Only a manager can change a recorded shift');
     if (data.out == null) reject('Only a manager can change a recorded shift');
+    if (now - prev.in > ATTENDANCE_STALE) reject('This shift was left open too long to end it here. Ask a manager to correct it, then clock in again.');
     return { ...prev, out: now };
   } else {
     doc = { ...prev, in: Number(data.in), out: data.out == null ? null : Number(data.out), edited: true, editedBy: me.id, editedAt: now };

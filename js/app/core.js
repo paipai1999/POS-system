@@ -25,6 +25,7 @@ const App = {
       if (b.dataset.nav === 'menu') $('#topbar').classList.toggle('menu-open'); // the ☰ button on phones
       else if (b.dataset.nav === 'lang') { I18N.toggle(); this.render(); }
       else if (b.dataset.nav === 'theme') Theme.toggle();
+      else if (b.dataset.nav === 'clock') this.clockPressed();
       else if (b.dataset.nav === 'logout') this.logout();
       else this.go(b.dataset.nav);
     });

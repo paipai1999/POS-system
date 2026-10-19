@@ -1,0 +1,7 @@
+/* Staff hours: the time sheet and the clock in the menu bar. */
+.onshift { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .6rem; margin: .5rem 0 1rem; }
+tr.needs-check td { background: var(--warn-soft); }
+.clock-btn.on { background: var(--ok-solid, rgba(255, 255, 255, .16)); border-color: transparent; }
+@media (max-width: 480px) {
+  .clock-btn span { display: none; }
+}

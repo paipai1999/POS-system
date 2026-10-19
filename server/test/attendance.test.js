@@ -272,3 +272,133 @@ test('a backup and the one-day ledger carry the time sheets', async () => {
     assert.equal((Buffer.isBuffer(exported) ? JSON.parse(exported.toString()) : exported).attendance.length, 3);
   } finally { await t.stop(); }
 });
+
+// ----- the hours report and the labour estimate -----
+
+const F = require('../../js/finance.js');
+const SETTINGS = { currency: '$', decimals: 2 };
+const at = (d, h = 9, m = 0) => new Date(2026, 2, d, h, m).getTime();      // March 2026 (the 2nd is a Monday)
+const WEEK = [at(2, 0), at(9, 0)];
+const shift = (id, userId, day, from, to, over = {}) => ({ id, userId, userName: userId, in: at(day, from), out: to === null ? null : at(day, to), ...over });
+const staff = [{ id: 'leo', name: 'Leo', role: 'waiter', hourlyRate: 2.5 }, { id: 'maya', name: 'Maya', role: 'cashier', hourlyRate: 4 }, { id: 'zed', name: 'Zed', role: 'kitchen' }];
+const sheet = [
+  shift('a1', 'leo', 2, 9, 17, { breakMinutes: 30 }),     // 7.5 h
+  shift('a2', 'leo', 3, 9, 13),                           // 4 h
+  shift('a3', 'maya', 2, 10, 18),                         // 8 h
+  shift('a4', 'zed', 4, 8, 12),                           // 4 h, no hourly pay set
+  shift('a5', 'leo', 9, 9, 17),                           // the next week: not in this one
+  shift('a6', 'leo', 1, 20, 23),                          // the Sunday before: not in this one
+];
+
+test('hours: totals, days and wages per person for a week', () => {
+  const r = F.attendanceReport(WEEK, { users: staff, attendance: sheet }, SETTINGS, at(8, 12));
+  assert.deepEqual(r.people.map(p => [p.name, p.hours]), [['Maya', 8], ['Leo', 11.5], ['Zed', 4]].sort((a, b) => b[1] - a[1]));
+  const leo = r.people.find(p => p.name === 'Leo');
+  assert.equal(leo.shifts, 2);
+  assert.equal(leo.days, 2);
+  assert.equal(leo.avgShift, 5.75);
+  assert.equal(leo.wages, 28.75, '11.5 h × 2.50');
+  assert.equal(r.people.find(p => p.name === 'Maya').wages, 32);
+  assert.equal(r.people.find(p => p.name === 'Zed').wages, null, 'no rate: no wages, not zero wages');
+  assert.equal(r.hours, 23.5);
+  assert.equal(r.wages, 60.75, 'only the people with a rate');
+  assert.deepEqual(r.withoutRate, ['Zed']);
+  assert.equal(r.shifts.length, 4);
+  assert.deepEqual(r.days.map(d => [d.date, d.hours, d.people]), [['2026-03-02', 15.5, 2], ['2026-03-03', 4, 1], ['2026-03-04', 4, 1]]);
+});
+
+test('hours: a night shift counts on the day it started, and the pay uses the exact hours', () => {
+  const night = { id: 'n', userId: 'leo', userName: 'Leo', in: at(3, 22), out: at(4, 6) };
+  assert.equal(F.attendanceReport([at(3, 0), at(4, 0)], { users: staff, attendance: [night] }, SETTINGS).hours, 8);
+  assert.equal(F.attendanceReport([at(4, 0), at(5, 0)], { users: staff, attendance: [night] }, SETTINGS).hours, 0);
+  const odd = { id: 'o', userId: 'leo', in: at(3, 9), out: at(3, 9, 20) };
+  const r = F.attendanceReport(WEEK, { users: staff, attendance: [odd] }, SETTINGS);
+  assert.equal(r.people[0].hours, 0.33);
+  assert.equal(r.people[0].wages, 0.83, '(1/3 h × 2.50, from the exact time rather than the rounded hours)');
+});
+
+test('hours: a shift still running counts up to now; a forgotten one counts for nothing and is listed', () => {
+  const now = at(4, 15);
+  const data = { users: staff, attendance: [shift('r', 'leo', 4, 9, null), shift('f', 'maya', 2, 9, null), shift('c', 'zed', 3, 9, 9, { autoClosed: true, out: at(3, 9) + 60000 })] };
+  const r = F.attendanceReport(WEEK, data, SETTINGS, now);
+  assert.equal(r.people.find(p => p.name === 'Leo').hours, 6, 'on shift since 09:00, now 15:00');
+  assert.equal(r.people.find(p => p.name === 'Leo').onShift, true);
+  assert.deepEqual(r.onShift, ['Leo']);
+  assert.equal(r.people.find(p => p.name === 'Maya').hours, 0, 'running for two days: surely forgotten');
+  assert.equal(r.people.find(p => p.name === 'Maya').forgotten, 1);
+  assert.equal(r.people.find(p => p.name === 'Zed').hours, 0, 'closed by the server with a placeholder end');
+  assert.deepEqual(r.forgotten.map(x => x.id).sort(), ['c', 'f']);
+  // Once a manager has set the real end, it counts.
+  data.attendance[1] = { ...data.attendance[1], out: at(2, 17), edited: true };
+  data.attendance[2] = { ...data.attendance[2], out: at(3, 13), edited: true };
+  const fixed = F.attendanceReport(WEEK, data, SETTINGS, now);
+  assert.equal(fixed.people.find(p => p.name === 'Maya').hours, 8);
+  assert.equal(fixed.people.find(p => p.name === 'Zed').hours, 4);
+  assert.deepEqual(fixed.forgotten, []);
+});
+
+test('hours: no time sheets is an empty report; a person who left is still named from the record', () => {
+  const none = F.attendanceReport(WEEK, {}, SETTINGS);
+  assert.deepEqual([none.people, none.shifts, none.hours, none.wages], [[], [], 0, 0]);
+  const gone = F.attendanceReport(WEEK, { users: [], attendance: [shift('x', 'old', 2, 9, 13, { userName: 'Old Timer' })] }, SETTINGS);
+  assert.equal(gone.people[0].name, 'Old Timer');
+  assert.equal(gone.people[0].wages, null);
+});
+
+test('health: with no salaries recorded, labour is estimated from the hours and said so; recorded salaries win', () => {
+  const sale = { id: 'k1', status: 'paid', paidAt: at(3), createdAt: at(3), staffId: 'leo', items: [{ name: 'Set', price: 1000, qty: 1, cost: 300 }], totals: { subtotal: 1000, discount: 0, points: 0, service: 0, tax: 0, total: 1000 } };
+  const range = [at(2, 0), at(9, 0)];
+  const est = F.businessKpis(range, { orders: [sale], expenses: [], users: staff, attendance: sheet }, SETTINGS);
+  const labour = est.lines.find(l => l.key === 'labour');
+  assert.equal(labour.amount, 60.75);
+  assert.equal(labour.estimated, true);
+  assert.match(labour.label, /estimated/);
+  assert.equal(est.lines.find(l => l.key === 'prime').amount, 360.75, 'food 300 + estimated labour');
+  assert.equal(est.staffHours, 23.5);
+  assert.equal(est.salesPerHour, 42.55, '1000 / 23.5');
+  assert.ok(est.notes.some(n => /estimated from the time sheets/.test(n)));
+  assert.ok(est.notes.some(n => /No hourly pay is set for Zed/.test(n)));
+  assert.equal(est.netProfit, 700, 'the estimate is not in the profit and loss');
+
+  const booked = F.businessKpis(range, { orders: [sale], expenses: [{ id: 'e', date: at(5), category: 'Salaries', amount: 90, method: 'cash', status: 'active' }], users: staff, attendance: sheet }, SETTINGS);
+  const real = booked.lines.find(l => l.key === 'labour');
+  assert.equal(real.amount, 90);
+  assert.ok(!real.estimated);
+  assert.ok(!booked.notes.some(n => /estimated from the time sheets/.test(n)));
+
+  const without = F.businessKpis(range, { orders: [sale], expenses: [] }, SETTINGS);
+  assert.equal(without.staffHours, 0);
+  assert.equal(without.salesPerHour, null);
+});
+
+// ----- a clock-out that was forgotten -----
+
+test('clocking in again after forgetting to clock out closes the old shift and flags it; the old one cannot be ended later', async () => {
+  const { t, admin, waiter, rows } = await setup();
+  try {
+    const old = { id: 'old1', userId: waiter.user.id, userName: 'Leo', in: Date.now() - 30 * HOUR, out: null, by: waiter.user.id };
+    t.app.db.put('attendance', old.id, old);
+    await waiter.load();
+
+    const end = await waiter.put('attendance', { ...waiter.doc('attendance', old.id), out: Date.now() });
+    assert.equal(end.status, 'error', 'a shift 30 hours old cannot be ended by clocking out');
+    assert.match(end.error, /left open too long/);
+
+    const inn = await waiter.put('attendance', { id: newId('at_'), userId: waiter.user.id });
+    assert.equal(inn.status, 'ok', inn.error);
+    const closed = t.app.db.doc('attendance', 'old1');
+    assert.equal(closed.autoClosed, true);
+    assert.ok(closed.out > closed.in && closed.out - closed.in <= 60000, 'a placeholder end, not hours of invented pay');
+    assert.equal(closed.edited, undefined);
+    assert.equal(rows(waiter).filter(e => e.out == null).length, 1, 'only the new shift is running');
+
+    // The manager sets the real end.
+    await admin.load();
+    const fixed = await admin.put('attendance', { ...admin.doc('attendance', 'old1'), out: closed.in + 9 * HOUR });
+    assert.equal(fixed.status, 'ok', fixed.error);
+    assert.equal(fixed.doc.edited, true);
+    const report = F.attendanceReport([Date.now() - 3 * 24 * HOUR, Date.now() + HOUR], { users: t.app.db.all('users'), attendance: t.app.db.all('attendance') }, SETTINGS);
+    assert.equal(report.people.find(p => p.name === 'Leo').shifts, 2);
+    assert.deepEqual(report.forgotten, []);
+  } finally { await t.stop(); }
+});

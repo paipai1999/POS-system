@@ -1,4 +1,6 @@
 /* The language switch. */
 .lang-btn { white-space: nowrap; }
+/* Narrow phones: the menu bar also holds the clock, so the switch shows only the globe (its tooltip names the languages). */
+@media (max-width: 480px) { .topbar .lang-btn .lang-name { display: none; } }
 .lang-corner { position: fixed; top: .75rem; right: .75rem; display: flex; gap: .4rem; }
 :lang(my) { line-height: 1.6; }

@@ -53,7 +53,11 @@ Screens.users = {
         if (v.pin && Store.data.users.some(x => x.id !== id && x.pin === v.pin)) return toast('That PIN is already used by someone else', 'error');
         if (!this.leavesAdmin(id, v.role, v.active)) return toast('At least one active admin is required', 'error');
         if (id === App.user.id && !v.active) return toast('You cannot deactivate yourself', 'error');
+        if (v.hourlyRate !== '' && !(Number(v.hourlyRate) >= 0)) return toast('Enter the hourly pay as a number', 'error');
         const data = { name: v.name, role: v.role, active: v.active };
+        // Hourly pay: an empty box clears it (the server keeps what it has unless it is told "null").
+        if (v.hourlyRate !== '') data.hourlyRate = rmoney(Number(v.hourlyRate));
+        else if (id && u.hourlyRate !== undefined) { if (Store.server) data.hourlyRate = null; else delete Store.user(id).hourlyRate; }
         if (v.pin) data.pin = v.pin;
         if (id) Object.assign(Store.user(id) || u, data);
         else Store.data.users.push({ id: uid('u_'), ...data });
@@ -93,6 +97,8 @@ Screens.users = {
           </select></label>
         <label class="field"><span>${id ? 'New PIN (leave blank to keep current)' : 'PIN (4–6 digits)'}</span>
           <input class="input" name="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password"></label>
+        <label class="field"><span>Hourly pay (optional)</span>
+          <input class="input" name="hourlyRate" type="number" min="0" step="${moneyStep()}" inputmode="decimal" value="${u.hourlyRate ? u.hourlyRate : ''}" placeholder="0"></label>
         <label class="check"><input type="checkbox" name="active" ${u.active ? 'checked' : ''}> Active (can sign in)</label>`,
       footer: `${id ? '<button class="btn danger" data-act="delete">Delete</button><span class="spacer"></span>' : ''}
         <button class="btn" data-act="__close">Cancel</button><button class="btn primary" data-act="save">Save</button>`,

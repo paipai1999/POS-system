@@ -17,6 +17,13 @@
     return Math.max(0, (end - e.in) / HOUR - num(e.breakMinutes) / 60);
   }
 
+  // A shift that is running but has been for so long that the clock-out was surely forgotten.
+  const forgotten = (e, now = Date.now()) => e.out == null && now - e.in > STALE;
+
+  // Hours that cannot be trusted until a manager looks at them: a forgotten clock-out, or a shift the server closed itself
+  // (when the person clocked in again without ever clocking out, `autoClosed`; the end it was given is only a placeholder).
+  const attendanceUnsure = (e, now = Date.now()) => forgotten(e, now) || (!!e.autoClosed && !e.edited);
+
   // The other record of the same person that overlaps `e` in time, or null. A shift still running overlaps everything after it began.
   function attendanceOverlap(list, e) {
     const end = e.out == null ? Infinity : e.out;
@@ -42,7 +49,7 @@
     return '';
   }
 
-  const api = { ATTENDANCE_STALE: STALE, ATTENDANCE_MAX_BREAK: MAX_BREAK, shiftHours, attendanceOverlap, attendanceProblem };
+  const api = { ATTENDANCE_STALE: STALE, ATTENDANCE_MAX_BREAK: MAX_BREAK, shiftHours, attendanceUnsure, attendanceOverlap, attendanceProblem };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else Object.assign(root, api);
 })(typeof window !== 'undefined' ? window : globalThis);

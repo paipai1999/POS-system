@@ -23,6 +23,7 @@
       <div class="stats compact">
         ${stat('Revenue', money(k.revenue), '<span>sales after discounts, before tax, with service charge</span>')}
         ${stat('Net profit', money(k.netProfit))}
+        ${k.salesPerHour === null ? '' : stat('Sales per staff hour', money(k.salesPerHour), `<span>revenue ÷ the hours staff clocked</span> · ${hoursText(k.staffHours)}`)}
       </div>
       <div class="stats">
         ${k.lines.map(card).join('')}
@@ -49,7 +50,7 @@
       <p class="muted small">All running costs in the period (rent, salaries, utilities…) are treated as fixed, and the cost of ingredients as varying with sales.</p>`}
 
       <div class="notes">
-        <p class="muted small">Prime cost (food + labour) is the figure restaurant owners watch hardest: it is the biggest part of the money going out, and the part you can steer. The verdicts compare with common ranges for table-service restaurants and cafes; yours may differ. Salaries and wages are taken from expenses with a name like Salaries, Wages or Payroll.</p>
+        <p class="muted small">Prime cost (food + labour) is the figure restaurant owners watch hardest: it is the biggest part of the money going out, and the part you can steer. The verdicts compare with common ranges for table-service restaurants and cafes; yours may differ. Salaries and wages are taken from expenses with a name like Salaries, Wages or Payroll; if there are none, labour is estimated from the staff hours and hourly pay.</p>
       </div>`;
   }
 
@@ -57,6 +58,7 @@
     const k = Finance.businessKpis(f.bounds(), Store.data, Store.settings);
     return [['Measure', 'Amount', 'Share of revenue', 'Verdict'],
       ['Revenue', k.revenue, '', ''],
+      ...(k.salesPerHour === null ? [] : [['Sales per staff hour', k.salesPerHour, '', ''], ['Staff hours', Math.round(k.staffHours * 100) / 100, '', '']]),
       ...k.lines.map(l => [l.label, l.amount, l.ratio === null ? '' : Math.round(l.ratio * 1000) / 10 + '%', VERDICT[l.status]]),
       ['Net profit', k.netProfit, Math.round(k.netMargin * 1000) / 10 + '%', VERDICT[k.netStatus]],
       [], ['Break-even revenue for the period', k.breakEven.revenue ?? ''], ['Break-even per day', k.breakEven.perDay ?? ''], ['Actual per day', k.breakEven.actualPerDay]];

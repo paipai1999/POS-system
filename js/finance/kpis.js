@@ -13,7 +13,7 @@
 (function (root) {
   const inNode = typeof module !== 'undefined' && module.exports;
   const { roundTo, decimalsOf } = inNode ? require('../shared.js') : root;
-  const finance = () => (inNode ? { ...require('./core.js'), ...require('./profit-loss.js') } : root.Finance);
+  const finance = () => (inNode ? { ...require('./core.js'), ...require('./profit-loss.js'), ...require('./attendance.js') } : root.Finance);
 
   const LABOUR = /salar|wage|payroll|labou?r|staff cost/i;
   const RENT = /rent|lease/i;
@@ -41,13 +41,17 @@
     const ratio = x => (revenue > 0 ? x / revenue : null);
 
     const sumOf = re => pl.expenses.filter(e => re.test(e.category)).reduce((n, e) => n + e.amount, 0);
-    const labour = sumOf(LABOUR), rent = sumOf(RENT);
+    // Wages: the salaries recorded as expenses; failing that, an estimate from the time sheets (hours × hourly pay).
+    const hoursReport = F.attendanceReport(range, data, settings);
+    const booked = sumOf(LABOUR), rent = sumOf(RENT);
+    const estimated = booked === 0 && hoursReport.wages > 0;
+    const labour = estimated ? hoursReport.wages : booked;
     const food = pl.cogs.total;
     const prime = food + labour;
 
     const lines = [
       { key: 'food', label: 'Food cost', amount: r(food), ratio: ratio(food) },
-      { key: 'labour', label: 'Labour', amount: r(labour), ratio: ratio(labour) },
+      { key: 'labour', label: estimated ? 'Labour (estimated from hours)' : 'Labour', amount: r(labour), ratio: ratio(labour), estimated },
       { key: 'prime', label: 'Prime cost (food + labour)', amount: r(prime), ratio: ratio(prime) },
       { key: 'occupancy', label: 'Rent', amount: r(rent), ratio: ratio(rent) },
     ].map(l => ({ ...l, status: l.ratio === null ? 'none' : verdict(l.key, l.ratio), hint: BENCHMARKS[l.key].text }));
@@ -62,6 +66,8 @@
     if (pl.cogs.coverage < 0.7 && revenue > 0) {
       notes.push(`Only ${Math.round(pl.cogs.coverage * 100)}% of item sales have a recipe, so food cost is understated. Add recipes under Menu & Stock to see the true figure.`);
     }
+    if (estimated && revenue > 0) notes.push('Labour is estimated from the time sheets (hours worked × each person\'s hourly pay). It is not in the profit and loss, so net profit is higher than it will be once the real salaries are recorded under Finance → Expenses (category Salaries).');
+    if (estimated && hoursReport.withoutRate.length) notes.push(`No hourly pay is set for ${hoursReport.withoutRate.join(', ')}, so their wages are not in the labour estimate. Set it under Staff.`);
     if (revenue > 0 && labour === 0) notes.push('No salaries or wages are recorded as expenses in this period, so labour and prime cost look better than they are. Record them under Finance → Expenses (category Salaries).');
 
     return {
@@ -70,6 +76,7 @@
       grossProfit: pl.grossProfit, netProfit: pl.netProfit, netMargin: pl.netMargin,
       netStatus: revenue <= 0 ? 'none' : pl.netMargin >= 0.10 ? 'good' : pl.netMargin >= 0.03 ? 'watch' : 'high',
       lines, running: r(running),
+      staffHours: hoursReport.hours, salesPerHour: hoursReport.hours > 0 ? r(revenue / hoursReport.hours) : null,
       breakEven: {
         revenue: breakEven === null ? null : r(breakEven),
         perDay: breakEven === null ? null : r(breakEven / days),

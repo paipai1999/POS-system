@@ -105,7 +105,8 @@ By default devices talk to the server over plain HTTP, which is fine on a Wi-Fi 
   - **Daily close**: closes a day and freezes its figures (the server works them out itself, from the records). After that nothing dated in that day can be added or voided (expenses, purchases, supplier payments, owner money); only an admin can reopen the day, and the activity log keeps a note. The report can be printed.
   - **Controls**: who gave discounts, made refunds and voided bills, with the big ones listed so they can be checked.
   - A **cash expense**, a **cash purchase** and the owner's **cash** moves count in the cash drawer: they come off (or go into) what the drawer should hold at the end of the shift. A refund is taken off on the day it is made, not on the day of the original sale, so a month that is over never changes.
-- **Staff & roles**: Admin, Manager, Cashier, Waiter and Kitchen, each with their own PIN.
+- **Staff & roles**: Admin, Manager, Cashier, Waiter and Kitchen, each with their own PIN. An admin can set each person's **hourly pay** (*Staff → Edit*); managers and the person themselves can see it, nobody else (it is not even sent to their devices, nor shown on the sign-in screen).
+- **Staff hours** (the clock button in the menu bar for everyone; *Hours* for managers): staff clock themselves in and out, and the **server's clock** decides the time, so a device cannot give someone longer hours. A manager sees the week or month by person (days, shifts, hours, average shift, wages = hours × hourly pay, with unpaid breaks taken off), who is on shift now, and the list of shifts; they can **add a shift nobody clocked, correct a forgotten clock-out or delete a shift**, each change going to the activity log. One person cannot have two shifts at the same time, and a shift cannot be in the future or longer than 24 hours. If someone forgets to clock out, the shift is flagged after 16 hours and counts for nothing until a manager sets the real end (clocking in again closes it with a placeholder end and flags it; no pay is invented). A person sees only their own hours. *Export CSV* gives a payroll-ready file. In *Finance → Business health*, **labour is estimated from the hours × pay** when no salaries are recorded as expenses (said on the screen; the profit and loss still uses only recorded expenses), and **sales per staff hour** is shown. Time sheets are in backups and work in single-device mode too. (Not included: shift schedules/rosters, overtime rules, leave, tax or deductions on pay.)
 - **Guest ordering**: on the guest's own phone via the table QR code, or on a restaurant tablet in guest mode. Dishes with priced options (extra shot, oat milk…) show "from $4.00" and open a small picker where the guest ticks what they want; the price is worked out from the menu (the server never takes a price from the guest's phone, only option names, and refuses names the dish does not offer). Waiters see the options on the request and accept it into the table's order with them.
 
 ## Roles
@@ -117,6 +118,9 @@ By default devices talk to the server over plain HTTP, which is fine on a Wi-Fi 
 | Give a deposit back (manager PIN) | ✓ | ✓ |   |   |   |
 | Reservations: take, change, cancel, seat | ✓ | ✓ | ✓ | ✓ |   |
 | Reservations: delete one, reopen a seated / cancelled / no-show one | ✓ | ✓ |   |   |   |
+| Clock in and out (own hours; the server sets the time) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| See everyone's hours, add / correct / delete a shift, see hourly pay | ✓ | ✓ |   |   |   |
+| Set someone's hourly pay | ✓ |   |   |   |   |
 | Kitchen display (tickets only)    | ✓ | ✓ |   |   | ✓ |
 | Take payments, cash drawer        | ✓ | ✓ | ✓ |   |   |
 | Approve voids, refunds, discounts | ✓ | ✓ |   |   |   |

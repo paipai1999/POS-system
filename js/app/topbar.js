@@ -19,6 +19,7 @@ Object.assign(App, {
       ${Store.server ? '<span id="sync-status" class="sync-status"></span>' : ''}
       ${this.healthChip()}
       <div class="who">
+        ${this.clockButton()}
         ${Theme.button()}
         ${I18N.button('lang')}
         <span>${esc(this.user.name)}<small>${ROLES[this.user.role].label}</small></span>

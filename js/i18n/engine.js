@@ -47,7 +47,7 @@ const I18N = {
 
   // The switch shown on the sign-in screen, the top bar and the guest menu. Its label is never translated.
   button(act = 'lang') {
-    return `<button class="btn small lang-btn" data-act="${act}" data-nav="${act}" data-no-i18n title="Language / ဘာသာစကား">${icon('globe')} ${this.lang === 'my' ? 'English' : 'မြန်မာ'}</button>`;
+    return `<button class="btn small lang-btn" data-act="${act}" data-nav="${act}" data-no-i18n title="Language / ဘာသာစကား">${icon('globe')} <span class="lang-name">${this.lang === 'my' ? 'English' : 'မြန်မာ'}</span></button>`;
   },
 
   toggle() { this.set(this.lang === 'my' ? 'en' : 'my'); },

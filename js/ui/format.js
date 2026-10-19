@@ -49,6 +49,13 @@ function timeAgo(ts) {
   return `${Math.floor(m / 60)}h ${m % 60}m ago`;
 }
 
+// 7.5 → "7h 30m", 0.25 → "15m", 0 → "0h": hours worked, to the minute
+function hoursText(h) {
+  const m = Math.round((Number(h) || 0) * 60);
+  if (m < 60) return m ? `${m}m` : '0h';
+  return m % 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m / 60}h`;
+}
+
 // 1536 → "1.5 KB", 3221225472 → "3.0 GB"
 function fmtBytes(n) {
   n = Number(n) || 0;
