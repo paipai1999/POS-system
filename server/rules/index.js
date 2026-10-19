@@ -11,7 +11,7 @@
 //   helpers.js    small helpers shared by the files above
 const { Rejection, can } = require('../base.js');
 const { applyChanges, refreshLacksDb } = require('./apply.js');
-const { rowsFor, publicRow, stripUser } = require('./access.js');
+const { rowsFor, publicRow, stripUser, publicUser } = require('./access.js');
 const { guestState, createGuestRequest, tableByCode } = require('./guest.js');
 const { splitOrder } = require('./orders.js');
 const ledger = require('./ledger.js');
@@ -23,4 +23,4 @@ function runRecurringDb(db) {
   return rows;
 }
 
-module.exports = { applyChanges, refreshLacksDb, runRecurringDb, guestState, createGuestRequest, tableByCode, splitOrder, rowsFor, publicRow, stripUser, can, Rejection };
+module.exports = { applyChanges, refreshLacksDb, runRecurringDb, guestState, createGuestRequest, tableByCode, splitOrder, rowsFor, publicRow, stripUser, publicUser, can, Rejection };

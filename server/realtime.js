@@ -23,7 +23,7 @@ function createRealtime(db) {
     const seq = Math.max(...rows.map(r => r.seq));
     const jobs = pub.filter(r => r.col === 'printJobs');
     const users = new Map();     // one lookup per signed-in user, shared by all of their devices
-    const guestRelevant = rows.some(r => !['printJobs', 'kitchenTickets', 'users', 'reservations'].includes(r.col));
+    const guestRelevant = rows.some(r => !['printJobs', 'kitchenTickets', 'users', 'reservations', 'attendance'].includes(r.col));
     for (const c of clients) {
       if (c.kind === 'staff') {
         if (!users.has(c.userId)) users.set(c.userId, db.doc('users', c.userId));

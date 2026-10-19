@@ -13,7 +13,7 @@ function publicInfo(db) {
   const users = db.all('users');
   return {
     settings: { name: settings.name, currency: settings.currency, decimals: settings.decimals, currencyAfter: settings.currencyAfter },
-    users: users.filter(u => u.active).map(rules.stripUser),
+    users: users.filter(u => u.active).map(rules.publicUser),
     demo: users.some(u => u.role === 'admin' && hasDemoPin(u)),   // true while the admin still has the demo PIN
   };
 }
@@ -63,7 +63,7 @@ const routes = {
     db.addAudit({ user: session ? session.user : null, action: 'manager PIN entered', target: user.name, detail: 'approval check' });
     auth.clearFailures(ip);
     if (session) auth.approve(session.token, user.id);
-    sendJSON(res, 200, { user: rules.stripUser(user) });
+    sendJSON(res, 200, { user: rules.publicUser(user) });
   },
 
   // ----- guests scanning the QR code on a table -----

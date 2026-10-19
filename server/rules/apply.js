@@ -17,6 +17,7 @@ const { prepareCustomerPayment } = require('./receivables.js');
 const { prepareShift } = require('./shifts.js');
 const { prepareGuestRequest, prepareKitchenTicket, preparePrintJob } = require('./floor.js');
 const { prepareReservation } = require('./reservations.js');
+const { prepareAttendance } = require('./attendance.js');
 const ledger = require('./ledger.js');
 
 // The rule for each collection. Every rule has the same shape: (db, ctx, id, prev, data, deleted, changed) and returns the
@@ -29,6 +30,7 @@ const RULES = {
   categories: prepareCategory,
   products: prepareProduct,
   users: prepareUser,
+  attendance: prepareAttendance,
   orders: prepareOrder,
   guestRequests: prepareGuestRequest,
   kitchenTickets: prepareKitchenTicket,

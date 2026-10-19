@@ -33,6 +33,7 @@ function describe(col, prev, next, deleted, nameOf = () => null) {
         ...(prev.active !== next.active ? [next.active ? 'activated' : 'deactivated'] : []),
         ...(prev.name !== next.name ? [`renamed from "${prev.name}"`] : []),
         ...(prev.pinHash !== next.pinHash ? ['PIN changed'] : []),
+        ...((prev.hourlyRate || 0) !== (next.hourlyRate || 0) ? [`hourly pay ${num(prev.hourlyRate || 0)} → ${num(next.hourlyRate || 0)}`] : []),
       ];
       if (d.length) add(d.includes('PIN changed') ? 'staff PIN/role changed' : 'staff edited', next.name, d.join('; '));
       break;
@@ -59,6 +60,16 @@ function describe(col, prev, next, deleted, nameOf = () => null) {
       if (!prev) return [{ action: 'reservation made', target: next.name, detail: `${next.guests} guest${next.guests === 1 ? '' : 's'}, ${when(next.at)}` }];
       if (prev.status !== next.status && ['cancelled', 'noshow'].includes(next.status)) add(next.status === 'noshow' ? 'reservation no-show' : 'reservation cancelled', next.name, when(next.at));
       else if (prev.at !== next.at || prev.tableId !== next.tableId || prev.guests !== next.guests) add('reservation changed', next.name, when(next.at));
+      break;
+    }
+    case 'attendance': {
+      const when = t => new Date(t).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+      const span = e => `${when(e.in)} – ${e.out ? when(e.out) : 'running'}${e.breakMinutes ? `, break ${e.breakMinutes} min` : ''}`;
+      // Clocking in and out is routine and not logged; a manager changing the record is.
+      if (deleted) return [{ action: 'shift deleted', target: prev?.userName || '', detail: prev ? span(prev) : '' }];
+      if (!next.edited) break;
+      if (!prev) add('shift added', next.userName, span(next));
+      else if (prev.in !== next.in || prev.out !== next.out || prev.breakMinutes !== next.breakMinutes) add('shift changed', next.userName, `${span(prev)} → ${span(next)}`);
       break;
     }
     case 'categories':

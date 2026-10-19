@@ -23,7 +23,7 @@
   // Every synced collection except settings, which is a single document.
   // The order matters: a device sends its changes in this order, so a new ingredient, supplier or customer arrives
   // before the recipe, purchase or bill that refers to it.
-  const COLLECTIONS = ['users', 'categories', 'ingredients', 'suppliers', 'customers', 'products', 'tables', 'reservations', 'orders', 'guestRequests', 'kitchenTickets', 'printJobs', 'shifts', 'purchases', 'stocktakes', 'supplierPayments', 'expenses', 'recurringExpenses', 'ownerMoves', 'dayCloses', 'customerPayments'];
+  const COLLECTIONS = ['users', 'attendance', 'categories', 'ingredients', 'suppliers', 'customers', 'products', 'tables', 'reservations', 'orders', 'guestRequests', 'kitchenTickets', 'printJobs', 'shifts', 'purchases', 'stocktakes', 'supplierPayments', 'expenses', 'recurringExpenses', 'ownerMoves', 'dayCloses', 'customerPayments'];
 
   function uid(prefix) {
     return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
