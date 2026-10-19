@@ -2,7 +2,7 @@
 
 // Rules for the single settings document (shop name, money format, tax, ingredient stock, finance setup, loyalty).
 // Only an admin may change it. Everything is checked again here because the browser's checks can be bypassed.
-const { roundTo, decimalsOf } = require('../../js/shared.js');
+const { roundTo, decimalsOf, PAY_NAMES_MAX, PAY_NAME_LENGTH, PAY_NAMES_RESERVED } = require('../../js/shared.js');
 const { reject, need, isObj, cleanText } = require('../base.js');
 
 // The currency symbol ends up in every page and receipt, so markup characters are removed.
@@ -10,6 +10,25 @@ function cleanMoneyFormat(data) {
   data.currency = String(data.currency ?? '$').replace(/[<>&"'`]/g, '').trim().slice(0, 4) || '$';
   data.decimals = data.decimals === 0 ? 0 : 2;
   data.currencyAfter = !!data.currencyAfter;
+}
+
+// The names offered for "Other" payments (KBZPay, Wave Pay, bank transfer…): a short list of plain text, no repeats, and
+// none that look like a method the till already has. They appear on receipts and reports, so they are cleaned like any text.
+function cleanPayNames(data) {
+  const raw = Array.isArray(data.payNames) ? data.payNames : [];
+  const seen = new Set();
+  const names = [];
+  for (const v of raw) {
+    const name = cleanText(v, PAY_NAME_LENGTH).replace(/[<>&"'`]/g, '');
+    const key = name.toLowerCase();
+    if (!name) continue;
+    if (PAY_NAMES_RESERVED.includes(key)) reject(`"${name}" is already a payment method. Choose another name.`);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    names.push(name);
+  }
+  if (names.length > PAY_NAMES_MAX) reject(`At most ${PAY_NAMES_MAX} payment names`);
+  data.payNames = names;
 }
 
 // Opening balances (as of a start date) and the list of expense categories used by the financial statements.
@@ -61,6 +80,7 @@ function prepareSettings(db, ctx, id, prev, data, deleted) {
   if (deleted) reject('Settings cannot be deleted');
   delete data.nextOrderNo;   // the order counter belongs to the server
   cleanMoneyFormat(data);
+  cleanPayNames(data);
   data.ingredientStock = ['off', 'warn', 'block'].includes(data.ingredientStock) ? data.ingredientStock : 'off';
   cleanFinance(data);
   cleanLoyalty(data);

@@ -14,6 +14,12 @@ function totalsHTML(t) {
 
 const PAY_METHODS = { cash: 'Cash', card: 'Card', other: 'Other', credit: 'On account', split: 'Split' };
 
+// What to call a payment: "KBZPay" for an Other payment made through one of the owner's payment names, else the method's name.
+function payLabel(method, via) { return method === 'other' && via ? via : PAY_METHODS[method] || method; }
+
+// The same for a key of paymentByWay(): 'cash', or 'other:KBZPay'.
+function wayLabel(key) { return String(key).startsWith('other:') ? String(key).slice(6) : PAY_METHODS[key] || key; }
+
 // The options picked on a line, e.g. "+ Extra shot, Large".
 function modsText(l) {
   return l.mods && l.mods.length ? '+ ' + l.mods.map(m => m.name).join(', ') : '';
@@ -28,11 +34,11 @@ function paymentRowsHTML(payment, row) {
     out.push(row('To pay', money(payment.amount + payment.tip), 'b'));
   }
   if (payment.method === 'split' && payment.parts) {
-    for (const p of payment.parts) out.push(row(PAY_METHODS[p.method] || p.method, money(p.tendered ?? p.amount)));
+    for (const p of payment.parts) out.push(row(esc(payLabel(p.method, p.via)), money(p.tendered ?? p.amount)));
     const change = payment.parts.reduce((n, p) => n + (p.change || 0), 0);
     if (change) out.push(row('Change', money(change)));
   } else {
-    out.push(row(PAY_METHODS[payment.method] || payment.method, money(payment.tendered ?? (payment.amount + (payment.tip || 0)))));
+    out.push(row(esc(payLabel(payment.method, payment.via)), money(payment.tendered ?? (payment.amount + (payment.tip || 0)))));
     if (payment.change) out.push(row('Change', money(payment.change)));
   }
   return out.join('');

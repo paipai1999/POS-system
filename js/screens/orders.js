@@ -95,7 +95,7 @@ Screens.orders = {
           <td>${esc(staff ? staff.name : '-')}</td>
           <td class="num">${items}</td>
           <td class="num">${money(Store.totals(o).total)}</td>
-          <td>${o.payment ? PAY_METHODS[o.payment.method] || '' : ''}</td>
+          <td>${o.payment ? esc(payLabel(o.payment.method, o.payment.via)) : ''}</td>
           <td><span class="pill ${o.status}">${o.status}</span></td>
           <td><div class="row-actions">
             ${o.status === 'open' && App.can('tables') ? `<button class="btn small" data-act="open" data-id="${o.id}">Open</button>` : ''}

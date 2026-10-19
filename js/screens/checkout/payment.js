@@ -44,6 +44,7 @@ Object.assign(Checkout, {
     const due = rmoney(total + tip);
     const payment = { method: this.method, amount: total };
     if (tip) payment.tip = tip;
+    if (this.method === 'other' && this.via) payment.via = this.via;
     if (this.method === 'cash') {
       const tendered = rmoney(parseFloat(this.tendered) || 0);
       if (tendered < due) throw new Error('Cash received is less than the total');
@@ -55,6 +56,7 @@ Object.assign(Checkout, {
         const amount = rmoney(parseFloat(this.split[k]) || 0);
         if (!(amount > 0)) continue;
         const part = { method: k, amount };
+        if (k === 'other' && this.splitVia) part.via = this.splitVia;
         if (k === 'cash') {
           const given = this.split.cashGiven === '' ? amount : rmoney(parseFloat(this.split.cashGiven) || 0);
           if (given < amount) throw new Error('Cash received is less than the total');

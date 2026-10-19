@@ -37,6 +37,7 @@
         nextOrderNo: 1,
         loyalty: { enabled: false, earnPercent: 5, maxRedeemPercent: 50 },
         ingredientStock: 'warn',
+        payNames: [],
       },
       users: [
         { id: uid('u_'), name: 'Admin', role: 'admin', pin: '1234', active: true },

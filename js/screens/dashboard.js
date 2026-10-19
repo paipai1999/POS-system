@@ -151,7 +151,7 @@ Screens.dashboard = {
     return `
       <button class="dash-card paid dc-main" data-act="paid" data-id="${o.id}">
         <span class="dc-top"><b>${esc(whereLabel(o))}</b><span class="muted">#${orderNo(o)}</span></span>
-        <span class="dc-meta">${esc(staff ? staff.name : '')}${o.payment ? ` · ${esc(PAY_METHODS[o.payment.method] || '')}` : ''}</span>
+        <span class="dc-meta">${esc(staff ? staff.name : '')}${o.payment ? ` · ${esc(payLabel(o.payment.method, o.payment.via))}` : ''}</span>
         <span class="dc-foot"><span class="dc-time"><span aria-hidden="true">${icon('clock', 1)}</span> <span>${timeAgo(o.paidAt)}</span></span><b>${money(Store.totals(o).total)}</b></span>
       </button>`;
   },

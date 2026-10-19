@@ -157,6 +157,9 @@ I18N.patterns.push(
   [/^Only (\d+) dish(?:es)? ha(?:s|ve) a recipe cost, so the groups below are rough\. Add recipes under Menu & Stock for the rest$/, 'ဟင်းလျာ $1 မျိုးသာ ချက်ပြုတ်နည်းစရိတ် ရှိသဖြင့် အောက်ပါအုပ်စုများသည် ခန့်မှန်းချက်သာ ဖြစ်သည်။ ကျန်ဟင်းလျာများအတွက် မီနူးနှင့် လက်ကျန်ပစ္စည်း တွင် ချက်ပြုတ်နည်းများ ထည့်ပါ'],
   [/^Only (\d+)% of item sales have a recipe, so food cost is understated\. Add recipes under Menu & Stock to see the true figure$/, 'ပစ္စည်းရောင်းရငွေ၏ $1% သာ ချက်ပြုတ်နည်းရှိသဖြင့် အစားအစာကုန်ကျစရိတ် နည်းနေပါသည်။ အမှန်ကိန်းဂဏန်းမြင်ရန် မီနူးနှင့် လက်ကျန်ပစ္စည်း တွင် ချက်ပြုတ်နည်းများ ထည့်ပါ'],
   [/^No salaries or wages are recorded as expenses in this period, so labour and prime cost look better than they are\. Record them under Finance → Expenses \(category Salaries\)$/, 'ဤကာလတွင် လစာ/လုပ်ခများကို အသုံးစရိတ်အဖြစ် မှတ်ထားခြင်းမရှိသဖြင့် လုပ်သားစရိတ်နှင့် အဓိကကုန်ကျစရိတ် အမှန်ထက် ကောင်းနေပုံပေါ်သည်။ ဘဏ္ဍာရေး → အသုံးစရိတ် (အမျိုးအစား လစာများ) တွင် မှတ်ပါ'],
+  // payment names
+  [/^"(.+)" is already a payment method\. Choose another name$/, '“$1” သည် ငွေပေးချေနည်း ဖြစ်ပြီးသားဖြစ်သည်။ အခြားအမည် ရွေးပါ'],
+  [/^At most (\d+) payment names$/, 'ငွေပေးချေမှုအမည် $1 ခုအထိသာ ထားနိုင်သည်'],
   // role + description in the role drop-down
   [/^(Admin|Manager|Cashier|Waiter|Kitchen) — (.+)$/, '$1 — $2']
 );

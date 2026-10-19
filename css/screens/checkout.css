@@ -26,3 +26,8 @@
 .diff-bad { color: var(--danger); font-weight: 700; }
 .line-mods { font-size: .82rem; color: var(--accent-2); font-weight: 600; }
 .single-note { max-width: 24rem; text-align: center; margin: .75rem auto 0; }
+
+/* Which of the owner's payment names an Other payment went through. */
+.pay-via { margin: 0 0 1rem; }
+.split-via { margin: -.25rem 0 .6rem 7rem; }
+@media (max-width: 560px) { .split-via { margin-left: 0; } }

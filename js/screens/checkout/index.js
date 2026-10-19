@@ -14,6 +14,10 @@ const Checkout = {
 
   tip: '',
 
+  via: '',            // the owner's payment name chosen for an Other payment ('' = none)
+
+  splitVia: '',
+
   split: { cash: '', cashGiven: '', card: '', other: '', credit: '' },
 
   discType: 'percent',
@@ -27,6 +31,8 @@ const Checkout = {
     this.method = 'cash';
     this.tendered = '';
     this.tip = '';
+    this.via = '';
+    this.splitVia = '';
     this.split = { cash: '', cashGiven: '', card: '', other: '', credit: '' };
     this.discType = order.discount ? order.discount.type : 'percent';
     this.discValue = order.discount ? String(order.discount.value) : '';
@@ -40,6 +46,9 @@ const Checkout = {
     const s = Store.settings;
     const d = order.discount;
     const credit = this.creditInfo();
+    const payNames = Array.isArray(s.payNames) ? s.payNames : [];
+    if (this.via && !payNames.includes(this.via)) this.via = '';
+    if (this.splitVia && !payNames.includes(this.splitVia)) this.splitVia = '';
     const methods = [['cash', `${icon('banknote')} Cash`], ['card', `${icon('credit-card')} Card`], ['other', `${icon('smartphone')} Other`], ...(credit ? [['credit', `${icon('receipt')} On account`]] : []), ['split', `${icon('divide')} Split`]];
     if (this.method === 'credit' && !credit) this.method = 'cash';   // the customer was changed or removed
     const fmt = n => (n === '' ? '' : esc(n));
@@ -61,6 +70,7 @@ const Checkout = {
       'max-points': el => this.setPoints(parseFloat(el.dataset.v)),
       'no-points': () => this.setPoints(0),
       method: el => { this.method = el.dataset.method; this.render(); },
+      via: el => { this.via = el.dataset.via; this.render(); },
       quick: el => {
         this.tendered = el.dataset.v;
         Modal.el().querySelector('[name=tendered]').value = el.dataset.v;
@@ -81,7 +91,10 @@ const Checkout = {
         this.updateChange();
       },
       complete: () => this.complete(),
-      __change: e => { if (e.target.name === 'points') this.setPoints(parseFloat(e.target.value)); },
+      __change: e => {
+        if (e.target.name === 'points') this.setPoints(parseFloat(e.target.value));
+        else if (e.target.name === 'split-via') this.splitVia = e.target.value;
+      },
       __input: e => {
         const n = e.target.name;
         if (n === 'tendered') { this.tendered = e.target.value; this.updateChange(); }
@@ -146,6 +159,11 @@ const Checkout = {
         <div class="pay-methods ${methods.length > 4 ? 'five' : 'four'}">
           ${methods.map(([m, label]) => `<button data-act="method" data-method="${m}" class="${this.method === m ? 'active' : ''}">${label}</button>`).join('')}
         </div>
+        ${this.method === 'other' && payNames.length ? `
+          <div class="field-label">Paid with</div>
+          <div class="chips wrap pay-via">
+            ${[['', 'Other'], ...payNames.map(n => [n, n])].map(([v, label]) => `<button class="chip ${this.via === v ? 'active' : ''}" data-act="via" data-via="${esc(v)}">${esc(label)}</button>`).join('')}
+          </div>` : ''}
         ${this.method === 'cash' ? `
           <label class="field"><span>Cash received</span>
             <input class="input big-input" name="tendered" type="number" min="0" step="${moneyStep()}" inputmode="decimal" value="${esc(this.tendered)}" autofocus></label>
@@ -160,7 +178,11 @@ const Checkout = {
               <span>${label}</span>
               <input class="input" name="split-${k}" type="number" min="0" step="${moneyStep()}" inputmode="decimal" placeholder="0" value="${fmt(this.split[k])}">
               <button class="btn small" data-act="rest" data-m="${k}">Rest</button>
-            </div>`).join('')}
+            </div>
+            ${k === 'other' && payNames.length ? `
+            <div class="split-via"><select class="input" name="split-via" aria-label="Paid with">
+              ${[['', 'Other'], ...payNames.map(n => [n, n])].map(([v, label]) => `<option value="${esc(v)}" ${this.splitVia === v ? 'selected' : ''}>${esc(label)}</option>`).join('')}
+            </select></div>` : ''}`).join('')}
           <label class="field spaced"><span>Cash handed over (only if more than the cash amount)</span>
             <input class="input" name="split-cashGiven" type="number" min="0" step="${moneyStep()}" inputmode="decimal" value="${fmt(this.split.cashGiven)}"></label>` : ''}
         <div class="change" data-role="change"></div>`,

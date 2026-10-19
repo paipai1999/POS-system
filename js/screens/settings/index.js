@@ -33,6 +33,8 @@ Screens.settings = {
 
         ${this.financeHTML(s)}
 
+        ${this.paymentsHTML(s)}
+
         ${this.tablesHTML(server)}
 
         ${server ? this.deviceHTML() : ''}
@@ -59,6 +61,8 @@ Screens.settings = {
           this.tiers.splice(+t.dataset.i, 1);
           root.querySelector('[data-role=tiers]').innerHTML = this.tierRows();
           break;
+        case 'pay-add': this.addPayName(t.dataset.name || root.querySelector('[data-role=new-payname]').value); break;
+        case 'pay-del': this.removePayName(t.dataset.name); break;
         case 'add-table': this.addTable(); break;
         case 'rename-table': this.renameTable(id); break;
         case 'del-table': this.deleteTable(id); break;
@@ -97,6 +101,7 @@ Screens.settings = {
       if (e.target.dataset.role === 'station') this.toggleStation(e.target);
     };
     root.querySelector('[data-role=new-table]').onkeydown = e => { if (e.key === 'Enter') this.addTable(); };
+    root.querySelector('[data-role=new-payname]').onkeydown = e => { if (e.key === 'Enter') this.addPayName(e.target.value); };
     if (server) { this.loadHealth(); this.loadBackupStatus(); }
   },
 

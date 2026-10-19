@@ -14,6 +14,21 @@
   // and pays later (see customer.creditLimit / customer.owing); no money changes hands, so it is not cash, card or bank.
   const PAY_METHODS = ['cash', 'card', 'other', 'credit'];
 
+  // The names an owner may add for "Other" payments (mobile wallets, bank transfer…): at most this many, this long.
+  const PAY_NAMES_MAX = 8;
+  const PAY_NAME_LENGTH = 20;
+  // Words that already mean something at the till, so a name may not look like them.
+  const PAY_NAMES_RESERVED = ['cash', 'card', 'other', 'on account', 'credit', 'split'];
+
+  // Which of the owner's names an "Other" payment went through, '' when none: `via` must be one of settings.payNames.
+  function payVia(method, via, settings) {
+    if (via === undefined || via === null || via === '') return '';
+    if (method !== 'other') throw new Error('Invalid payment method');
+    const names = settings && Array.isArray(settings.payNames) ? settings.payNames : [];
+    if (typeof via !== 'string' || !names.includes(via)) throw new Error('That payment name is no longer in Settings. Choose another.');
+    return via;
+  }
+
   // How much of a payment went through each method (tips included): { cash: 12, card: 8 }.
   function paymentByMethod(payment) {
     if (!payment) return {};
@@ -23,6 +38,19 @@
       return out;
     }
     return { [payment.method]: Number(payment.amount || 0) + Number(payment.tip || 0) };
+  }
+
+  // Like paymentByMethod, but an "Other" payment made through one of the owner's names is listed under that name:
+  // { cash: 12, 'other:KBZPay': 8 }. For reports; money channels (cash, card, bank) still follow the method.
+  function paymentByWay(payment) {
+    if (!payment) return {};
+    const key = (method, via) => (method === 'other' && via ? 'other:' + via : method);
+    if (payment.method === 'split' && Array.isArray(payment.parts)) {
+      const out = {};
+      for (const part of payment.parts) { const k = key(part.method, part.via); out[k] = (out[k] || 0) + Number(part.amount || 0); }
+      return out;
+    }
+    return { [key(payment.method, payment.via)]: Number(payment.amount || 0) + Number(payment.tip || 0) };
   }
 
   // Cash that stayed in the till for this payment (what was handed over minus the change given back).
@@ -73,6 +101,8 @@
         if (!(amount > 0)) throw new Error('Invalid split amount');
         sum += amount;
         const part = { method: p.method, amount };
+        const via = payVia(p.method, p.via, settings);
+        if (via) part.via = via;
         if (p.method === 'credit') {
           if (amount > t.total + 0.005) throw new Error('Only the bill itself can be put on account, not the tip');
           checkCredit(customer, amount, dec);
@@ -89,10 +119,12 @@
     } else if (!PAY_METHODS.includes(pay.method)) {
       throw new Error('Invalid payment method');
     }
+    if (pay.method === 'other') { const via = payVia('other', pay.via, settings); if (via) out.via = via; }
+    else if (pay.method !== 'split') payVia(pay.method, pay.via, settings);   // a name only goes with "Other"
     return { totals: t, payment: out };
   }
 
-  const api = { PAY_METHODS, paymentByMethod, paymentCash, settleOrder };
+  const api = { PAY_METHODS, PAY_NAMES_MAX, PAY_NAME_LENGTH, PAY_NAMES_RESERVED, paymentByMethod, paymentByWay, paymentCash, settleOrder };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else Object.assign(root, api);
 })(typeof window !== 'undefined' ? window : globalThis);
