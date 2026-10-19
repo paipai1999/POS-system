@@ -120,6 +120,7 @@ const Store = {
     if (this.server) {
       await Sync.api('/api/me/pin', { method: 'POST', body: { pin } });
       Sync.mustChangePin = false;
+      if (Sync.needsSnapshot) { await Sync.loadSnapshot(); Sync.needsSnapshot = false; }
       return;
     }
     const me = this.user(App.user.id);

@@ -30,7 +30,7 @@ You need [Node.js](https://nodejs.org) **22.5 or newer** (the "LTS" download) on
 
 ### First sign-in: choose your own PIN
 
-The demo PINs are listed below only so you can try the system. **Anyone who signs in with a demo PIN is asked to choose their own 4–6 digit PIN and cannot continue until they do.** Easy PINs (1234, 0000, 7777…) are refused. Staff accounts are managed under **Staff**.
+The demo PINs are listed below only so you can try the system. **Anyone who signs in with a demo PIN is asked to choose their own 4–6 digit PIN and cannot continue until they do. The server enforces this too: until the new PIN is saved, a demo-PIN sign-in can do nothing else, not even load the menu.** Easy PINs (1234, 0000, 7777…) are refused. Staff accounts are managed under **Staff**.
 
 | Staff   | Role    | Demo PIN |
 |---------|---------|----------|

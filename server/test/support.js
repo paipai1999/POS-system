@@ -11,7 +11,7 @@ const { start } = require('../server.js');
 
 async function boot() {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pos-test-'));
-  const app = start({ port: 0, dataDir, quiet: true });
+  const app = start({ port: 0, dataDir, quiet: true, allowDemoPins: true });
   await new Promise(r => app.server.once('listening', r));
   const base = `http://127.0.0.1:${app.server.address().port}`;
 

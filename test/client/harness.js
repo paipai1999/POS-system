@@ -25,9 +25,10 @@ async function until(fn, { timeout = 5000, what = 'condition' } = {}) {
   }
 }
 
-async function startServer() {
+// `strict` starts the server the way it runs in a restaurant: a demo PIN gets nothing but the PIN change.
+async function startServer({ strict = false } = {}) {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pos-client-'));
-  const app = start({ port: 0, dataDir, quiet: true });
+  const app = start({ port: 0, dataDir, quiet: true, allowDemoPins: !strict });
   await new Promise(r => app.server.once('listening', r));
   const base = `http://127.0.0.1:${app.server.address().port}`;
   return {
@@ -40,7 +41,7 @@ async function startServer() {
 }
 
 // One browser tab. `net.up = false` makes every request fail like a dropped Wi-Fi connection.
-async function openApp(base, { apiDown = false, lang = null, path = '/' } = {}) {
+async function openApp(base, { apiDown = false, lang = null, path = '/', sessionToken = null } = {}) {
   const net = { up: true, apiDown };
   const prints = [];
   const dom = await JSDOM.fromURL(base + path, {
@@ -48,6 +49,7 @@ async function openApp(base, { apiDown = false, lang = null, path = '/' } = {}) 
     resources: 'usable',
     pretendToBeVisual: true,
     beforeParse(window) {
+      if (sessionToken) window.sessionStorage.setItem('pos-token', sessionToken);   // a tab that was already signed in
       window.fetch = async (url, opts = {}) => {
         const u = new URL(url, base);
         if (!net.up || (net.apiDown && u.pathname.startsWith('/api/'))) throw new TypeError('Failed to fetch');

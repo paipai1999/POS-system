@@ -48,7 +48,7 @@ test('no screen sets its own page colours with a bare hex, so the theme reaches 
 
 test('the font files are served with the right type, and every url() in fonts.css exists', async () => {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pos-font-'));
-  const app = start({ port: 0, dataDir, quiet: true });
+  const app = start({ port: 0, dataDir, quiet: true, allowDemoPins: true });
   await new Promise(r => app.server.once('listening', r));
   const base = `http://127.0.0.1:${app.server.address().port}`;
   try {

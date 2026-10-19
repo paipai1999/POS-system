@@ -104,7 +104,9 @@ const App = {
 
   // Someone signed in with a demo PIN has to choose their own before they can use the POS.
   checkPin() {
-    if (this.user && Store.mustChangePin(this.user)) forcePinChange();
+    if (this.user && Store.mustChangePin(this.user)) {
+      forcePinChange(() => { this.user = Store.user(this.user.id) || this.user; this.go(this.firstScreen()); });
+    }
   },
 
   can(perm, user = this.user) {

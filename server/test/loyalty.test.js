@@ -59,7 +59,7 @@ const pay = (dev, o, total) => dev.put('orders', { ...dev.doc('orders', o.id), s
 
 test.before(async () => {
   dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pos-loy-'));
-  app = start({ port: 0, dataDir, quiet: true });
+  app = start({ port: 0, dataDir, quiet: true, allowDemoPins: true });
   await new Promise(r => app.server.once('listening', r));
   base = `http://127.0.0.1:${app.server.address().port}`;
 });
