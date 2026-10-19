@@ -23,6 +23,8 @@ Screens.settings = {
     root.innerHTML = `
       <div class="page-head"><h1>Settings</h1></div>
       <div class="settings-grid">
+        ${server ? this.healthHTML() : ''}
+
         <section class="card" data-role="general">
           ${this.generalHTML(s)}
           ${this.loyaltyHTML(s)}
@@ -62,6 +64,7 @@ Screens.settings = {
         case 'del-table': this.deleteTable(id); break;
         case 'qr': this.showQR(); break;
         case 'audit': this.showAudit(); break;
+        case 'health-refresh': this.loadHealth(); break;
         case 'backup-now': this.backupNow(); break;
         case 'backup-folders': this.backupFolders(); break;
         case 'test-print-here': printLocal(testPageHTML()); break;
@@ -94,7 +97,7 @@ Screens.settings = {
       if (e.target.dataset.role === 'station') this.toggleStation(e.target);
     };
     root.querySelector('[data-role=new-table]').onkeydown = e => { if (e.key === 'Enter') this.addTable(); };
-    if (server) this.loadBackupStatus();
+    if (server) { this.loadHealth(); this.loadBackupStatus(); }
   },
 
   // Addresses other devices can use. "localhost" only works on the server PC itself.

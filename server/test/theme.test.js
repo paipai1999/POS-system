@@ -17,7 +17,7 @@ test('the dark theme re-defines every colour of the light theme', () => {
   const dark = css.match(/:root\[data-theme="dark"\] \{([\s\S]*?)\n  \}/)[1];
   const names = block => new Set([...block.matchAll(/(--[a-z0-9-]+):/g)].map(m => m[1]));
   // Sizes and shapes are the same in both themes; every colour and fill must be listed again for dark.
-  const same = new Set(['--radius', '--topbar-h', '--on-chrome', '--chrome-text', '--chrome-muted', '--danger-solid', '--ok-solid']);
+  const same = new Set(['--radius', '--topbar-h', '--on-chrome', '--chrome-text', '--chrome-muted', '--danger-solid', '--ok-solid', '--warn-solid']);
   const missing = [...names(light)].filter(n => !names(dark).has(n) && !same.has(n));
   assert.deepEqual(missing, [], 'colours with no dark value');
 });

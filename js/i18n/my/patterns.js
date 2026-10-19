@@ -144,6 +144,14 @@ I18N.patterns.push(
   [/^Too many wrong PINs entered from (.+)'s sign-in\. Wait (\d+) minutes and try again$/, '$1 ၏ ဝင်ရောက်မှုမှ ပင်နံပါတ် အကြိမ်များစွာ မှားထည့်ထားပါသည်။ $2 မိနစ် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
   [/^Too many wrong PINs entered here\. Wait (\d+) seconds and try again$/, 'ဤနေရာတွင် ပင်နံပါတ် အကြိမ်များစွာ မှားထည့်ထားပါသည်။ $1 စက္ကန့် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
   [/^Too many wrong PINs entered here\. Wait (\d+) minutes and try again$/, 'ဤနေရာတွင် ပင်နံပါတ် အကြိမ်များစွာ မှားထည့်ထားပါသည်။ $1 မိနစ် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
+  // System health (the problems the server reports)
+  [/^The newest backup on this PC is (.+) old\. Backups are made every day while the server runs$/, 'ဤကွန်ပျူတာပေါ်ရှိ နောက်ဆုံးအရန်ဖိုင်သည် $1 ဟောင်းနေပြီ။ ဆာဗာ ပြေးနေစဉ် နေ့တိုင်း အရန်သိမ်းပါသည်'],
+  [/^The newest backup in (.+) is damaged: (.+)$/, '$1 ရှိ နောက်ဆုံးအရန်ဖိုင် ပျက်စီးနေသည်: $2'],
+  [/^The backup in (.+) is (.+) old$/, '$1 ရှိ အရန်ဖိုင်သည် $2 ဟောင်းနေပြီ'],
+  [/^Only (.+) GB is free on this PC's disk\. Free some space before it runs out$/, 'ဤကွန်ပျူတာ၏ ဒစ်ခ်တွင် $1 GB သာ ကျန်ပါတော့သည်။ မကုန်မီ နေရာလွတ်ပေးပါ'],
+  [/^One person still uses a PIN from the demo data \((.+)\)\. They cannot sign in to work until they choose their own$/, 'စမ်းသပ်ဒေတာမှ ပင်နံပါတ်ကို တစ်ဦး ဆက်သုံးနေသည် ($1)။ ကိုယ်ပိုင်ပင်နံပါတ် မရွေးမချင်း အလုပ်ဝင်၍ မရပါ'],
+  [/^(\d+) people still use a PIN from the demo data \((.+)\)\. They cannot sign in to work until they choose their own$/, 'စမ်းသပ်ဒေတာမှ ပင်နံပါတ်ကို $1 ဦး ဆက်သုံးနေသည် ($2)။ ကိုယ်ပိုင်ပင်နံပါတ် မရွေးမချင်း အလုပ်ဝင်၍ မရပါ'],
+  [/^Please choose your own PIN first$/, 'ကိုယ်ပိုင်ပင်နံပါတ် အရင်ရွေးပါ'],
   // role + description in the role drop-down
   [/^(Admin|Manager|Cashier|Waiter|Kitchen) — (.+)$/, '$1 — $2']
 );

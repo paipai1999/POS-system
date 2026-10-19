@@ -133,6 +133,7 @@ const App = {
     this.deferredRender = false;
     this.render();
     this.checkPin();
+    this.maybeRefreshHealth();
   },
 
   render() {

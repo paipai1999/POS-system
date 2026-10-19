@@ -49,6 +49,24 @@ function timeAgo(ts) {
   return `${Math.floor(m / 60)}h ${m % 60}m ago`;
 }
 
+// 1536 → "1.5 KB", 3221225472 → "3.0 GB"
+function fmtBytes(n) {
+  n = Number(n) || 0;
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return `${i === 0 ? n : n.toFixed(1)} ${units[i]}`;
+}
+
+// 93784000 → "1d 2h", 3600000 → "1h 0m", 90000 → "1m"
+function fmtDuration(ms) {
+  const m = Math.floor((Number(ms) || 0) / 60000);
+  const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60);
+  if (d) return `${d}d ${h}h`;
+  if (h) return `${h}h ${m % 60}m`;
+  return `${m}m`;
+}
+
 function initials(name) {
   return String(name).split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('') || '?';
 }

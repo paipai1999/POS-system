@@ -62,6 +62,17 @@ test('the messages about too many wrong PINs are translated, with the name and t
   for (const [en, my] of Object.entries(cases)) assert.equal(I18N.tr(en), my, en);
 });
 
+test('the system health messages are translated around the data', () => {
+  const cases = {
+    'The newest backup on this PC is 3 days old. Backups are made every day while the server runs.': 'ဤကွန်ပျူတာပေါ်ရှိ နောက်ဆုံးအရန်ဖိုင်သည် 3 days ဟောင်းနေပြီ။ ဆာဗာ ပြေးနေစဉ် နေ့တိုင်း အရန်သိမ်းပါသည်။',
+    "Only 0.4 GB is free on this PC's disk. Free some space before it runs out.": 'ဤကွန်ပျူတာ၏ ဒစ်ခ်တွင် 0.4 GB သာ ကျန်ပါတော့သည်။ မကုန်မီ နေရာလွတ်ပေးပါ။',
+    'One person still uses a PIN from the demo data (Leo). They cannot sign in to work until they choose their own.': 'စမ်းသပ်ဒေတာမှ ပင်နံပါတ်ကို တစ်ဦး ဆက်သုံးနေသည် (Leo)။ ကိုယ်ပိုင်ပင်နံပါတ် မရွေးမချင်း အလုပ်ဝင်၍ မရပါ။',
+    '3 people still use a PIN from the demo data (Admin, Maya, Leo). They cannot sign in to work until they choose their own.': 'စမ်းသပ်ဒေတာမှ ပင်နံပါတ်ကို 3 ဦး ဆက်သုံးနေသည် (Admin, Maya, Leo)။ ကိုယ်ပိုင်ပင်နံပါတ် မရွေးမချင်း အလုပ်ဝင်၍ မရပါ။',
+    'Please choose your own PIN first': 'ကိုယ်ပိုင်ပင်နံပါတ် အရင်ရွေးပါ',
+  };
+  for (const [en, my] of Object.entries(cases)) assert.equal(I18N.tr(en), my, en);
+});
+
 test('anything unknown stays as it is, and what people typed is never invented into something else', () => {
   for (const typed of ['Espresso', 'Pancake Stack', 'Table 12', 'Lemonade', 'မုန့်ဟင်းခါး', '12', '$4.50', 'a@b.com']) assert.equal(I18N.tr(typed), null, typed);
   assert.equal(I18N.tr(''), null);

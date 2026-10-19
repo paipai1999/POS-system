@@ -17,6 +17,7 @@ Object.assign(App, {
           </button>`).join('')}
       </nav>
       ${Store.server ? '<span id="sync-status" class="sync-status"></span>' : ''}
+      ${this.healthChip()}
       <div class="who">
         ${Theme.button()}
         ${I18N.button('lang')}

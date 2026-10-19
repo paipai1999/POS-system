@@ -6,6 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const photos = require('./photos.js');
+const { verifyCopy } = require('./db.js');
 
 const MAX_EXTRA = 2;
 const FILE = /^pos-\d{4}-\d{2}-\d{2}\.db$/;
@@ -25,6 +26,23 @@ function createBackups({ db, dataDir, initialExtra = [] }) {
       try { return fs.statSync(path.dirname(dir)).dev; } catch (e2) { return null; }
     }
   };
+
+  // Whether the newest copy in a folder opens and looks like a POS database. Checked once per copy (and again if the file
+  // changes), so showing the status often costs nothing.
+  const checks = new Map();   // file -> { mtimeMs, result }
+  function checkNewest(dir, name) {
+    const file = path.join(dir, name);
+    try {
+      const mtimeMs = fs.statSync(file).mtimeMs;
+      const cached = checks.get(file);
+      if (cached && cached.mtimeMs === mtimeMs) return cached.result;
+      const result = verifyCopy(file);
+      checks.set(file, { mtimeMs, result });
+      return result;
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  }
 
   function latest(dir) {
     try {
@@ -62,10 +80,11 @@ function createBackups({ db, dataDir, initialExtra = [] }) {
         count: l.count, newest: l.newest, at: l.at || null,
         stale: !l.at || Date.now() - l.at > STALE_MS,
         error: errors.get(dir) || null,
+        check: l.newest ? checkNewest(dir, l.newest) : null,
       };
     };
     const folders = [row(main, 'main'), ...extraDirs().map(d => row(d, 'extra'))];
-    return { folders, safe: folders.some(f => f.kind === 'extra' && f.offDisk && !f.stale && !f.error) };
+    return { folders, safe: folders.some(f => f.kind === 'extra' && f.offDisk && !f.stale && !f.error && (!f.check || f.check.ok)) };
   }
 
   // Replaces the extra folders after checking that each exists and can be written to.

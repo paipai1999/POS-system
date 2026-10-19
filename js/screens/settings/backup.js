@@ -32,6 +32,7 @@ Object.assign(Screens.settings, {
     try {
       const st = await Sync.api('/api/backup/run', { method: 'POST' });
       this.showBackupStatus(this.root.querySelector('[data-role=backup-status]'), st);
+      this.loadHealth();
       toast('Backup saved', 'ok');
     } catch (e) {
       toast(e.message, 'error');
