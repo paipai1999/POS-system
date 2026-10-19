@@ -27,7 +27,7 @@ Object.assign(Sync, {
   async guestRequest(req) {
     await this.api('/api/guest/request', {
       method: 'POST',
-      body: { table: this.guestCode, kind: req.kind, note: req.note, items: req.items.map(l => ({ productId: l.productId, qty: l.qty })) },
+      body: { table: this.guestCode, kind: req.kind, note: req.note, items: req.items.map(l => ({ productId: l.productId, qty: l.qty, ...(l.mods && l.mods.length ? { mods: l.mods.map(m => m.name) } : {}) })) },
     });
     await this.refreshGuest();
   },

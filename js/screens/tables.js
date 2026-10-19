@@ -134,7 +134,7 @@ Screens.tables = {
         <header><span>${esc(table ? table.name : 'Unknown table')}</span><span class="muted small">${timeAgo(r.createdAt)}</span></header>
         ${r.kind === 'call'
           ? `<p>${icon('bell')} Guest is asking for a waiter</p>`
-          : `<ul>${r.items.map(l => `<li>${l.qty} × ${esc(l.name)}</li>`).join('')}</ul>
+          : `<ul>${r.items.map(l => `<li>${l.qty} × ${esc(l.name)}${modsText(l) ? ` <span class="line-mods">${esc(modsText(l))}</span>` : ''}</li>`).join('')}</ul>
              ${r.note ? `<p class="line-note">“${esc(r.note)}”</p>` : ''}`}
         <div class="row-actions start">
           ${r.kind === 'call'

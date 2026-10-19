@@ -104,7 +104,7 @@ By default devices talk to the server over plain HTTP, which is fine on a Wi-Fi 
   - **Controls**: who gave discounts, made refunds and voided bills, with the big ones listed so they can be checked.
   - A **cash expense**, a **cash purchase** and the owner's **cash** moves count in the cash drawer: they come off (or go into) what the drawer should hold at the end of the shift. A refund is taken off on the day it is made, not on the day of the original sale, so a month that is over never changes.
 - **Staff & roles**: Admin, Manager, Cashier, Waiter and Kitchen, each with their own PIN.
-- **Guest ordering**: on the guest's own phone via the table QR code, or on a restaurant tablet in guest mode. Waiters accept requests into the table's order. (Guests order items at their base price; a waiter adds options.)
+- **Guest ordering**: on the guest's own phone via the table QR code, or on a restaurant tablet in guest mode. Dishes with priced options (extra shot, oat milk…) show "from $4.00" and open a small picker where the guest ticks what they want; the price is worked out from the menu (the server never takes a price from the guest's phone, only option names, and refuses names the dish does not offer). Waiters see the options on the request and accept it into the table's order with them.
 
 ## Roles
 

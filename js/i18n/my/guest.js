@@ -37,4 +37,5 @@ Object.assign(I18N.dict, {
   'Exit guest mode': 'ဧည့်သည်မုဒ်မှ ထွက်ရန်',
   'Guest menu': 'ဧည့်သည်မီနူး',
   'Staff: choose which table this device is for.': 'ဝန်ထမ်း – ဤစက်သည် မည်သည့်စားပွဲအတွက်လဲ ရွေးပါ။',
+  'from': 'မှစ၍',
 });

@@ -1,7 +1,7 @@
 'use strict';
 
 // Guests at a table (no sign-in): the menu and bill they see, and the requests they send.
-const { uid, guestCode, ingredientStockMode } = require('../../js/shared.js');
+const { uid, guestCode, ingredientStockMode, lineUnitPrice } = require('../../js/shared.js');
 const { reject, isObj } = require('../base.js');
 
 function tableByCode(db, code) {
@@ -27,6 +27,7 @@ function guestState(db, code) {
     const short = blocking && p.lacks && p.lacks.length > 0;
     return {
       id: p.id, name: p.name, categoryId: p.categoryId, price: p.price, emoji: p.emoji, description: p.description, photo: p.photo,
+      options: (p.options || []).map(o => ({ name: o.name, price: o.price })),   // what a guest may add; never the ingredients behind them
       active: true, trackStock: p.trackStock || short, lowStock: p.lowStock,
       stock: short ? 0 : p.trackStock ? Math.max(0, p.stock - (reserved[p.id] || 0)) + (reservedHere[p.id] || 0) : 0,
     };
@@ -69,7 +70,18 @@ function createGuestRequest(db, code, body) {
       if (!p || !p.active) reject('Some items are no longer available. Please refresh the menu.');
       if (ingredientStockMode(db.doc('settings', 'main')) === 'block' && p.lacks && p.lacks.length) reject(`${p.name} is sold out right now. Please refresh the menu.`);
       if (!Number.isInteger(qty) || qty < 1 || qty > 50) reject('Invalid quantity');
-      items.push({ productId: p.id, name: p.name, price: p.price, qty });
+      // Options come as names; each must be one the menu offers for this dish, and the price is the menu's, never the guest's.
+      const mods = [];
+      if (it.mods !== undefined) {
+        if (!Array.isArray(it.mods) || it.mods.length > 8) reject('Invalid options');
+        for (const m of it.mods) {
+          const name = typeof m === 'string' ? m : isObj(m) ? m.name : null;
+          const offered = (p.options || []).find(o => o.name === name);
+          if (!offered || mods.some(x => x.name === name)) reject(`"${String(name).slice(0, 30)}" is not an option for ${p.name}. Please refresh the menu.`);
+          mods.push({ name: offered.name, price: offered.price });
+        }
+      }
+      items.push({ productId: p.id, name: p.name, price: lineUnitPrice(p, mods), qty, ...(mods.length ? { mods } : {}) });
     }
   }
   const doc = {
