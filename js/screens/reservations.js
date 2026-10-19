@@ -57,6 +57,7 @@ Screens.reservations = {
         case 'cancel': this.close(id, 'cancelled', 'Cancel this booking?', 'The table is free for other bookings again.', 'Cancel booking'); break;
         case 'noshow': this.close(id, 'noshow', 'Mark as a no-show?', 'The guests did not come. The table is free for other bookings again.', 'No-show'); break;
         case 'reopen': Store.setReservationStatus(id, 'booked'); App.render(); break;
+        case 'deposit': this.deposit(id); break;
         case 'delete': this.remove(id); break;
         case 'order': App.go('order', { orderId: id }); break;
       }
@@ -76,6 +77,7 @@ Screens.reservations = {
           <div class="res-name"><b>${esc(r.name)}</b> <span class="muted">· ${r.guests} <span>guests</span></span></div>
           <div class="res-meta">
             ${table ? `<span class="pill muted">${esc(table.name)}</span>` : '<span class="pill open">No table yet</span>'}
+            ${Store.depositFor(r.id) > 0 ? `<span class="pill paid"><span>Deposit</span> ${money(Store.depositFor(r.id))}</span>` : ''}
             ${r.phone ? `<span class="muted small">${esc(r.phone)}</span>` : ''}
           </div>
           ${r.note ? `<div class="line-note">“${esc(r.note)}”</div>` : ''}
@@ -86,6 +88,7 @@ Screens.reservations = {
             ${r.status === 'booked' ? `
               <button class="btn small primary" data-act="seat" data-id="${r.id}">Seat</button>
               <button class="btn small" data-act="edit" data-id="${r.id}">Edit</button>
+              ${App.can('checkout') ? `<button class="btn small" data-act="deposit" data-id="${r.id}">Deposit</button>` : ''}
               <button class="btn small danger" data-act="cancel" data-id="${r.id}">Cancel</button>
               <button class="btn small" data-act="noshow" data-id="${r.id}">No-show</button>`
               : `${App.can('manage') ? `<button class="btn small" data-act="reopen" data-id="${r.id}">Reopen</button>` : ''}
@@ -148,6 +151,19 @@ Screens.reservations = {
       footer: '<button class="btn" data-act="__close">Cancel</button><button class="btn primary" data-act="save">Save booking</button>',
       actions,
     });
+  },
+
+  // A deposit for a booking goes on the guest's customer account (found by phone or name, or added now), tied to the booking.
+  deposit(id) {
+    const r = Store.reservation(id);
+    if (!r) return;
+    const digits = Screens.customers.digits(r.phone);
+    let c = (digits && Store.data.customers.find(x => Screens.customers.digits(x.phone) === digits))
+      || Store.data.customers.find(x => x.name.trim().toLowerCase() === r.name.trim().toLowerCase());
+    if (!c) {
+      try { c = Screens.customers.create({ name: r.name, phone: r.phone }); } catch (e) { return toast(e.message, 'error'); }
+    }
+    Screens.customers.takeDeposit(c.id, { reservationId: r.id, note: `Booking ${fmtDateTime(r.at)}`, onDone: () => App.render() });
   },
 
   // The guests have arrived: put them at their table, which opens a bill for it.

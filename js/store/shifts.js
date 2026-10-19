@@ -26,7 +26,7 @@ Object.assign(Store, {
       shift.closedAt = Date.now();
       shift.closedBy = App.user.id;
       const sums = computeShift(shift, this.data.orders, decimalsOf(this.settings), this.data.supplierPayments, this.shiftExtras());
-      Object.assign(shift, { expectedCash: sums.expected, difference: rmoney(shift.countedCash - sums.expected), cashIn: sums.cashIn, cashOut: sums.cashOut, payouts: sums.payouts, spent: sums.spent, bought: sums.bought, ownerIn: sums.ownerIn, ownerOut: sums.ownerOut, received: sums.received, tips: sums.tips, sales: sums.sales, orders: sums.orders });
+      Object.assign(shift, { expectedCash: sums.expected, difference: rmoney(shift.countedCash - sums.expected), cashIn: sums.cashIn, cashOut: sums.cashOut, payouts: sums.payouts, spent: sums.spent, bought: sums.bought, ownerIn: sums.ownerIn, ownerOut: sums.ownerOut, received: sums.received, returned: sums.returned, tips: sums.tips, sales: sums.sales, orders: sums.orders });
     } else {
       shift.closedAt = Date.now(); // marks the close request; the server replaces every figure
     }

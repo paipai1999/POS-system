@@ -167,6 +167,12 @@ I18N.patterns.push(
   [/^(.+) is already booked (.+)–(.+) for (.+)$/, '$1 ကို $2–$3 အတွက် $4 က ကြိုတင်မှာထားပြီးဖြစ်သည်'],
   [/^Guests must be between 1 and (\d+)$/, 'ဧည့်သည်အရေအတွက်သည် ၁ မှ $1 အတွင်း ဖြစ်ရမည်'],
   [/^The table is held for (\d+) to (\d+) minutes$/, 'စားပွဲကို မိနစ် $1 မှ $2 အတွင်း ထိန်းထားနိုင်သည်'],
+  // deposits
+  [/^Deposit from (.+)$/, '$1 ထံမှ စရန်ငွေ'],
+  [/^Give back (.+)'s deposit$/, '$1 ၏ စရန်ငွေ ပြန်ပေးရန်'],
+  [/^Use the deposit \((.+)\)$/, 'စရန်ငွေကို သုံးရန် ($1)'],
+  [/^Only (.+) of (.+)'s deposit is left to give back$/, '$2 ၏ စရန်ငွေမှ $1 သာ ပြန်ပေးရန် ကျန်သည်'],
+  [/^Only (.+) is left of (.+)'s deposit$/, '$2 ၏ စရန်ငွေမှ $1 သာ ကျန်သည်'],
   // role + description in the role drop-down
   [/^(Admin|Manager|Cashier|Waiter|Kitchen) — (.+)$/, '$1 — $2']
 );

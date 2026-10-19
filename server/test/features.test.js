@@ -245,7 +245,7 @@ test('the drawer sums are the same whether the browser or the server works them 
     { status: 'paid', paidAt: 40, totals: { total: 7 }, payment: { method: 'card', amount: 7 } },
   ];
   const sums = computeShift({ openedAt: 8, openingFloat: 50 }, orders);
-  assert.deepEqual(sums, { cashIn: 13.56, cashOut: 4, payouts: 0, spent: 0, bought: 0, ownerIn: 0, ownerOut: 0, received: 0, tips: 1, sales: 19.56, orders: 3, expected: 59.56 });
+  assert.deepEqual(sums, { cashIn: 13.56, cashOut: 4, payouts: 0, spent: 0, bought: 0, ownerIn: 0, ownerOut: 0, received: 0, returned: 0, tips: 1, sales: 19.56, orders: 3, expected: 59.56 });
   // Cash handed to a supplier out of the till during the shift comes off; other methods, voided or earlier payments do not.
   const paid = computeShift({ openedAt: 8, openingFloat: 50 }, orders, 2, [
     { method: 'cash', amount: 10, status: 'paid', date: 15 },

@@ -90,6 +90,12 @@ const Checkout = {
         Modal.el().querySelector(`[name=split-${key}]`).value = this.split[key];
         this.updateChange();
       },
+      'use-deposit': () => {
+        const info = this.creditInfo();
+        if (!info) return;
+        this.split.credit = String(Math.min(info.room, info.prepaid, this.billTotal()));
+        this.render();
+      },
       complete: () => this.complete(),
       __change: e => {
         if (e.target.name === 'points') this.setPoints(parseFloat(e.target.value));
@@ -169,10 +175,11 @@ const Checkout = {
             <input class="input big-input" name="tendered" type="number" min="0" step="${moneyStep()}" inputmode="decimal" value="${esc(this.tendered)}" autofocus></label>
           <div class="quick-cash" data-role="quick">${this.quickHTML()}</div>` : ''}
         ${this.method === 'credit' && credit ? `
-          <p class="credit-line"><b>${esc(credit.customer.name)}</b> <span>owes</span> ${money(credit.owing)} · <span>credit limit</span> ${money(credit.limit)} · <span>available</span> <b>${money(credit.room)}</b></p>
-          <p class="muted small">The whole bill goes on their account and is paid later. A tip cannot be put on account.</p>` : ''}
+          <p class="credit-line"><b>${esc(credit.customer.name)}</b> ${credit.prepaid > 0 ? `<span>deposit</span> ${money(credit.prepaid)}` : `<span>owes</span> ${money(credit.owing)}`}${credit.limit > 0 ? ` · <span>credit limit</span> ${money(credit.limit)}` : ''} · <span>available</span> <b>${money(credit.room)}</b></p>
+          <p class="muted small">The whole bill goes on their account${credit.prepaid > 0 ? ' (the deposit is used first)' : ' and is paid later'}. A tip cannot be put on account.</p>` : ''}
         ${this.method === 'split' ? `
           <p class="muted small">Enter how much is paid by each method. The amounts must add up to the total to pay.${credit ? ` <span>${esc(credit.customer.name)} can put up to ${money(credit.room)} on account.</span>` : ''}</p>
+          ${credit && credit.prepaid > 0 ? `<p><button class="btn small" data-act="use-deposit">${icon('wallet', 1)} Use the deposit (${money(Math.min(credit.room, credit.prepaid, this.billTotal()))})</button></p>` : ''}
           ${[['cash', `${icon('banknote')} Cash`], ['card', `${icon('credit-card')} Card`], ['other', `${icon('smartphone')} Other`], ...(credit ? [['credit', `${icon('receipt')} On account`]] : [])].map(([k, label]) => `
             <div class="split-row">
               <span>${label}</span>

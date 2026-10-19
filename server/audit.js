@@ -92,7 +92,10 @@ function describe(col, prev, next, deleted, nameOf = () => null) {
     }
     case 'customerPayments': {
       if (deleted || !next) break;
-      if (!prev) add(next.method === 'writeoff' ? 'debt written off' : 'customer paid', next.customerName || '', `${num(next.amount)}${next.method === 'writeoff' ? '' : ' (' + next.method + ')'}`);
+      if (!prev) {
+        const action = next.method === 'writeoff' ? 'debt written off' : next.kind === 'deposit' ? 'deposit received' : next.kind === 'depositRefund' ? 'deposit given back' : 'customer paid';
+        add(action, next.customerName || '', `${num(next.amount)}${next.method === 'writeoff' ? '' : ' (' + next.method + ')'}${next.kind === 'depositRefund' ? `, approved by ${who(next.approvedBy)}` : ''}`);
+      }
       else if (prev.status !== 'void' && next.status === 'void') add('customer payment voided', next.customerName || '', num(next.amount));
       break;
     }

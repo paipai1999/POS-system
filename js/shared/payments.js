@@ -58,14 +58,22 @@
     return paymentByMethod(payment).cash || 0;
   }
 
-  // Putting `amount` on a customer's account: the customer must be on the bill, have a credit limit, and have room left.
+  // How much a customer may put on account now. With a credit limit: the limit less what they owe (so a deposit they paid in
+  // advance, which makes `owing` negative, adds to it). With no limit: only what they have paid in advance (a deposit).
+  function creditRoom(customer, dec) {
+    const limit = Number(customer && customer.creditLimit) || 0;
+    const owing = Number(customer && customer.owing) || 0;
+    return limit > 0 ? roundTo(limit - owing, dec) : roundTo(Math.max(0, -owing), dec);
+  }
+
+  // Putting `amount` on a customer's account: the customer must be on the bill, have a credit limit or a deposit, and have room left.
   function checkCredit(customer, amount, dec) {
     if (!customer) throw new Error('Choose a customer to put the bill on account');
     if (customer.active === false) throw new Error(`${customer.name} is not active`);
     const limit = Number(customer.creditLimit) || 0;
-    if (!(limit > 0)) throw new Error(`${customer.name} has no credit. A manager can set a credit limit.`);
-    const room = roundTo(limit - (Number(customer.owing) || 0), dec);
-    if (amount > room + 0.005) throw new Error(`Credit limit: only ${room} is available for ${customer.name}`);
+    if (!(limit > 0) && !(Number(customer.owing) < 0)) throw new Error(`${customer.name} has no credit. A manager can set a credit limit.`);
+    const room = creditRoom(customer, dec);
+    if (amount > room + 0.005) throw new Error(limit > 0 ? `Credit limit: only ${room} is available for ${customer.name}` : `Only ${room} is left of ${customer.name}'s deposit`);
   }
 
   // Checks a payment against the bill and returns the figures to store: { totals, payment }.
@@ -124,7 +132,7 @@
     return { totals: t, payment: out };
   }
 
-  const api = { PAY_METHODS, PAY_NAMES_MAX, PAY_NAME_LENGTH, PAY_NAMES_RESERVED, paymentByMethod, paymentByWay, paymentCash, settleOrder };
+  const api = { PAY_METHODS, creditRoom, PAY_NAMES_MAX, PAY_NAME_LENGTH, PAY_NAMES_RESERVED, paymentByMethod, paymentByWay, paymentCash, settleOrder };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else Object.assign(root, api);
 })(typeof window !== 'undefined' ? window : globalThis);

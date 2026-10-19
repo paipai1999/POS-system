@@ -7,8 +7,12 @@
 const { roundTo, decimalsOf } = require('../../js/shared.js');
 const { reject, need, cleanText } = require('../base.js');
 const { needOpenDay } = require('./ledger.js');
+const { needApproval } = require('./helpers.js');
 
 const METHODS = ['cash', 'card', 'other', 'writeoff'];
+// A customer payment is one of: 'payment' (towards what they owe), 'deposit' (money paid in advance, which puts the account in
+// credit to be used on a later bill) or 'depositRefund' (a deposit given back: money out, and a manager must approve it).
+const KINDS = ['payment', 'deposit', 'depositRefund'];
 
 function prepareCustomerPayment(db, ctx, id, prev, data, deleted, changed) {
   need(ctx.user, 'checkout');                          // whoever takes payments at the counter may take one on account
@@ -23,7 +27,9 @@ function prepareCustomerPayment(db, ctx, id, prev, data, deleted, changed) {
     needOpenDay(db, prev.date, 'this payment cannot be voided');
     const c = customer(prev.customerId);
     if (c) {
-      c.owing = roundTo((c.owing || 0) + prev.amount, dec);
+      if (prev.kind === 'deposit' && -(c.owing || 0) < prev.amount - 0.005) reject('This deposit has already been used on a bill, so it cannot be voided.');
+      // Voiding undoes what the entry did: a payment or deposit had lowered the balance, a deposit given back had raised it.
+      c.owing = roundTo((c.owing || 0) + (prev.kind === 'depositRefund' ? -prev.amount : prev.amount), dec);
       changed.push(db.put('customers', c.id, c));
     }
     return { ...prev, status: 'void', voidedAt: Date.now(), voidedBy: ctx.user.id };
@@ -31,18 +37,29 @@ function prepareCustomerPayment(db, ctx, id, prev, data, deleted, changed) {
 
   const c = customer(data.customerId);
   if (!c) reject('That customer no longer exists');
-  if (!METHODS.includes(data.method)) reject('Choose how the customer paid');
+  const kind = data.kind === undefined || data.kind === null ? 'payment' : data.kind;
+  if (!KINDS.includes(kind)) reject('Invalid payment');
+  if (!METHODS.includes(data.method) || (kind !== 'payment' && data.method === 'writeoff')) reject('Choose how the customer paid');
   if (data.method === 'writeoff') need(ctx.user, 'manage');
   const amount = roundTo(Number(data.amount), dec);
   if (!(amount > 0) || amount > 1e12) reject('Enter the amount');
-  if (amount > (c.owing || 0) + 0.005) reject(`Only ${roundTo(c.owing || 0, dec)} is owed by ${c.name}`);
+  const credit = roundTo(Math.max(0, -(c.owing || 0)), dec);
+  if (kind === 'payment' && amount > (c.owing || 0) + 0.005) reject(`Only ${roundTo(c.owing || 0, dec)} is owed by ${c.name}`);
+  if (kind === 'depositRefund') {
+    if (amount > credit + 0.005) reject(`Only ${credit} of ${c.name}'s deposit is left to give back`);
+    needApproval(db, ctx, data.approvedBy);
+  }
   needOpenDay(db, Date.now(), 'nothing can be added to it');
-  c.owing = roundTo((c.owing || 0) - amount, dec);
+  c.owing = roundTo((c.owing || 0) + (kind === 'depositRefund' ? amount : -amount), dec);
   changed.push(db.put('customers', c.id, c));
-  return {
+  const doc = {
     id, customerId: c.id, customerName: c.name, date: Date.now(), amount, method: data.method,
     note: cleanText(data.note, 200), by: ctx.user.id, status: 'received',
   };
+  if (kind !== 'payment') doc.kind = kind;
+  if (kind === 'deposit' && typeof data.reservationId === 'string' && data.reservationId.length <= 80) doc.reservationId = data.reservationId;
+  if (kind === 'depositRefund') doc.approvedBy = data.approvedBy;
+  return doc;
 }
 
 module.exports = { prepareCustomerPayment };
