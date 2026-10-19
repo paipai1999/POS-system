@@ -152,6 +152,11 @@ I18N.patterns.push(
   [/^One person still uses a PIN from the demo data \((.+)\)\. They cannot sign in to work until they choose their own$/, 'စမ်းသပ်ဒေတာမှ ပင်နံပါတ်ကို တစ်ဦး ဆက်သုံးနေသည် ($1)။ ကိုယ်ပိုင်ပင်နံပါတ် မရွေးမချင်း အလုပ်ဝင်၍ မရပါ'],
   [/^(\d+) people still use a PIN from the demo data \((.+)\)\. They cannot sign in to work until they choose their own$/, 'စမ်းသပ်ဒေတာမှ ပင်နံပါတ်ကို $1 ဦး ဆက်သုံးနေသည် ($2)။ ကိုယ်ပိုင်ပင်နံပါတ် မရွေးမချင်း အလုပ်ဝင်၍ မရပါ'],
   [/^Please choose your own PIN first$/, 'ကိုယ်ပိုင်ပင်နံပါတ် အရင်ရွေးပါ'],
+  // owner reports (Finance → Business health, Sales patterns, Menu engineering)
+  [/^over (\d+) days?$/, '$1 ရက်အတွင်း'],
+  [/^Only (\d+) dish(?:es)? ha(?:s|ve) a recipe cost, so the groups below are rough\. Add recipes under Menu & Stock for the rest$/, 'ဟင်းလျာ $1 မျိုးသာ ချက်ပြုတ်နည်းစရိတ် ရှိသဖြင့် အောက်ပါအုပ်စုများသည် ခန့်မှန်းချက်သာ ဖြစ်သည်။ ကျန်ဟင်းလျာများအတွက် မီနူးနှင့် လက်ကျန်ပစ္စည်း တွင် ချက်ပြုတ်နည်းများ ထည့်ပါ'],
+  [/^Only (\d+)% of item sales have a recipe, so food cost is understated\. Add recipes under Menu & Stock to see the true figure$/, 'ပစ္စည်းရောင်းရငွေ၏ $1% သာ ချက်ပြုတ်နည်းရှိသဖြင့် အစားအစာကုန်ကျစရိတ် နည်းနေပါသည်။ အမှန်ကိန်းဂဏန်းမြင်ရန် မီနူးနှင့် လက်ကျန်ပစ္စည်း တွင် ချက်ပြုတ်နည်းများ ထည့်ပါ'],
+  [/^No salaries or wages are recorded as expenses in this period, so labour and prime cost look better than they are\. Record them under Finance → Expenses \(category Salaries\)$/, 'ဤကာလတွင် လစာ/လုပ်ခများကို အသုံးစရိတ်အဖြစ် မှတ်ထားခြင်းမရှိသဖြင့် လုပ်သားစရိတ်နှင့် အဓိကကုန်ကျစရိတ် အမှန်ထက် ကောင်းနေပုံပေါ်သည်။ ဘဏ္ဍာရေး → အသုံးစရိတ် (အမျိုးအစား လစာများ) တွင် မှတ်ပါ'],
   // role + description in the role drop-down
   [/^(Admin|Manager|Cashier|Waiter|Kitchen) — (.+)$/, '$1 — $2']
 );

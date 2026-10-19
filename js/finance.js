@@ -15,6 +15,9 @@
 //   recurring.js    monthly expenses that repeat (rent, salaries)
 //   receivables.js  what customers owe for bills on account: statements and ageing
 //   overview.js     the owner's first look: today vs yesterday, the week, hours, best sellers
+//   analytics.js    sales patterns: weekday, hour, day by hour, trend, dine-in vs takeaway, tables, servers
+//   menu.js         menu engineering: stars, plowhorses, puzzles and dogs
+//   kpis.js         business health: food, labour and prime cost, rent, net margin, break-even
 module.exports = Object.assign({},
   require('./finance/core.js'),
   require('./finance/profit-loss.js'),
@@ -25,5 +28,8 @@ module.exports = Object.assign({},
   require('./finance/daily.js'),
   require('./finance/recurring.js'),
   require('./finance/receivables.js'),
-  require('./finance/overview.js')
+  require('./finance/overview.js'),
+  require('./finance/analytics.js'),
+  require('./finance/menu.js'),
+  require('./finance/kpis.js')
 );

@@ -45,6 +45,11 @@
   .brand, .nav-btn span, .who > span { display: none; }
   .topbar { gap: .5rem; padding: 0 .5rem; }
 }
+/* Narrow phones: the bar also holds the sync state and, for admins, the warning mark, so it is packed a little tighter. */
+@media (max-width: 480px) {
+  .topbar { gap: .3rem; padding: 0 .35rem; }
+  .who { gap: .3rem; }
+}
 
 .main { padding: 1.25rem; max-width: 1400px; margin: 0 auto; }
 .main.screen-login, .main.screen-guest, .main.screen-order { padding: 0; max-width: none; }

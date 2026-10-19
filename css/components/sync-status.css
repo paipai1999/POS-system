@@ -10,3 +10,4 @@
 .health-chip { display: inline-flex; align-items: center; gap: .3rem; font: inherit; font-size: .78rem; font-weight: 800; padding: .25rem .6rem; border: 0; border-radius: 999px; background: var(--warn-solid); color: #fff; cursor: pointer; white-space: nowrap; }
 .health-chip svg { width: 14px; height: 14px; }
 .health-chip.error { background: var(--danger-solid); animation: pulse 1.5s infinite; }
+@media (max-width: 480px) { .health-chip { padding: .25rem .45rem; } }
