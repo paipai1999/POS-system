@@ -9,6 +9,8 @@ The interface can be switched between **English and မြန်မာ** with th
 
 ## Multi-device setup
 
+Before the first real day, go through the **[opening-day checklist](docs/SETUP-CHECKLIST.md)** ([Myanmar](docs/SETUP-CHECKLIST-my.md)); it lists what was tested and what has not been tried yet on real devices. The owner's day-to-day routine is in the [owner's guide](docs/OWNER-GUIDE.md).
+
 You need [Node.js](https://nodejs.org) **22.5 or newer** (the "LTS" download) on the PC that runs the server. `start-server.bat` checks this and says so if it is too old. There is nothing else to install.
 
 1. **Start the server.** On the counter PC, double-click `start-server.bat`. It shows the address to use, for example:
