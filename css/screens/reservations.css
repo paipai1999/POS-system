@@ -1,0 +1,23 @@
+/* Reservations: the day's list, and the booking hint on a table tile. */
+.day-nav { gap: .4rem; }
+.day-nav .btn.active { background: var(--sel-bg); color: var(--sel-ink); border-color: var(--sel-bg); }
+.day-nav .input { width: auto; min-width: 0; flex: 0 0 auto; }
+.day-text { margin-left: .5rem; }
+.res-list { display: grid; gap: .6rem; margin-top: .75rem; }
+.res { display: grid; grid-template-columns: 6.4rem 1fr auto; gap: .9rem; align-items: start; padding: .8rem 1rem; }
+.res.late { border-color: var(--danger); }
+.res.done { opacity: .7; }
+.res-time { display: flex; flex-direction: column; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.res-time b { font-size: 1.2rem; }
+.res-time .small::before { content: "–"; margin-right: .2rem; }
+.res-name { font-size: 1.05rem; }
+.res-meta { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: .25rem; }
+.res-side { display: flex; flex-direction: column; align-items: flex-end; gap: .45rem; }
+.res-side .row-actions { justify-content: flex-end; flex-wrap: wrap; }
+@media (max-width: 640px) {
+  .res { grid-template-columns: 5.6rem 1fr; }
+  .res-side { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+}
+.table-tile.booked:not(.busy) { border-color: var(--accent); border-style: dashed; }
+.t-booked { display: flex; align-items: center; gap: .25rem; margin-top: .15rem; font-size: .8rem; font-weight: 700; color: var(--accent-2); line-height: 1.2; }
+.table-tile .t-booked svg { flex-shrink: 0; }

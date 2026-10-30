@@ -4,6 +4,11 @@
 .inline-add { display: flex; gap: .5rem; margin-top: .85rem; }
 
 .ok-box { background: var(--ok-soft); color: var(--ok); border-radius: 10px; padding: .55rem .8rem; font-weight: 600; font-size: .9rem; margin-bottom: .6rem; }
+.alert-box.danger { background: var(--danger-soft); color: var(--danger-solid); }
+.facts { margin: .6rem 0 .8rem; display: grid; gap: .1rem; }
+.facts > div { display: flex; justify-content: space-between; gap: 1rem; padding: .35rem 0; border-bottom: 1px dashed var(--line); font-size: .92rem; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; text-align: right; font-weight: 600; }
 .backup-list { margin: 0 0 .75rem; }
 .backup-list li { display: flex; justify-content: space-between; align-items: center; gap: .6rem; padding: .4rem 0; border-bottom: 1px dashed var(--line); }
 .backup-list code { word-break: break-all; }

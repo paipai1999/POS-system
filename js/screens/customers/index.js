@@ -93,6 +93,8 @@ Screens.customers = {
         <td class="num">${this.owesHTML(c)}</td>
         <td><div class="row-actions">
           ${(c.owing || 0) > 0 ? `<button class="btn small" data-act="receive" data-id="${c.id}">Receive payment</button>` : ''}
+          ${c.active !== false ? `<button class="btn small" data-act="deposit" data-id="${c.id}">Deposit</button>` : ''}
+          ${(c.owing || 0) < 0 ? `<button class="btn small" data-act="return-deposit" data-id="${c.id}">Give back deposit</button>` : ''}
           ${(c.owing || 0) !== 0 || c.creditLimit > 0 ? `<button class="btn small" data-act="statement" data-id="${c.id}">Statement</button>` : ''}
           <button class="btn small" data-act="edit" data-id="${c.id}">Edit</button>
         </div></td>
@@ -125,6 +127,8 @@ Screens.customers = {
       if (t.dataset.act === 'new') this.edit(null);
       else if (t.dataset.act === 'edit') this.edit(t.dataset.id);
       else if (t.dataset.act === 'receive') this.receivePayment(t.dataset.id, () => this.render(root));
+      else if (t.dataset.act === 'deposit') this.takeDeposit(t.dataset.id, { onDone: () => this.render(root) });
+      else if (t.dataset.act === 'return-deposit') this.returnDeposit(t.dataset.id, () => this.render(root));
       else if (t.dataset.act === 'statement') this.statement(t.dataset.id);
     };
     root.oninput = e => {

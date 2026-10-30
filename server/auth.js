@@ -6,10 +6,16 @@ const { HttpError } = require('./http/util.js');
 const APPROVAL_TTL = 10 * 60 * 1000;   // a manager's PIN approval is good for 10 minutes on the session it was entered in
 const LOCK_AFTER = 5;                  // wrong PINs in a row from one address…
 const LOCK_FOR = 30 * 1000;            // …lock it for this long
+const GUARD_LOCKS = [30, 60, 120, 300].map(s => s * 1000);   // an account locked again and again waits longer each time, up to 5 minutes
+const GUARD_FORGET = 60 * 60 * 1000;   // wrong PINs older than this (and the "again and again" count) are forgotten
+const PIN_CHANGES = 5;                 // a signed-in person may try this many new PINs…
+const PIN_CHANGE_WINDOW = 10 * 60 * 1000;   // …within this time (see pinChangeAttempt)
 
 function createAuth(db) {
   const failures = new Map();     // ip -> { n, until }
   const approvals = new Map();    // session token -> Map(managerId -> time the manager entered their PIN)
+  const pinChanges = new Map();   // user id -> times of their recent attempts to choose a new PIN
+  const guards = new Map();       // "login:<user id>" etc. -> { n, strikes, until, last }: wrong PINs against one target, from any address
 
   // Throws while an address is locked out after too many wrong PINs.
   function checkLock(ip) {
@@ -26,6 +32,51 @@ function createAuth(db) {
       db.addAudit({ action: 'sign-in blocked', target: who, detail: `${LOCK_AFTER} wrong PINs in a row from ${ip}; locked for 30 seconds` });
     }
     failures.set(ip, f);
+  }
+
+  // The lock above follows the address a request comes from, so it is no help against someone who changes address (a few
+  // devices, or a second sign-in of their own in between, which clears it). These locks follow what is being guessed instead:
+  //   login:<user id>    wrong PINs for one person's sign-in, whoever sends them
+  //   verify:<user id>   wrong PINs typed into the manager-approval box by one signed-in person
+  //   verify:guest       the same box on a table tablet, where nobody is signed in (all such callers share one count)
+  // Five wrong PINs lock the target for 30 seconds, then 1, 2 and 5 minutes each time it happens again. The target is locked
+  // even for the right PIN: answering it would tell a guesser they were right. People already signed in are not affected.
+  const waitText = ms => { const s = Math.ceil(ms / 1000); return s < 90 ? `${s} seconds` : `${Math.ceil(s / 60)} minutes`; };
+
+  function checkGuard(key, subject) {
+    const g = guards.get(key);
+    if (g && g.until > Date.now()) throw new HttpError(429, `Too many wrong PINs ${subject}. Wait ${waitText(g.until - Date.now())} and try again.`);
+  }
+
+  function guardFailed(key, target, ip) {
+    const now = Date.now();
+    const g = guards.get(key) || { n: 0, strikes: 0, until: 0, last: 0 };
+    if (now - g.last > GUARD_FORGET) { g.n = 0; g.strikes = 0; }
+    g.last = now;
+    if (++g.n >= LOCK_AFTER) {
+      const wait = GUARD_LOCKS[Math.min(g.strikes, GUARD_LOCKS.length - 1)];
+      g.n = 0;
+      g.strikes++;
+      g.until = now + wait;
+      db.addAudit({ action: 'account locked', target, detail: `${LOCK_AFTER} wrong PINs in a row (latest from ${ip}); locked for ${waitText(wait)}` });
+    }
+    guards.set(key, g);
+  }
+
+  const guardCleared = key => guards.delete(key);
+
+  // Choosing a PIN that a colleague already has is refused ("already used"), so every attempt is a yes/no question about
+  // everyone else's PIN. Without a limit, any signed-in person could ask it for all 10,000 four-digit PINs in minutes and
+  // never trip the sign-in lock. This allows a few attempts per person per window; call it once per attempt.
+  function pinChangeAttempt(userId) {
+    const now = Date.now();
+    const recent = (pinChanges.get(userId) || []).filter(t => now - t < PIN_CHANGE_WINDOW);
+    if (recent.length >= PIN_CHANGES) {
+      pinChanges.set(userId, recent);
+      throw new HttpError(429, 'Too many PIN changes. Wait a few minutes and try again.');
+    }
+    recent.push(now);
+    pinChanges.set(userId, recent);
   }
 
   // The signed-in person for a request (Bearer token, or ?token= for event streams), or null.
@@ -50,10 +101,15 @@ function createAuth(db) {
     return !!t && Date.now() - t < APPROVAL_TTL;
   }
 
+  // Everyone whose PIN was entered on this session recently, newest first (for approvals that name no one in particular).
+  function approvers(token) {
+    return [...(approvals.get(token) || [])].filter(([, t]) => Date.now() - t < APPROVAL_TTL).sort((a, b) => b[1] - a[1]).map(([id]) => id);
+  }
+
   return {
-    checkLock, pinFailed,
+    checkLock, pinFailed, pinChangeAttempt, checkGuard, guardFailed, guardCleared,
     clearFailures: ip => failures.delete(ip),
-    authenticate, approve, hasApproval,
+    authenticate, approve, hasApproval, approvers,
     forget: token => approvals.delete(token),
     forgetAll: () => approvals.clear(),
   };

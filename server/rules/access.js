@@ -9,6 +9,18 @@ function stripUser(u) {
   return rest;
 }
 
+// Someone's hourly pay is for managers and the person themselves.
+function withoutWage(u) {
+  if (!u || u.hourlyRate === undefined) return u;
+  const { hourlyRate, ...rest } = u;
+  return rest;
+}
+
+// What anyone may be told about a staff account (the sign-in list, a manager who approved something): no PIN, no pay.
+function publicUser(u) {
+  return withoutWage(stripUser(u));
+}
+
 // Rows leave the server without PINs.
 function publicRow(row) {
   return row.col === 'users' && row.data ? { ...row, data: stripUser(row.data) } : row;
@@ -22,7 +34,7 @@ function canSeeOrder(user, order) {
 }
 
 // The kitchen display only needs the tickets (they carry the order number and table name), staff names and settings.
-const KITCHEN_ONLY = new Set(['settings', 'users', 'kitchenTickets']);
+const KITCHEN_ONLY = new Set(['settings', 'users', 'kitchenTickets', 'attendance']); // (everyone can clock in, the kitchen too)
 
 const isKitchenOnly = user => !can(user, 'tables') && !can(user, 'checkout') && !can(user, 'orders') && !can(user, 'products');
 
@@ -43,7 +55,14 @@ function rowsFor(user, rows, { tombstone = false } = {}) {
   if (!user) return [];
   if (isKitchenOnly(user)) rows = rows.filter(r => KITCHEN_ONLY.has(r.col));
   const out = [];
+  const manager = can(user, 'manage');
   for (const row of rows) {
+    // Time sheets: a manager sees everyone's, anyone else only their own. Pay rates: managers and the person themselves.
+    if (row.col === 'attendance' && !manager && !(row.data && row.data.userId === user.id)) continue;
+    if (row.col === 'users' && row.data && row.data.hourlyRate !== undefined && !can(user, 'reports') && row.id !== user.id) {
+      out.push({ ...row, data: withoutWage(row.data) });
+      continue;
+    }
     if (row.col === 'shifts' && !(can(user, 'checkout') || can(user, 'reports'))) continue;
     if (row.col === 'purchases' && !can(user, 'products')) {
       // The till needs to know about cash spent on a purchase, nothing else about it.
@@ -78,4 +97,4 @@ function rowsFor(user, rows, { tombstone = false } = {}) {
   return out;
 }
 
-module.exports = { stripUser, publicRow, rowsFor };
+module.exports = { stripUser, publicUser, withoutWage, publicRow, rowsFor };

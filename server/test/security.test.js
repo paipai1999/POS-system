@@ -13,7 +13,7 @@ let app, base, dataDir;
 
 test.before(async () => {
   dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pos-sec-'));
-  app = start({ port: 0, dataDir, quiet: true });
+  app = start({ port: 0, dataDir, quiet: true, allowDemoPins: true });
   await new Promise(r => app.server.once('listening', r));
   base = `http://127.0.0.1:${app.server.address().port}`;
 });
@@ -61,6 +61,10 @@ test('only the app files are served: never the database, server code or anything
     sock.on('error', reject);
   });
   for (const t of ['/js/../server/server.js', '/js/%2e%2e/server/server.js', '/js/..%2fserver/server.js', '/js/..%2fserver%2fdata%2fpos.db', '/css/..%2f..%2f..%2fwindows%2fwin.ini', '/css/../../../../windows/win.ini']) {
+    assert.match(await raw(t), / 404 /, t);
+  }
+  // A null byte used to make the file read throw (a 500 and a stack trace in the log); it is simply not a file now.
+  for (const t of ['/js/%00', '/css/%00.css', '/%00', '/js/store/core.js%00.png', '/photos/%00', '/photos/a%00.png']) {
     assert.match(await raw(t), / 404 /, t);
   }
 });

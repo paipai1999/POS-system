@@ -32,7 +32,8 @@ function ensureGuestCodes(db) {
   });
 }
 
-function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = null, quiet = false } = {}) {
+// `allowDemoPins` (tests only) lets a session that still uses a demo PIN do everything; normally it may only change its PIN.
+function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = null, quiet = false, allowDemoPins = false } = {}) {
   const tls = loadTLS();
   const scheme = tls ? 'https' : 'http';
   const db = new Database(path.join(dataDir, 'pos.db'));
@@ -51,7 +52,7 @@ function start({ port = 3000, dataDir = path.join(__dirname, 'data'), testDir = 
   const realtime = createRealtime(db);
 
   // What the routes work with. `server` is filled in below, once the HTTP server exists.
-  const app = { db, dataDir, tls, backups, auth, realtime, afterDataReplaced, server: null };
+  const app = { db, dataDir, tls, backups, auth, realtime, afterDataReplaced, allowDemoPins, server: null };
 
   const handler = async (req, res) => {
     const url = new URL(req.url, 'http://localhost');

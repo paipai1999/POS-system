@@ -18,6 +18,7 @@ Object.assign(I18N.dict, {
   'Invalid payment method': 'ငွေပေးချေမှုနည်းလမ်း မမှန်ပါ',
   'Already handled by another station': 'အခြားစခန်းက လုပ်ဆောင်ပြီးဖြစ်သည်',
   'That table has an open order': 'ထိုစားပွဲတွင် ဖွင့်ထားသော အော်ဒါရှိသည်',
+  'Manager approval required to take off items that were already sent to the kitchen': 'မီးဖိုချောင်သို့ ပို့ပြီးသော ပစ္စည်းများကို ဖယ်ရှားရန် မန်နေဂျာ၏ ခွင့်ပြုချက် လိုအပ်သည်',
   'Only unsent open orders can be removed': 'မပို့ရသေးသော ဖွင့်ထားသည့်အော်ဒါများကိုသာ ဖယ်ရှားနိုင်သည်',
   'This person has order history. Deactivate them instead so reports stay accurate.': 'ဤသူတွင် အော်ဒါမှတ်တမ်းရှိသည်။ အစီရင်ခံစာများ မှန်ကန်စေရန် ဖျက်မည့်အစား ရပ်ဆိုင်းပါ။',
   'Only an admin can set up a printer station': 'အက်ဒမင်သာ ပရင်တာစခန်း တပ်ဆင်နိုင်သည်',

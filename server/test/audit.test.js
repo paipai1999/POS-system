@@ -50,7 +50,7 @@ const find = (rows, action) => rows.find(r => r.action === action);
 
 test.before(async () => {
   dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pos-audit-'));
-  app = start({ port: 0, dataDir, quiet: true });
+  app = start({ port: 0, dataDir, quiet: true, allowDemoPins: true });
   await new Promise(r => app.server.once('listening', r));
   base = `http://127.0.0.1:${app.server.address().port}`;
 });
@@ -134,7 +134,7 @@ test('sign-ins, lockouts, exports and PIN changes are recorded; imports do not e
   const leo = users.find(u => u.name === 'Leo');
   for (let i = 0; i < 5; i++) await call('/api/login', { method: 'POST', body: { userId: leo.id, pin: '0001' } });
   await app.close();
-  app = start({ port: 0, dataDir, quiet: true }); // a restart also clears the lockout
+  app = start({ port: 0, dataDir, quiet: true, allowDemoPins: true }); // a restart also clears the lockout
   await new Promise(r => app.server.once('listening', r));
   base = `http://127.0.0.1:${app.server.address().port}`;
 

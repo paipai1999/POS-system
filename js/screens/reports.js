@@ -74,7 +74,7 @@ Screens.reports = {
     const items = {}, cats = {}, methods = {}, staff = {};
     const hours = Array(24).fill(0);
     for (const o of paid) {
-      for (const [k, amount] of Object.entries(paymentByMethod(o.payment))) { // a split bill counts under each method used
+      for (const [k, amount] of Object.entries(paymentByWay(o.payment))) { // a split bill counts under each method used; an Other payment under its payment name
         const m = (methods[k] ||= { count: 0, amount: 0 });
         m.count++; m.amount += amount;
       }
@@ -145,7 +145,7 @@ Screens.reports = {
         </section>
         <section class="card">
           <h2>Payment methods</h2>
-          ${barList(Object.entries(methods).map(([k, m]) => ({ label: PAY_METHODS[k] || k, value: m.amount, text: `${money(m.amount)} · ${m.count}` })))}
+          ${barList(Object.entries(methods).map(([k, m]) => ({ label: wayLabel(k), value: m.amount, text: `${money(m.amount)} · ${m.count}` })))}
         </section>
         <section class="card">
           <h2>Sales by server</h2>
@@ -201,8 +201,8 @@ Screens.reports = {
         o.items.map(l => `${l.qty}x ${l.name}`).join('; '),
         t.subtotal, t.discount, t.service, t.tax, t.total, (o.payment && o.payment.tip) || 0,
         !o.payment ? '' : o.payment.method === 'split' && o.payment.parts
-          ? 'split: ' + o.payment.parts.map(p => `${p.method} ${p.amount}`).join(' + ')
-          : o.payment.method,
+          ? 'split: ' + o.payment.parts.map(p => `${p.method}${p.via ? ` (${p.via})` : ''} ${p.amount}`).join(' + ')
+          : o.payment.method + (o.payment.via ? ` (${o.payment.via})` : ''),
       ];
     });
     return [header, ...rows].map(r => r.map(cell).join(',')).join('\n');

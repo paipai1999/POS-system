@@ -57,6 +57,69 @@ Object.assign(Screens.customers, {
     });
   },
 
+  // A customer pays money in advance (a deposit for a booking or an event). It sits on their account as credit until a bill is
+  // put on account, which uses it first. `reservationId` ties it to a booking.
+  takeDeposit(id, { reservationId = null, note = '', onDone = () => {} } = {}) {
+    const c = Store.customer(id);
+    if (!c) return;
+    const actions = {
+      save: () => {
+        const v = formValues(Modal.el());
+        try { Store.addCustomerPayment({ customerId: id, amount: parseFloat(v.amount), method: v.method, note: v.note, kind: 'deposit', reservationId }); } catch (e) { return toast(e.message, 'error'); }
+        Modal.close();
+        toast('Deposit recorded', 'ok');
+        onDone();
+      },
+    };
+    actions.__enter = actions.save;
+    Modal.open({
+      title: `Deposit from ${c.name}`,
+      body: `
+        ${(c.owing || 0) < 0 ? `<p class="muted"><span>Deposit already held</span> <b>${money(-c.owing)}</b></p>` : ''}
+        <div class="grid-2">
+          <label class="field"><span>Amount received</span><input class="input big-input" name="amount" type="number" min="0" step="${moneyStep()}" inputmode="decimal" autofocus></label>
+          <label class="field"><span>Paid with</span>
+            <select class="input" name="method"><option value="cash">Cash</option><option value="card">Card</option><option value="other">Bank transfer / mobile wallet</option></select></label>
+        </div>
+        <label class="field"><span>Note (optional)</span><input class="input" name="note" maxlength="200" value="${esc(note)}"></label>
+        <p class="muted small">The deposit stays on the customer's account. At checkout choose On account (or Split) to use it. Cash goes into the drawer of the open shift.</p>`,
+      footer: '<button class="btn" data-act="__close">Cancel</button><button class="btn primary" data-act="save">Record deposit</button>',
+      actions,
+    });
+  },
+
+  // Gives a deposit back (a manager approves it): money goes out of the drawer or the bank.
+  returnDeposit(id, onDone = () => {}) {
+    const c = Store.customer(id);
+    if (!c || !((c.owing || 0) < 0)) return toast('There is no deposit to give back', 'error');
+    requireManager(`Give back ${c.name}'s deposit.`, mgr => {
+      const actions = {
+        save: () => {
+          const v = formValues(Modal.el());
+          try { Store.addCustomerPayment({ customerId: id, amount: parseFloat(v.amount), method: v.method, note: v.note, kind: 'depositRefund', approvedBy: mgr.id }); } catch (e) { return toast(e.message, 'error'); }
+          Modal.close();
+          toast('Deposit given back', 'ok');
+          onDone();
+        },
+      };
+      actions.__enter = actions.save;
+      Modal.open({
+        title: `Give back ${c.name}'s deposit`,
+        body: `
+          <p class="muted"><span>Deposit held</span> <b>${money(-c.owing)}</b></p>
+          <div class="grid-2">
+            <label class="field"><span>Amount to give back</span><input class="input big-input" name="amount" type="number" min="0" step="${moneyStep()}" inputmode="decimal" value="${-c.owing}" autofocus></label>
+            <label class="field"><span>Given back with</span>
+              <select class="input" name="method"><option value="cash">Cash</option><option value="card">Card</option><option value="other">Bank transfer / mobile wallet</option></select></label>
+          </div>
+          <label class="field"><span>Note (optional)</span><input class="input" name="note" maxlength="200"></label>
+          <p class="muted small">Cash comes out of the drawer of the open shift.</p>`,
+        footer: '<button class="btn" data-act="__close">Cancel</button><button class="btn primary" data-act="save">Give back</button>',
+        actions,
+      });
+    });
+  },
+
   // The customer's account: every bill put on account and every payment, with the balance after each.
   statement(id) {
     const c = Store.customer(id);
@@ -70,7 +133,7 @@ Object.assign(Screens.customers, {
     if (!c) return;
     const st = Finance.statement(id, Store.data, Store.settings, Sync.historySince());
     const label = e => ({
-      bill: 'Bill on account', refund: 'Bill refunded', earlier: 'Earlier balance', writeoff: 'Written off',
+      bill: 'Bill on account', refund: 'Bill refunded', earlier: 'Earlier balance', writeoff: 'Written off', deposit: 'Deposit received', depositRefund: 'Deposit given back',
       payment: { cash: 'Payment in cash', card: 'Payment by card', other: 'Payment by bank / wallet' }[e.method] || 'Payment',
     })[e.kind];   // (each label is its own element so it can be translated)
     const html = () => `

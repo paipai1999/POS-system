@@ -25,6 +25,7 @@ const App = {
       if (b.dataset.nav === 'menu') $('#topbar').classList.toggle('menu-open'); // the ☰ button on phones
       else if (b.dataset.nav === 'lang') { I18N.toggle(); this.render(); }
       else if (b.dataset.nav === 'theme') Theme.toggle();
+      else if (b.dataset.nav === 'clock') this.clockPressed();
       else if (b.dataset.nav === 'logout') this.logout();
       else this.go(b.dataset.nav);
     });
@@ -104,7 +105,9 @@ const App = {
 
   // Someone signed in with a demo PIN has to choose their own before they can use the POS.
   checkPin() {
-    if (this.user && Store.mustChangePin(this.user)) forcePinChange();
+    if (this.user && Store.mustChangePin(this.user)) {
+      forcePinChange(() => { this.user = Store.user(this.user.id) || this.user; this.go(this.firstScreen()); });
+    }
   },
 
   can(perm, user = this.user) {
@@ -131,6 +134,7 @@ const App = {
     this.deferredRender = false;
     this.render();
     this.checkPin();
+    this.maybeRefreshHealth();
   },
 
   render() {

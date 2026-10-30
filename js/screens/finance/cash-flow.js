@@ -15,11 +15,12 @@
     };
     rows.push({ label: 'Money in', kind: 'heading' });
     add('Customers paid (tips included)', cf.receipts, 'sub');
-    add('Customers paying their accounts', cf.customerIn, 'sub');
+    add('Customers paying their accounts or paying deposits', cf.customerIn, 'sub');
     add('Put in by the owner', cf.ownerIn, 'sub');
     add('Total money in', cf.inflow, 'total');
     rows.push({ label: 'Money out', kind: 'heading' });
     add('Refunds to customers', cf.refundsOut, 'sub', -1);
+    add('Deposits given back', cf.customerOut, 'sub', -1);
     add('Purchases paid at the time', cf.boughtOut, 'sub', -1);
     add('Paid to suppliers later', cf.suppliersOut, 'sub', -1);
     add('Expenses', cf.expensesOut, 'sub', -1);

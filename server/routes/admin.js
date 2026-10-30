@@ -4,6 +4,7 @@
 // Each handler is (app, req, res, url, session).
 const { seedData, isValidDataset, normalizeDataset } = require('../../js/shared.js');
 const photos = require('../photos.js');
+const { systemInfo } = require('../health.js');
 const { SECURITY_HEADERS, HttpError, sendJSON, readJSON } = require('../http/util.js');
 
 const pad2 = n => String(n).padStart(2, '0');
@@ -37,6 +38,9 @@ const routes = {
   },
 
   'GET /api/backup': (app, req, res) => sendJSON(res, 200, app.backups.status()),
+
+  // Version, uptime, data size, disk space, backup state and the problems an owner should know about.
+  'GET /api/system': (app, req, res) => sendJSON(res, 200, systemInfo(app)),
 
   'POST /api/backup/run': (app, req, res) => {
     app.backups.run({ force: true });

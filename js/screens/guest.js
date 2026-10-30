@@ -89,7 +89,7 @@ Screens.guest = {
           <div class="mc-name">${esc(p.name)}</div>
           <div class="desc">${esc(p.description || '')}</div>
           <div class="foot">
-            <span class="price">${money(p.price)}</span>
+            <span class="price">${p.options && p.options.length ? '<span class="muted small">from</span> ' : ''}${money(p.price)}</span>
             ${avail <= 0
               ? '<span class="pill muted">Sold out</span>'
               : `<span class="add-wrap">${inCart ? `<span class="in-cart">${inCart} added</span>` : ''}
@@ -102,11 +102,45 @@ Screens.guest = {
   add(root, productId) {
     const p = Store.product(productId);
     if (!p || !this.canAdd(p)) return;
-    const line = this.state.cart.find(l => l.productId === p.id);
+    if (p.options && p.options.length) return this.pickOptions(root, p);
+    this.addLine(root, p, []);
+  },
+
+  // Puts one portion in the cart; the same dish with the same options is one line.
+  addLine(root, p, mods) {
+    const same = l => l.productId === p.id && JSON.stringify(l.mods || []) === JSON.stringify(mods);
+    const line = this.state.cart.find(same);
     if (line) line.qty++;
-    else this.state.cart.push({ productId: p.id, name: p.name, price: p.price, qty: 1 });
+    else this.state.cart.push({ productId: p.id, name: p.name, price: lineUnitPrice(p, mods), qty: 1, ...(mods.length ? { mods } : {}) });
     toast(`Added ${p.name}`);
     this.render(root);
+  },
+
+  // A dish with priced options (extra shot, large…): the guest ticks what they want, then adds it.
+  pickOptions(root, p) {
+    const picked = () => [...Modal.el().querySelectorAll('[name=opt]:checked')].map(i => p.options[+i.value]);
+    const refresh = () => { Modal.el().querySelector('[data-role=sum]').textContent = money(lineUnitPrice(p, picked())); };
+    const actions = {
+      __change: e => { if (e.target.name === 'opt') refresh(); },
+      add: () => {
+        const mods = picked().map(o => ({ name: o.name, price: o.price }));
+        if (!this.canAdd(p)) return Modal.close();
+        Modal.close();
+        this.addLine(root, p, mods);
+      },
+    };
+    actions.__enter = actions.add;
+    Modal.open({
+      title: p.name,
+      body: `
+        <div class="opt-list">
+          ${p.options.map((o, i) => `
+            <label class="opt-row"><span><input type="checkbox" name="opt" value="${i}"> ${esc(o.name)}</span><span>${o.price ? '+' + money(o.price) : ''}</span></label>`).join('')}
+        </div>
+        <div class="totals-inline spaced"><span>Price</span><b data-role="sum">${money(lineUnitPrice(p, []))}</b></div>`,
+      footer: '<button class="btn" data-act="__close">Cancel</button><button class="btn primary" data-act="add">Add to order</button>',
+      actions,
+    });
   },
 
   openCart(root) {
@@ -118,7 +152,7 @@ Screens.guest = {
       ${st.cart.length ? `
         <div>${st.cart.map((l, i) => `
           <div class="line">
-            <div class="line-main"><div class="line-name">${esc(l.name)}</div><div class="line-meta">${money(l.price)}</div></div>
+            <div class="line-main"><div class="line-name">${esc(l.name)}</div><div class="line-meta">${money(l.price)}${modsText(l) ? ` · ${esc(modsText(l))}` : ''}</div></div>
             <div class="qty"><button data-act="dec" data-i="${i}" aria-label="Less">−</button><span>${l.qty}</span><button data-act="inc" data-i="${i}" aria-label="More">+</button></div>
             <div class="line-total">${money(l.price * l.qty)}</div>
           </div>`).join('')}
@@ -130,10 +164,10 @@ Screens.guest = {
       : '<p class="empty">Nothing new yet. Add items from the menu.</p>'}
       ${pending.length ? `
         <h3 class="sub">Waiting for confirmation</h3>
-        <ul class="plain">${pending.flatMap(r => r.items).map(l => `<li><span>${l.qty} × ${esc(l.name)}</span></li>`).join('')}</ul>` : ''}
+        <ul class="plain">${pending.flatMap(r => r.items).map(l => `<li><span>${l.qty} × ${esc(l.name)}${modsText(l) ? ` <small class="muted">${esc(modsText(l))}</small>` : ''}</span></li>`).join('')}</ul>` : ''}
       ${order && order.items.length ? `
         <h3 class="sub">Already ordered</h3>
-        <ul class="plain">${order.items.map(l => `<li><span>${l.qty} × ${esc(l.name)}</span><span>${money(l.qty * l.price)}</span></li>`).join('')}</ul>
+        <ul class="plain">${order.items.map(l => `<li><span>${l.qty} × ${esc(l.name)}${modsText(l) ? ` <small class="muted">${esc(modsText(l))}</small>` : ''}</span><span>${money(l.qty * l.price)}</span></li>`).join('')}</ul>
         <div class="totals-inline"><span>Bill so far (incl. tax)</span><b>${money(Store.totals(order).total)}</b></div>` : ''}`;
 
     const refresh = () => { this.render(root); this.openCart(root); };

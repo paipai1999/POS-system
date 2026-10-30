@@ -12,7 +12,8 @@
   const BUCKETS = [{ id: 'current', from: 0, to: 30 }, { id: 'd31', from: 31, to: 60 }, { id: 'd61', from: 61, to: 90 }, { id: 'd90', from: 91, to: Infinity }];
 
   // The entries on one customer's account, oldest first, each with the balance after it.
-  // kind: 'bill' (put on account, adds to the debt), 'refund' (a bill that was refunded, takes it off), 'payment', 'writeoff'.
+  // kind: 'bill' (put on account, adds to the debt), 'refund' (a bill that was refunded, takes it off), 'payment', 'writeoff',
+  // 'deposit' (paid in advance: credit) and 'depositRefund' (a deposit given back).
   // `since` is how far back this device holds every record (a moment; 0 in single-device mode). A customer who started after it
   // has a complete account, so the balance is simply what the entries add up to. For an older customer the entries this device
   // does not hold are summed into one "earlier" line, using the balance the server keeps, so the balance is always right.
@@ -28,7 +29,9 @@
     }
     for (const p of live(data.customerPayments)) {
       if (p.customerId !== customerId) continue;
-      entries.push({ date: p.date, kind: p.method === 'writeoff' ? 'writeoff' : 'payment', method: p.method, ref: p.note || '', paymentId: p.id, amount: -num(p.amount) });
+      // A deposit paid in advance is a payment that puts the account in credit; giving it back takes the credit away again.
+      const kind = p.method === 'writeoff' ? 'writeoff' : p.kind === 'deposit' ? 'deposit' : p.kind === 'depositRefund' ? 'depositRefund' : 'payment';
+      entries.push({ date: p.date, kind, method: p.method, ref: p.note || '', paymentId: p.id, amount: kind === 'depositRefund' ? num(p.amount) : -num(p.amount) });
     }
     entries.sort((x, y) => x.date - y.date);
 
@@ -55,8 +58,15 @@
       if (!st.owing) continue;
       // First in, first paid: walk the entries and let each payment cancel the oldest open bills.
       const open = [];
+      let prepaid = 0;   // money paid in advance that no bill has used yet: the next bills are paid from it first
       for (const e of st.entries) {
-        if (e.amount > 0) { open.push({ date: e.date, left: e.amount, orderId: e.orderId }); continue; }
+        if (e.amount > 0 && e.kind === 'depositRefund') { prepaid = Math.max(0, prepaid - e.amount); continue; }
+        if (e.amount > 0) {
+          const use = Math.min(prepaid, e.amount);
+          prepaid -= use;
+          if (e.amount - use > 1e-9) open.push({ date: e.date, left: e.amount - use, orderId: e.orderId });
+          continue;
+        }
         let pay = -e.amount;
         // A refunded bill cancels that bill itself, not the oldest one.
         const own = e.kind === 'refund' ? open.find(o => o.orderId === e.orderId) : null;
@@ -70,6 +80,7 @@
           open[0].left -= take; pay -= take;
           if (open[0].left <= 1e-9) open.shift();
         }
+        if (pay > 1e-9) prepaid += pay;
       }
       const buckets = Object.fromEntries(BUCKETS.map(b => [b.id, 0]));
       for (const o of open) {

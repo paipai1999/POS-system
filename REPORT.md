@@ -1,6 +1,6 @@
 # Work report
 
-Date: 2026-10-08. All tests: `npm test` → **171 passed** (server API, live multi-device sync, security, backups, money, features, and the real web app clicked through in jsdom).
+Last updated: 2026-10-19 (version 1.1.0). All tests: `npm test` → **372 passed** (server API, live multi-device sync, security, backups, money, features, and the real web app clicked through in jsdom). The newest round is at the end of this file.
 
 ## Earlier rounds (summary)
 Bill and price checks on the server, per-role visibility of orders, stock reservation, salted-hash PINs, Kitchen role limited to tickets, safe printing of other devices' print jobs, receipt no longer closing after payment. Details are in the code and tests.
@@ -122,3 +122,53 @@ Tests: 12 more (now 171): server tests for the limit, who may do what, refunds, 
 Not done yet (asked for, not started): bank reconciliation, payroll and tips payout, budgets.
 
 Everything above is on this PC only. The last push to GitHub (bb69382) was before all of it.
+
+## Latest round (2026-10-19): security fixes, reliability, owner reports, sales, staff and branches
+
+Everything below is committed and pushed to GitHub (branch `ccr-e7e52610-2azu9a`); the suite went from 171 to 372 tests. Not merged into `main` and no pull request was opened.
+
+### Security (the review you asked for; the numbers are those of that review)
+| # | Finding | Fix |
+|---|---------|-----|
+| 1 | **A waiter could discover the admin's PIN** through the PIN-change box (it said "already used by someone else" and never counted failures), then sign in as Admin | The PIN-change box now counts and locks failed attempts, so it can no longer be used to guess |
+| 2 | **Items already sent to the kitchen could be taken off a bill without a manager** (the screen asked, the server did not) | The server refuses it unless a manager approved (signed in, or a manager's PIN typed on that device), and logs it |
+| 3 | **PIN guessing** was limited per network address only: alternating with a valid login or using a second address avoided the lock, and the manager-approval box tests a PIN against everyone | Per-account escalating lock (30 s, then 1, 2 and 5 minutes) that no other person's login resets, plus a shared lock for the approval box (also when nobody is signed in, as on a table tablet); lock-outs are in the activity log |
+| 4 | **Demo PINs were only enforced in the browser** | The server itself allows nothing but the PIN change until the demo PIN is replaced |
+| 6 | **`/js/%00` crashed the file handler** (a 500 and a stack trace in the log; no data leaked) | A null byte in a path is a 404 now (fixed at the very end of this round; the other items were fixed earlier) |
+| 5 | A manager's approval covers 10 minutes of actions on that session, not one specific void | **Not changed**: a design trade-off, not a bug; it is worth knowing about |
+
+### Reliability
+- **System health** (*Settings*, with a ⚠ mark in the top bar for admins): every backup is opened and checked as soon as it is made (a damaged copy is discarded and reported); stale or missing backups, all backups on the same disk as the data, low disk space and demo PINs are named in plain words.
+- **Restore tool** (`restore-backup.bat`, `node server/restore.js`): lists the copies with their order counts and condition, and restores one after saving what was in place. **Owner's guide** in English and Myanmar (`docs/`): daily routine, backups, the monthly restore drill, what to do when things go wrong, a security checklist, and now how to read the numbers.
+
+### Owner reports (*Finance*)
+**Business health** (food, labour, prime cost, rent and net margin with verdicts, break-even), **Sales patterns** (weekday, hour, grid, dine-in vs takeaway, tables, servers) and **Menu engineering** (stars, plowhorses, puzzles, dogs). Each warns when the data cannot be trusted.
+
+### Sales
+| Feature | What it does |
+|---------|--------------|
+| **Payment names** | *Other* payments carry a wallet name (KBZPay, Wave Pay, AYA Pay, bank transfer…) on the receipt, orders and reports |
+| **Guest options** | Guests choose priced options on the table QR menu; the server prices them itself and refuses names the dish does not offer |
+| **Reservations** | Bookings with clash checking by the server, a hint on the table map, seating opens the bill |
+| **Deposits** | Money paid in advance is credit on the customer's account (not sales), used at checkout, given back with a manager's PIN; the cash, bank and "owed to customers" figures follow |
+
+### Staff and branches
+| Feature | What it does |
+|---------|--------------|
+| **Staff hours** | Everyone clocks in and out from the top bar on the **server's clock**; managers see hours and wages per person, add a missed shift, correct a forgotten clock-out or delete a shift (all logged). One person cannot have overlapping shifts; a shift cannot be in the future or over 24 hours. A forgotten clock-out counts for nothing until a manager sets the real end (no pay is invented). People see only their own hours; **hourly pay** is set by an admin and is visible to managers and the person themselves only (it is not sent to other devices). |
+| **Labour estimate** | When no salaries are recorded, *Business health* estimates labour from hours × pay, says so, and keeps it out of the profit and loss; it also shows sales per staff hour |
+| **Tips** | Collected, paid out and still to pay; each person's own tips (the bills they took) and the whole pool shared by hours worked, to the cent |
+| **Branches** | Several shops side by side from their backup files (sales, share, average bill, food cost %, labour %, net profit, margin), read in the browser only. Flags a backup that stops before the period ends and two files with the same shop name. Totals only when all shops use the same currency |
+
+Found and fixed along the way: an open phone top bar overflowed the screen by 35 px once the clock button was added (the language switch is now just a globe on narrow phones); a person who forgot to clock out could not clock in again (the old shift is now closed with a flag); the first draft of the attendance rules let a running shift block every later entry silently (the message now names it).
+
+### Not done, and limits you should know
+- **Nothing here has been tried on real hardware**: real phones on the restaurant Wi-Fi, the real receipt printer, Windows (`start-server.bat`, `allow-firewall.bat`, `install-autostart.bat`, `restore-backup.bat` and the disk-space check were written but **not run on Windows**; the tests ran on Linux).
+- **Myanmar wording** (all of `js/i18n/my/` and `docs/OWNER-GUIDE-my.md`) was written by me and has **not been read by a native speaker**. Please have someone review it.
+- **Branches have no live link**: it compares backup files you bring together. A server-to-server sync would be a separate, bigger project (each shop's data, prices and stock would need merge rules).
+- **Staff hours are not payroll**: no rosters or schedules, overtime rules, leave, tax or deductions; wages are hours × pay and an aid for checking payroll. The tips report does not pay anyone: you pay and record it under *Finance → Expenses*.
+- **Clock-in can be done for yourself only** and relies on each person using their own PIN; someone could clock a friend in by signing in as them (the same trust the rest of the PIN system has). A shared fingerprint or photo check is not included.
+- **Deposits and reservations**: no SMS or reminder messages, no online booking page for guests, no automatic release of a late booking.
+- Single-device mode keeps PINs unhashed and data readable in the browser (unchanged, documented). Menu prices are not converted when the currency format changes (unchanged).
+- Still to do by you: choose real PINs, set a backup folder on a USB drive or cloud folder, practise the restore drill once.
+

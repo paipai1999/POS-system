@@ -12,6 +12,26 @@ const { hashPin } = require('./pins.js');
 const SESSION_TTL = 12 * 60 * 60 * 1000;
 const LEDGER_DAYS = 90;   // purchases, expenses… of the last 90 days are sent at sign-in; older ones are fetched when a report needs them
 
+// Opens a copy of the database and checks it is whole: SQLite's own quick check, the table the POS needs, and the settings
+// row every working database has. Used on every backup copy, and by server/restore.js before a copy replaces the data.
+function verifyCopy(file) {
+  let copy;
+  try {
+    copy = new DatabaseSync(file);
+    const found = copy.prepare('PRAGMA quick_check').all().map(r => Object.values(r)[0]);
+    if (found.length !== 1 || found[0] !== 'ok') return { ok: false, error: `Damaged (${found.slice(0, 2).join('; ')})` };
+    if (!copy.prepare("SELECT 1 FROM docs WHERE col = 'settings' AND id = 'main' AND deleted = 0").get()) {
+      return { ok: false, error: 'Not a POS database (it has no settings)' };
+    }
+    const count = col => copy.prepare('SELECT COUNT(*) AS n FROM docs WHERE col = ? AND deleted = 0').get(col).n;
+    return { ok: true, orders: count('orders'), products: count('products'), users: count('users') };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  } finally {
+    if (copy) try { copy.close(); } catch (e) { /* nothing to do */ }
+  }
+}
+
 class Database {
   constructor(file) {
     fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -144,7 +164,9 @@ class Database {
         OR (col = 'kitchenTickets' AND (json_extract(data, '$.status') IN ('new', 'ready') OR json_extract(data, '$.createdAt') >= ?))
         OR (col = 'printJobs' AND json_extract(data, '$.status') IN ('pending', 'printing') AND json_extract(data, '$.createdAt') >= ?)
         OR (col = 'shifts' AND (json_extract(data, '$.closedAt') IS NULL OR json_extract(data, '$.openedAt') >= ?))
-      ) ORDER BY rowid`).all(Date.now() - LEDGER_DAYS * 24 * 60 * 60 * 1000, since, Date.now() - 90 * 24 * 60 * 60 * 1000, Date.now() - 90 * 24 * 60 * 60 * 1000, since, since, Date.now() - 30 * 60 * 1000, Date.now() - 90 * 24 * 60 * 60 * 1000).map(r => this.row(r));
+        OR (col = 'reservations' AND (json_extract(data, '$.status') = 'booked' OR json_extract(data, '$.at') >= ?))
+        OR (col = 'attendance' AND (json_extract(data, '$.out') IS NULL OR json_extract(data, '$.in') >= ?))
+      ) ORDER BY rowid`).all(Date.now() - LEDGER_DAYS * 24 * 60 * 60 * 1000, since, Date.now() - 90 * 24 * 60 * 60 * 1000, Date.now() - 90 * 24 * 60 * 60 * 1000, since, since, Date.now() - 30 * 60 * 1000, Date.now() - 90 * 24 * 60 * 60 * 1000, since, Date.now() - LEDGER_DAYS * 24 * 60 * 60 * 1000).map(r => this.row(r));
   }
 
   // Records dated before this are not sent at sign-in; a device asks for them (GET /api/ledger) when a report needs them.
@@ -162,8 +184,11 @@ class Database {
   // Purchases, supplier payments, stocktakes, expenses and the owner's money moves dated in a period (older than a device holds).
   ledgerBetween(from, to) {
     return this.db.prepare(`
-      SELECT * FROM docs WHERE deleted = 0 AND col IN ('purchases', 'stocktakes', 'supplierPayments', 'expenses', 'ownerMoves', 'customerPayments')
-        AND json_extract(data, '$.date') >= ? AND json_extract(data, '$.date') < ? ORDER BY rowid`).all(from, to).map(r => this.row(r));
+      SELECT * FROM docs WHERE deleted = 0 AND (
+        (col IN ('purchases', 'stocktakes', 'supplierPayments', 'expenses', 'ownerMoves', 'customerPayments')
+          AND json_extract(data, '$.date') >= ? AND json_extract(data, '$.date') < ?)
+        OR (col = 'attendance' AND json_extract(data, '$.in') >= ? AND json_extract(data, '$.in') < ?)
+      ) ORDER BY rowid`).all(from, to, from, to).map(r => this.row(r));
   }
 
   // ----- sessions (kept in the database so a server restart doesn't sign everyone out) -----
@@ -216,10 +241,16 @@ class Database {
       fs.unlinkSync(target);
     }
     this.db.exec(`VACUUM INTO '${target.replace(/'/g, "''")}'`);
+    // A copy that cannot be opened is no backup. Remove it so the next run makes a new one, and keep the older copies.
+    const check = verifyCopy(target);
+    if (!check.ok) {
+      try { fs.unlinkSync(target); } catch (e) { /* already gone */ }
+      throw new Error(`The new backup copy failed its check: ${check.error}`);
+    }
     const old = fs.readdirSync(dir).filter(f => /^pos-\d{4}-\d{2}-\d{2}\.db$/.test(f)).sort().slice(0, -30);
     for (const f of old) fs.unlinkSync(path.join(dir, f));
     return target;
   }
 }
 
-module.exports = { Database };
+module.exports = { Database, verifyCopy };

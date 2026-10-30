@@ -26,7 +26,7 @@ function prepareShift(db, ctx, id, prev, data, deleted) {
   return {
     ...prev, closedAt: now, closedBy: ctx.user.id, countedCash: counted,
     expectedCash: sums.expected, difference: roundTo(counted - sums.expected, dec),
-    cashIn: sums.cashIn, cashOut: sums.cashOut, payouts: sums.payouts, spent: sums.spent, bought: sums.bought, ownerIn: sums.ownerIn, ownerOut: sums.ownerOut, received: sums.received,
+    cashIn: sums.cashIn, cashOut: sums.cashOut, payouts: sums.payouts, spent: sums.spent, bought: sums.bought, ownerIn: sums.ownerIn, ownerOut: sums.ownerOut, received: sums.received, returned: sums.returned,
     tips: sums.tips, sales: sums.sales, orders: sums.orders,
     note: String(data.note || '').trim().slice(0, 300),
   };

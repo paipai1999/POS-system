@@ -33,6 +33,7 @@ function describe(col, prev, next, deleted, nameOf = () => null) {
         ...(prev.active !== next.active ? [next.active ? 'activated' : 'deactivated'] : []),
         ...(prev.name !== next.name ? [`renamed from "${prev.name}"`] : []),
         ...(prev.pinHash !== next.pinHash ? ['PIN changed'] : []),
+        ...((prev.hourlyRate || 0) !== (next.hourlyRate || 0) ? [`hourly pay ${num(prev.hourlyRate || 0)} → ${num(next.hourlyRate || 0)}`] : []),
       ];
       if (d.length) add(d.includes('PIN changed') ? 'staff PIN/role changed' : 'staff edited', next.name, d.join('; '));
       break;
@@ -53,6 +54,24 @@ function describe(col, prev, next, deleted, nameOf = () => null) {
       if (!prev) return [{ action: 'table created', target: next.name, detail: '' }];
       if (prev.name !== next.name) add('table renamed', next.name, `from "${prev.name}"`);
       break;
+    case 'reservations': {
+      const when = t => new Date(t).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+      if (deleted) return [{ action: 'reservation deleted', target: prev?.name || '', detail: prev ? when(prev.at) : '' }];
+      if (!prev) return [{ action: 'reservation made', target: next.name, detail: `${next.guests} guest${next.guests === 1 ? '' : 's'}, ${when(next.at)}` }];
+      if (prev.status !== next.status && ['cancelled', 'noshow'].includes(next.status)) add(next.status === 'noshow' ? 'reservation no-show' : 'reservation cancelled', next.name, when(next.at));
+      else if (prev.at !== next.at || prev.tableId !== next.tableId || prev.guests !== next.guests) add('reservation changed', next.name, when(next.at));
+      break;
+    }
+    case 'attendance': {
+      const when = t => new Date(t).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+      const span = e => `${when(e.in)} – ${e.out ? when(e.out) : 'running'}${e.breakMinutes ? `, break ${e.breakMinutes} min` : ''}`;
+      // Clocking in and out is routine and not logged; a manager changing the record is.
+      if (deleted) return [{ action: 'shift deleted', target: prev?.userName || '', detail: prev ? span(prev) : '' }];
+      if (!next.edited) break;
+      if (!prev) add('shift added', next.userName, span(next));
+      else if (prev.in !== next.in || prev.out !== next.out || prev.breakMinutes !== next.breakMinutes) add('shift changed', next.userName, `${span(prev)} → ${span(next)}`);
+      break;
+    }
     case 'categories':
       if (deleted) return [{ action: 'category deleted', target: prev?.name || '', detail: '' }];
       if (!prev) return [{ action: 'category created', target: next.name, detail: '' }];
@@ -84,7 +103,10 @@ function describe(col, prev, next, deleted, nameOf = () => null) {
     }
     case 'customerPayments': {
       if (deleted || !next) break;
-      if (!prev) add(next.method === 'writeoff' ? 'debt written off' : 'customer paid', next.customerName || '', `${num(next.amount)}${next.method === 'writeoff' ? '' : ' (' + next.method + ')'}`);
+      if (!prev) {
+        const action = next.method === 'writeoff' ? 'debt written off' : next.kind === 'deposit' ? 'deposit received' : next.kind === 'depositRefund' ? 'deposit given back' : 'customer paid';
+        add(action, next.customerName || '', `${num(next.amount)}${next.method === 'writeoff' ? '' : ' (' + next.method + ')'}${next.kind === 'depositRefund' ? `, approved by ${who(next.approvedBy)}` : ''}`);
+      }
       else if (prev.status !== 'void' && next.status === 'void') add('customer payment voided', next.customerName || '', num(next.amount));
       break;
     }

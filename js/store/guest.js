@@ -22,7 +22,13 @@ Object.assign(Store, {
       if (!p || !p.active) { skipped.push(l.name); continue; }
       const qty = Math.min(l.qty, this.available(p));
       if (qty < l.qty) skipped.push(l.name);
-      if (qty > 0) this.addItem(order, p, qty);
+      // The options the guest picked, as the menu offers them now (one that was taken off since is left out and reported).
+      const mods = [];
+      for (const m of l.mods || []) {
+        const offered = (p.options || []).find(o => o.name === m.name);
+        if (offered) mods.push(offered); else skipped.push(`${l.name}: ${m.name}`);
+      }
+      if (qty > 0) this.addItem(order, p, qty, '', mods);
     }
     if (req.note) order.note = [order.note, 'Guest: ' + req.note].filter(Boolean).join(' / ');
     req.status = 'accepted';

@@ -13,7 +13,7 @@
   // (only cash ones count; customers paying off their account in cash puts cash in).
   function computeShift(shift, orders, decimals = 2, supplierPayments = [], extra = {}) {
     const from = shift.openedAt, to = shift.closedAt || Infinity;
-    let cashIn = 0, cashOut = 0, tips = 0, sales = 0, count = 0, payouts = 0, spent = 0, bought = 0, ownerIn = 0, ownerOut = 0, received = 0;
+    let cashIn = 0, cashOut = 0, tips = 0, sales = 0, count = 0, payouts = 0, spent = 0, bought = 0, ownerIn = 0, ownerOut = 0, received = 0, returned = 0;
     for (const o of orders) {
       if ((o.status === 'paid' || o.status === 'refunded') && o.paidAt >= from && o.paidAt <= to) {
         cashIn += paymentCash(o.payment);
@@ -32,11 +32,14 @@
       if (m.method !== 'cash' || m.status === 'void' || !within(m.date)) continue;
       if (m.type === 'in') ownerIn += Number(m.amount || 0); else ownerOut += Number(m.amount || 0);
     }
-    // Customers paying what they owe, in cash.
-    for (const c of extra.customerPayments || []) if (c.method === 'cash' && c.status !== 'void' && within(c.date)) received += Number(c.amount || 0);
+    // Customers paying what they owe, or paying a deposit, in cash; and a deposit given back in cash.
+    for (const c of extra.customerPayments || []) {
+      if (c.method !== 'cash' || c.status === 'void' || !within(c.date)) continue;
+      if (c.kind === 'depositRefund') returned += Number(c.amount || 0); else received += Number(c.amount || 0);
+    }
     const r = n => roundTo(n, decimals);
-    const expected = r(Number(shift.openingFloat || 0) + cashIn - cashOut - payouts - spent - bought + ownerIn - ownerOut + received);
-    return { cashIn: r(cashIn), cashOut: r(cashOut), payouts: r(payouts), spent: r(spent), bought: r(bought), ownerIn: r(ownerIn), ownerOut: r(ownerOut), received: r(received), tips: r(tips), sales: r(sales), orders: count, expected };
+    const expected = r(Number(shift.openingFloat || 0) + cashIn - cashOut - payouts - spent - bought + ownerIn - ownerOut + received - returned);
+    return { cashIn: r(cashIn), cashOut: r(cashOut), payouts: r(payouts), spent: r(spent), bought: r(bought), ownerIn: r(ownerIn), ownerOut: r(ownerOut), received: r(received), returned: r(returned), tips: r(tips), sales: r(sales), orders: count, expected };
   }
 
   const api = { computeShift };

@@ -1,7 +1,7 @@
 'use strict';
 
 // Staff accounts: roles, PINs (stored hashed) and keeping at least one active admin.
-const { ROLES } = require('../../js/shared.js');
+const { ROLES, decimalsOf, roundTo } = require('../../js/shared.js');
 const { reject, need } = require('../base.js');
 const { hashPin, pinMatches, hasPin } = require('../pins.js');
 
@@ -19,6 +19,16 @@ function prepareUser(db, ctx, id, prev, data, deleted) {
   if (typeof data.name !== 'string' || !data.name.trim()) reject('Name is required');
   if (!ROLES[data.role]) reject('Invalid role');
   data.active = !!data.active;
+  // Hourly pay (for the labour cost in reports): kept as it was unless the request says otherwise; empty clears it.
+  if (data.hourlyRate === undefined) {
+    if (prev && prev.hourlyRate !== undefined) data.hourlyRate = prev.hourlyRate;
+  } else if (data.hourlyRate === null || data.hourlyRate === '') {
+    delete data.hourlyRate;
+  } else {
+    const rate = Number(data.hourlyRate);
+    if (!Number.isFinite(rate) || rate < 0 || rate > 1e9) reject('Enter the hourly pay as a number');
+    data.hourlyRate = roundTo(rate, decimalsOf(db.doc('settings', 'main')));
+  }
   // A device can only ever send digits; the stored hash is never taken from the request.
   const newPin = data.pin ? String(data.pin) : '';
   delete data.pin;

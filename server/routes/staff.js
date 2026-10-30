@@ -55,7 +55,7 @@ const routes = {
   'POST /api/sync': async (app, req, res, url, s) => {
     const { changes } = await readJSON(req, 5e6);
     if (!Array.isArray(changes) || changes.length > 1000) throw new HttpError(400, 'Invalid changes');
-    const ctx = { user: s.user, hasApproval: id => app.auth.hasApproval(s.token, id) };
+    const ctx = { user: s.user, hasApproval: id => app.auth.hasApproval(s.token, id), approvers: () => app.auth.approvers(s.token) };
     const { results, changed } = rules.applyChanges(app.db, ctx, changes);
     app.realtime.broadcast(changed);
     sendJSON(res, 200, {
@@ -94,12 +94,20 @@ const routes = {
     const newPin = String(pin ?? '');
     if (!/^\d{4,6}$/.test(newPin)) throw new HttpError(400, 'PIN must be 4–6 digits');
     if (WEAK_PINS.has(newPin) || /^(\d)\1+$/.test(newPin)) throw new HttpError(400, 'That PIN is too easy to guess. Choose another.');
-    const row = db.tx(() => {
-      const me = db.doc('users', s.user.id);
-      if (db.all('users').some(u => u.id !== me.id && pinMatches(u, newPin))) throw new HttpError(409, 'That PIN is already used by someone else');
-      const { pin: legacy, ...rest } = me;
-      return db.put('users', me.id, { ...rest, pinHash: hashPin(newPin) });
-    });
+    app.auth.pinChangeAttempt(s.user.id);   // "already used" tells the caller about a colleague's PIN, so attempts are limited
+    let row;
+    try {
+      row = db.tx(() => {
+        const me = db.doc('users', s.user.id);
+        if (db.all('users').some(u => u.id !== me.id && pinMatches(u, newPin))) throw new HttpError(409, 'That PIN is already used by someone else');
+        const { pin: legacy, ...rest } = me;
+        return db.put('users', me.id, { ...rest, pinHash: hashPin(newPin) });
+      });
+    } catch (e) {
+      // Written after the transaction, which a refusal rolls back. The log shows who is trying PINs, never which one.
+      if (e instanceof HttpError && e.status === 409) db.addAudit({ user: s.user, action: 'PIN change refused', target: s.user.name, detail: 'the PIN chosen is already used by someone else' });
+      throw e;
+    }
     app.realtime.broadcast([row]);
     db.addAudit({ user: s.user, action: 'own PIN changed', target: s.user.name });
     sendJSON(res, 200, { ok: true });

@@ -45,6 +45,7 @@
   --late-bg: #fff7f7;
   --danger-solid: #b91c1c;       /* filled buttons with white text */
   --ok-solid: #15803d;
+  --warn-solid: #b45309;
   color-scheme: light;
   /* Inter is bundled (css/fonts) so every device looks the same without internet; Myanmar script falls through to the system fonts. */
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", "Myanmar Text", "Noto Sans Myanmar", "Padauk", Roboto, sans-serif;

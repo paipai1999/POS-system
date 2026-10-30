@@ -13,23 +13,24 @@
     const [a, b] = range;
     const r = n => roundTo(n, decimalsOf(settings));
     const orders = data.orders || [];
-    const receipts = zero(), refundsOut = zero(), boughtOut = zero(), suppliersOut = zero(), expensesOut = zero(), ownerIn = zero(), ownerOut = zero(), customerIn = zero();
+    const receipts = zero(), refundsOut = zero(), boughtOut = zero(), suppliersOut = zero(), expensesOut = zero(), ownerIn = zero(), ownerOut = zero(), customerIn = zero(), customerOut = zero();
     const soldOrders = sold(orders, a, b);
     // A bill put on account is not money: nothing is received (or given back) until the customer pays.
     for (const o of soldOrders) for (const [m, amount] of Object.entries(paymentByMethod(o.payment))) if (m !== 'credit') receipts[channel(m)] += num(amount);
     for (const o of refunded(orders, a, b)) for (const [m, amount] of Object.entries(paymentByMethod(o.payment))) if (m !== 'credit') refundsOut[channel(m)] += num(amount);
     // Customers paying what they owe (a write-off is not money either).
-    for (const c of live(data.customerPayments).filter(x => x.method !== 'writeoff' && inRange(x.date, a, b))) customerIn[channel(c.method)] += num(c.amount);
+    // (a deposit paid in advance is money in too; a deposit given back is money out)
+    for (const c of live(data.customerPayments).filter(x => x.method !== 'writeoff' && inRange(x.date, a, b))) (c.kind === 'depositRefund' ? customerOut : customerIn)[channel(c.method)] += num(c.amount);
     for (const p of live(data.purchases).filter(x => inRange(x.date, a, b))) boughtOut[channel(p.payMethod)] += num(p.paid ?? p.total);
     for (const p of live(data.supplierPayments).filter(x => inRange(x.date, a, b))) suppliersOut[channel(p.method)] += num(p.amount);
     for (const e of live(data.expenses).filter(x => inRange(x.date, a, b))) expensesOut[channel(e.method)] += num(e.amount);
     for (const m of live(data.ownerMoves).filter(x => inRange(x.date, a, b))) (m.type === 'in' ? ownerIn : ownerOut)[channel(m.method)] += num(m.amount);
 
-    const rows = { receipts, customerIn, ownerIn, refundsOut, boughtOut, suppliersOut, expensesOut, ownerOut };
+    const rows = { receipts, customerIn, ownerIn, refundsOut, customerOut, boughtOut, suppliersOut, expensesOut, ownerOut };
     const inflow = zero(), outflow = zero(), net = zero();
     for (const c of CHANNELS) {
       inflow[c] = receipts[c] + customerIn[c] + ownerIn[c];
-      outflow[c] = refundsOut[c] + boughtOut[c] + suppliersOut[c] + expensesOut[c] + ownerOut[c];
+      outflow[c] = refundsOut[c] + customerOut[c] + boughtOut[c] + suppliersOut[c] + expensesOut[c] + ownerOut[c];
       net[c] = inflow[c] - outflow[c];
     }
     const round = o => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, r(v)]));

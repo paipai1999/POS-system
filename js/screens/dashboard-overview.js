@@ -78,7 +78,7 @@ Object.assign(Screens.dashboard, {
         </section>
         <section class="card">
           <h2>Payment methods</h2>
-          ${donut(ov.methods.slice(0, 6).map(m => ({ label: PAY_METHODS[m.method] || m.method, value: m.amount, text: money(m.amount) })))}
+          ${donut(ov.methods.slice(0, 6).map(m => ({ label: wayLabel(m.method), value: m.amount, text: money(m.amount) })))}
         </section>
       </div>`;
   },

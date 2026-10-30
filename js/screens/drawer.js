@@ -26,6 +26,7 @@ Screens.drawer = {
             <div class="card stat"><div class="label">Cash paid back (refunds)</div><div class="value">${money(sums.cashOut)}</div></div>
             ${sums.payouts ? `<div class="card stat"><div class="label">Cash paid to suppliers</div><div class="value">${money(sums.payouts)}</div></div>` : ''}
             ${sums.received ? `<div class="card stat"><div class="label">Cash received on accounts</div><div class="value">${money(sums.received)}</div></div>` : ''}
+            ${sums.returned ? `<div class="card stat"><div class="label">Deposits given back in cash</div><div class="value">${money(sums.returned)}</div></div>` : ''}
             ${sums.bought ? `<div class="card stat"><div class="label">Cash paid for purchases</div><div class="value">${money(sums.bought)}</div></div>` : ''}
             ${sums.spent ? `<div class="card stat"><div class="label">Cash paid for expenses</div><div class="value">${money(sums.spent)}</div></div>` : ''}
             ${sums.ownerIn ? `<div class="card stat"><div class="label">Cash put in by the owner</div><div class="value">${money(sums.ownerIn)}</div></div>` : ''}

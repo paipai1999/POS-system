@@ -6,7 +6,7 @@
 (function (root) {
   const inNode = typeof module !== 'undefined' && module.exports;
   const { roundTo, decimalsOf } = inNode ? require('../shared.js') : root;
-  const { paymentByMethod } = inNode ? require('../shared.js') : root;
+  const { paymentByWay } = inNode ? require('../shared.js') : root;
   const { num, inRange, isSale, refundTime } = inNode ? require('./core.js') : root.Finance;
 
   const startOfDay = (t, plusDays = 0) => {
@@ -66,7 +66,7 @@
       if (!isSale(o)) continue;
       if (inRange(o.paidAt, today, tomorrow)) hours[new Date(num(o.paidAt)).getHours()] += num(o.totals.total);
       if (!inRange(o.paidAt, weekStart, tomorrow)) continue;
-      for (const [k, amount] of Object.entries(paymentByMethod(o.payment) || {})) methods.set(k, (methods.get(k) || 0) + num(amount));
+      for (const [k, amount] of Object.entries(paymentByWay(o.payment) || {})) methods.set(k, (methods.get(k) || 0) + num(amount));   // 'other:KBZPay' is listed apart from plain 'other'
       for (const l of o.items || []) {
         const amount = num(l.qty) * num(l.price);
         const it = items.get(l.productId) || { name: l.name, qty: 0, amount: 0 };

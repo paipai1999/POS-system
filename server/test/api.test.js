@@ -11,7 +11,7 @@ const { start } = require('../server.js');
 let app, base, dataDir;
 
 async function boot() {
-  app = start({ port: 0, dataDir, quiet: true });
+  app = start({ port: 0, dataDir, quiet: true, allowDemoPins: true });
   await new Promise(r => app.server.once('listening', r));
   base = `http://127.0.0.1:${app.server.address().port}`;
 }

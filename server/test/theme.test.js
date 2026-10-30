@@ -17,7 +17,7 @@ test('the dark theme re-defines every colour of the light theme', () => {
   const dark = css.match(/:root\[data-theme="dark"\] \{([\s\S]*?)\n  \}/)[1];
   const names = block => new Set([...block.matchAll(/(--[a-z0-9-]+):/g)].map(m => m[1]));
   // Sizes and shapes are the same in both themes; every colour and fill must be listed again for dark.
-  const same = new Set(['--radius', '--topbar-h', '--on-chrome', '--chrome-text', '--chrome-muted', '--danger-solid', '--ok-solid']);
+  const same = new Set(['--radius', '--topbar-h', '--on-chrome', '--chrome-text', '--chrome-muted', '--danger-solid', '--ok-solid', '--warn-solid']);
   const missing = [...names(light)].filter(n => !names(dark).has(n) && !same.has(n));
   assert.deepEqual(missing, [], 'colours with no dark value');
 });
@@ -48,7 +48,7 @@ test('no screen sets its own page colours with a bare hex, so the theme reaches 
 
 test('the font files are served with the right type, and every url() in fonts.css exists', async () => {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pos-font-'));
-  const app = start({ port: 0, dataDir, quiet: true });
+  const app = start({ port: 0, dataDir, quiet: true, allowDemoPins: true });
   await new Promise(r => app.server.once('listening', r));
   const base = `http://127.0.0.1:${app.server.address().port}`;
   try {

@@ -137,6 +137,42 @@ I18N.patterns.push(
   [/^Payment( \(cash\))?( \(void\))?( · .+)?$/, 'ငွေပေးချေမှု$1$2$3'],
   [/^Only (.+) is owed to (.+)$/, '$2 ကို $1 သာ ပေးရန်ကျန်သည်'],
   [/^(.+) is still owed money\. Pay it first, or deactivate the supplier instead$/, '$1 ကို ငွေပေးရန်ကျန်နေသည်။ အရင်ပေးပါ၊ သို့မဟုတ် ပေးသွင်းသူကို ရပ်ဆိုင်းပါ'],
+  // the lock after too many wrong PINs (the wait is in seconds up to a minute and a half, then in minutes)
+  [/^Too many wrong PINs for (.+)\. Wait (\d+) seconds and try again$/, '$1 အတွက် ပင်နံပါတ် အကြိမ်များစွာ မှားနေပါသည်။ $2 စက္ကန့် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
+  [/^Too many wrong PINs for (.+)\. Wait (\d+) minutes and try again$/, '$1 အတွက် ပင်နံပါတ် အကြိမ်များစွာ မှားနေပါသည်။ $2 မိနစ် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
+  [/^Too many wrong PINs entered from (.+)'s sign-in\. Wait (\d+) seconds and try again$/, '$1 ၏ ဝင်ရောက်မှုမှ ပင်နံပါတ် အကြိမ်များစွာ မှားထည့်ထားပါသည်။ $2 စက္ကန့် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
+  [/^Too many wrong PINs entered from (.+)'s sign-in\. Wait (\d+) minutes and try again$/, '$1 ၏ ဝင်ရောက်မှုမှ ပင်နံပါတ် အကြိမ်များစွာ မှားထည့်ထားပါသည်။ $2 မိနစ် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
+  [/^Too many wrong PINs entered here\. Wait (\d+) seconds and try again$/, 'ဤနေရာတွင် ပင်နံပါတ် အကြိမ်များစွာ မှားထည့်ထားပါသည်။ $1 စက္ကန့် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
+  [/^Too many wrong PINs entered here\. Wait (\d+) minutes and try again$/, 'ဤနေရာတွင် ပင်နံပါတ် အကြိမ်များစွာ မှားထည့်ထားပါသည်။ $1 မိနစ် စောင့်ပြီး ပြန်ကြိုးစားပါ'],
+  // System health (the problems the server reports)
+  [/^The newest backup on this PC is (.+) old\. Backups are made every day while the server runs$/, 'ဤကွန်ပျူတာပေါ်ရှိ နောက်ဆုံးအရန်ဖိုင်သည် $1 ဟောင်းနေပြီ။ ဆာဗာ ပြေးနေစဉ် နေ့တိုင်း အရန်သိမ်းပါသည်'],
+  [/^The newest backup in (.+) is damaged: (.+)$/, '$1 ရှိ နောက်ဆုံးအရန်ဖိုင် ပျက်စီးနေသည်: $2'],
+  [/^The backup in (.+) is (.+) old$/, '$1 ရှိ အရန်ဖိုင်သည် $2 ဟောင်းနေပြီ'],
+  [/^Only (.+) GB is free on this PC's disk\. Free some space before it runs out$/, 'ဤကွန်ပျူတာ၏ ဒစ်ခ်တွင် $1 GB သာ ကျန်ပါတော့သည်။ မကုန်မီ နေရာလွတ်ပေးပါ'],
+  [/^One person still uses a PIN from the demo data \((.+)\)\. They cannot sign in to work until they choose their own$/, 'စမ်းသပ်ဒေတာမှ ပင်နံပါတ်ကို တစ်ဦး ဆက်သုံးနေသည် ($1)။ ကိုယ်ပိုင်ပင်နံပါတ် မရွေးမချင်း အလုပ်ဝင်၍ မရပါ'],
+  [/^(\d+) people still use a PIN from the demo data \((.+)\)\. They cannot sign in to work until they choose their own$/, 'စမ်းသပ်ဒေတာမှ ပင်နံပါတ်ကို $1 ဦး ဆက်သုံးနေသည် ($2)။ ကိုယ်ပိုင်ပင်နံပါတ် မရွေးမချင်း အလုပ်ဝင်၍ မရပါ'],
+  [/^Please choose your own PIN first$/, 'ကိုယ်ပိုင်ပင်နံပါတ် အရင်ရွေးပါ'],
+  // owner reports (Finance → Business health, Sales patterns, Menu engineering)
+  [/^over (\d+) days?$/, '$1 ရက်အတွင်း'],
+  [/^Only (\d+) dish(?:es)? ha(?:s|ve) a recipe cost, so the groups below are rough\. Add recipes under Menu & Stock for the rest$/, 'ဟင်းလျာ $1 မျိုးသာ ချက်ပြုတ်နည်းစရိတ် ရှိသဖြင့် အောက်ပါအုပ်စုများသည် ခန့်မှန်းချက်သာ ဖြစ်သည်။ ကျန်ဟင်းလျာများအတွက် မီနူးနှင့် လက်ကျန်ပစ္စည်း တွင် ချက်ပြုတ်နည်းများ ထည့်ပါ'],
+  [/^Only (\d+)% of item sales have a recipe, so food cost is understated\. Add recipes under Menu & Stock to see the true figure$/, 'ပစ္စည်းရောင်းရငွေ၏ $1% သာ ချက်ပြုတ်နည်းရှိသဖြင့် အစားအစာကုန်ကျစရိတ် နည်းနေပါသည်။ အမှန်ကိန်းဂဏန်းမြင်ရန် မီနူးနှင့် လက်ကျန်ပစ္စည်း တွင် ချက်ပြုတ်နည်းများ ထည့်ပါ'],
+  [/^No salaries or wages are recorded as expenses in this period, so labour and prime cost look better than they are\. Record them under Finance → Expenses \(category Salaries\)$/, 'ဤကာလတွင် လစာ/လုပ်ခများကို အသုံးစရိတ်အဖြစ် မှတ်ထားခြင်းမရှိသဖြင့် လုပ်သားစရိတ်နှင့် အဓိကကုန်ကျစရိတ် အမှန်ထက် ကောင်းနေပုံပေါ်သည်။ ဘဏ္ဍာရေး → အသုံးစရိတ် (အမျိုးအစား လစာများ) တွင် မှတ်ပါ'],
+  // payment names
+  [/^"(.+)" is already a payment method\. Choose another name$/, '“$1” သည် ငွေပေးချေနည်း ဖြစ်ပြီးသားဖြစ်သည်။ အခြားအမည် ရွေးပါ'],
+  [/^At most (\d+) payment names$/, 'ငွေပေးချေမှုအမည် $1 ခုအထိသာ ထားနိုင်သည်'],
+  // reservations
+  [/^Delete the booking for (.+)$/, '$1 ၏ ကြိုတင်မှာမှုကို ဖျက်မလား'],
+  [/^Seat (.+)$/, '$1 ကို ထိုင်စေရန်'],
+  [/^Choose a free table for (\d+) guests$/, '$1 ဦးအတွက် လွတ်နေသောစားပွဲကို ရွေးပါ'],
+  [/^(.+) is already booked (.+)–(.+) for (.+)$/, '$1 ကို $2–$3 အတွက် $4 က ကြိုတင်မှာထားပြီးဖြစ်သည်'],
+  [/^Guests must be between 1 and (\d+)$/, 'ဧည့်သည်အရေအတွက်သည် ၁ မှ $1 အတွင်း ဖြစ်ရမည်'],
+  [/^The table is held for (\d+) to (\d+) minutes$/, 'စားပွဲကို မိနစ် $1 မှ $2 အတွင်း ထိန်းထားနိုင်သည်'],
+  // deposits
+  [/^Deposit from (.+)$/, '$1 ထံမှ စရန်ငွေ'],
+  [/^Give back (.+)'s deposit$/, '$1 ၏ စရန်ငွေ ပြန်ပေးရန်'],
+  [/^Use the deposit \((.+)\)$/, 'စရန်ငွေကို သုံးရန် ($1)'],
+  [/^Only (.+) of (.+)'s deposit is left to give back$/, '$2 ၏ စရန်ငွေမှ $1 သာ ပြန်ပေးရန် ကျန်သည်'],
+  [/^Only (.+) is left of (.+)'s deposit$/, '$2 ၏ စရန်ငွေမှ $1 သာ ကျန်သည်'],
   // role + description in the role drop-down
   [/^(Admin|Manager|Cashier|Waiter|Kitchen) — (.+)$/, '$1 — $2']
 );

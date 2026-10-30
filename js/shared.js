@@ -9,6 +9,8 @@ module.exports = Object.assign({},
   require('./shared/inventory.js'),
   require('./shared/loyalty.js'),
   require('./shared/payments.js'),
+  require('./shared/reservations.js'),
+  require('./shared/attendance.js'),
   require('./shared/shifts.js'),
   require('./shared/dataset.js')
 );

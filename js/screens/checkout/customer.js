@@ -46,8 +46,9 @@ Object.assign(Checkout, {
   creditInfo() {
     const o = Store.order(this.orderId);
     const c = o && o.customerId && Store.customer(o.customerId);
-    if (!c || c.active === false || !(Number(c.creditLimit) > 0)) return null;
-    return { customer: c, limit: c.creditLimit, owing: c.owing || 0, room: Math.max(0, rmoney(c.creditLimit - (c.owing || 0))) };
+    // A customer can put a bill on account with a credit limit, or with a deposit they paid in advance.
+    if (!c || c.active === false || (!(Number(c.creditLimit) > 0) && !((c.owing || 0) < 0))) return null;
+    return { customer: c, limit: Number(c.creditLimit) || 0, owing: c.owing || 0, prepaid: Math.max(0, -(c.owing || 0)), room: Math.max(0, creditRoom(c, decimalsOf(Store.settings))) };
   },
 
   // The methods a bill may be split between (on account only for a customer with credit).

@@ -16,8 +16,15 @@ Object.assign(Sync, {
   async login(userId, pin) {
     const r = await this.api('/api/login', { method: 'POST', body: { userId, pin } });
     this.setToken(r.token);
+    if (r.mustChangePin) {
+      // With a demo PIN the server hands out nothing but the PIN change; the data is loaded once the new PIN is saved.
+      this.userId = r.user.id;
+      this.mustChangePin = true;
+      this.needsSnapshot = true;
+      return Store.user(r.user.id) || r.user;
+    }
     await this.loadSnapshot();
-    this.mustChangePin = !!r.mustChangePin;
+    this.mustChangePin = false;
     return Store.user(r.user.id);
   },
 
@@ -70,6 +77,7 @@ Object.assign(Sync, {
     try { await this.api('/api/logout', { method: 'POST' }); } catch (e) { /* signing out locally is enough */ }
     this.disconnect();
     clearTimeout(this.timer);
+    this.needsSnapshot = false;
     this.setToken(null);
     this.synced = {};
     await this.loadPublic();

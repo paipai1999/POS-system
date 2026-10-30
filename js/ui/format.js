@@ -3,8 +3,10 @@
 // How numbers, money, dates and order labels are shown.
 
 // Amounts follow the Settings: symbol before or after the number, 2 or 0 decimals, thousands separated by commas.
-function money(n) {
-  const s = Store.settings;
+function money(n) { return moneyWith(Store.settings, n); }
+
+// The same, in the money of any shop's settings (used when several shops are shown together).
+function moneyWith(s, n) {
   const dec = decimalsOf(s);
   const v = roundTo(n, dec);
   const body = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
@@ -47,6 +49,31 @@ function timeAgo(ts) {
   if (m < 1) return 'just now';
   if (m < 60) return `${m} min ago`;
   return `${Math.floor(m / 60)}h ${m % 60}m ago`;
+}
+
+// 7.5 → "7h 30m", 0.25 → "15m", 0 → "0h": hours worked, to the minute
+function hoursText(h) {
+  const m = Math.round((Number(h) || 0) * 60);
+  if (m < 60) return m ? `${m}m` : '0h';
+  return m % 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m / 60}h`;
+}
+
+// 1536 → "1.5 KB", 3221225472 → "3.0 GB"
+function fmtBytes(n) {
+  n = Number(n) || 0;
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return `${i === 0 ? n : n.toFixed(1)} ${units[i]}`;
+}
+
+// 93784000 → "1d 2h", 3600000 → "1h 0m", 90000 → "1m"
+function fmtDuration(ms) {
+  const m = Math.floor((Number(ms) || 0) / 60000);
+  const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60);
+  if (d) return `${d}d ${h}h`;
+  if (h) return `${h}h ${m % 60}m`;
+  return `${m}m`;
 }
 
 function initials(name) {

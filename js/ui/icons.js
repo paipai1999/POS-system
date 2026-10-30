@@ -26,6 +26,7 @@ const ICONS = {
   'circle-check': '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
   'x': '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
   'menu': '<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/>',
+  'calendar': '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
   'clock': '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
   'shopping-bag': '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
   'book-open': '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',

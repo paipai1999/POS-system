@@ -23,6 +23,8 @@ Screens.settings = {
     root.innerHTML = `
       <div class="page-head"><h1>Settings</h1></div>
       <div class="settings-grid">
+        ${server ? this.healthHTML() : ''}
+
         <section class="card" data-role="general">
           ${this.generalHTML(s)}
           ${this.loyaltyHTML(s)}
@@ -30,6 +32,8 @@ Screens.settings = {
         </section>
 
         ${this.financeHTML(s)}
+
+        ${this.paymentsHTML(s)}
 
         ${this.tablesHTML(server)}
 
@@ -57,11 +61,14 @@ Screens.settings = {
           this.tiers.splice(+t.dataset.i, 1);
           root.querySelector('[data-role=tiers]').innerHTML = this.tierRows();
           break;
+        case 'pay-add': this.addPayName(t.dataset.name || root.querySelector('[data-role=new-payname]').value); break;
+        case 'pay-del': this.removePayName(t.dataset.name); break;
         case 'add-table': this.addTable(); break;
         case 'rename-table': this.renameTable(id); break;
         case 'del-table': this.deleteTable(id); break;
         case 'qr': this.showQR(); break;
         case 'audit': this.showAudit(); break;
+        case 'health-refresh': this.loadHealth(); break;
         case 'backup-now': this.backupNow(); break;
         case 'backup-folders': this.backupFolders(); break;
         case 'test-print-here': printLocal(testPageHTML()); break;
@@ -94,7 +101,8 @@ Screens.settings = {
       if (e.target.dataset.role === 'station') this.toggleStation(e.target);
     };
     root.querySelector('[data-role=new-table]').onkeydown = e => { if (e.key === 'Enter') this.addTable(); };
-    if (server) this.loadBackupStatus();
+    root.querySelector('[data-role=new-payname]').onkeydown = e => { if (e.key === 'Enter') this.addPayName(e.target.value); };
+    if (server) { this.loadHealth(); this.loadBackupStatus(); }
   },
 
   // Addresses other devices can use. "localhost" only works on the server PC itself.
