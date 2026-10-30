@@ -1,6 +1,6 @@
 # Owner's guide
 
-For the person who owns the restaurant. The README explains how the system is built and installed; this explains how to **run the business on it**: what to look at every day, how to keep the data safe, what to do when something goes wrong, and how to read your numbers. (A Myanmar version is in [OWNER-GUIDE-my.md](OWNER-GUIDE-my.md).)
+For the person who owns the restaurant. The README explains how the system is built and installed; this explains how to **run the business on it**: what to look at every day, how to keep the data safe, what to do when something goes wrong, and how to read your numbers. (A Myanmar version is in [OWNER-GUIDE-my.md](OWNER-GUIDE-my.md).) Setting up for the first real day? Use the [opening-day checklist](SETUP-CHECKLIST.md) first.
 
 ---
 
