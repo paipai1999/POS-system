@@ -186,7 +186,9 @@ test('repeating expenses: made automatically from the first month, never twice, 
     assert.equal(made.status, 'ok', made.error);
     await mina.load();
     const ids = months => months.map(n => `rx_${rent.id}_${F.monthKey(monthsAgo(n).getTime()).replace('-', '')}`);
-    assert.deepEqual(mina.all('expenses').map(e => e.id).sort(), ids([2, 1, 0]).sort(), 'two months ago, last month and this month are all due');
+    // (Read from the server: a device is sent only the last 90 days of money records, and on some days of the month the first
+    // of two months ago is older than that, so the device would not hold it.)
+    assert.deepEqual(t.app.db.all('expenses').map(e => e.id).sort(), ids([2, 1, 0]).sort(), 'two months ago, last month and this month are all due');
     const one = mina.doc('expenses', ids([0])[0]);
     assert.deepEqual([one.amount, one.method, one.category, one.payee, one.by, one.recurringId, one.status], [500, 'other', 'Rent', 'Landlord', 'system', rent.id, 'active']);
 

@@ -20,7 +20,8 @@ test.after(async () => {
 const db = () => srv.app.db;
 const pad = n => String(n).padStart(2, '0');
 const isoDay = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const hhmm = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const hhmm = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;       // what a time field holds
+const shown = d => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });   // how the app shows a time (12 or 24 hours, by locale)
 const inMinutes = m => new Date(Date.now() + m * 60000);
 
 // Fills in and saves the booking form.
@@ -69,7 +70,7 @@ test('a waiter takes a booking, sees it on the day and on the table, and the dou
   t.click('[data-nav=tables]');
   await t.until(() => t.screen() === 'tables');
   const tile = t.$$('.table-tile').find(x => /Table 1/.test(x.textContent));
-  assert.match(tile.textContent, new RegExp(`${hhmm(when).replace(':', ':')}.*Ma Hla \\(4\\)`));
+  assert.match(tile.textContent, new RegExp(`${shown(when)}.*Ma Hla \\(4\\)`));
   assert.ok(tile.classList.contains('booked'));
   const other = t.$$('.table-tile').find(x => /Table 2/.test(x.textContent));
   assert.ok(!other.querySelector('.t-booked'), 'another table has no hint');

@@ -87,7 +87,9 @@ test('price, stock, staff and settings changes are recorded with who made them',
   assert.equal(staff.target, 'Leo');
   assert.match(staff.detail, /role waiter → cashier/);
   assert.match(staff.detail, /PIN changed/);
-  assert.ok(!JSON.stringify(rows).includes('6543'), 'the new PIN itself is never written to the log');
+  // (Only the words of each entry are searched: a timestamp or id can contain any four digits by chance.)
+  const words = rows.map(r => [r.user, r.action, r.target, r.detail].map(v => String(v ?? '')).join(' | '));
+  assert.ok(!words.some(w => w.includes('6543')), 'the new PIN itself is never written to the log');
 });
 
 test('voids, refunds and discounts are recorded with the manager who approved them', async () => {

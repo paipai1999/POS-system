@@ -122,7 +122,7 @@ test('a lock is written to the activity log, with the person and the address but
     assert.equal(rows.length, 1);
     assert.equal(rows[0].target, 'Maya');
     assert.match(rows[0].detail, /5 wrong PINs in a row \(latest from .+\); locked for 30 seconds/);
-    assert.ok(!JSON.stringify(rows).includes('0123'));
+    assert.ok(!rows.some(r => [r.user, r.action, r.target, r.detail].some(v => String(v ?? '').includes('0123'))), 'the PIN that was tried is not in the log');   // (words only: a timestamp can hold any four digits)
   } finally { await t.stop(); }
 });
 

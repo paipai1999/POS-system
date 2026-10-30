@@ -514,6 +514,7 @@ test('Myanmar interface covers the inventory, customers and recipe screens', opt
   assert.equal(t.$$('.modal input[placeholder]').filter(i => /[A-Za-z]{3,}/.test(i.placeholder) && !/[က-႟]/.test(i.placeholder)).length, 0, 'item editor placeholders');
   t.click('.modal [data-act=__close]');
   t.click('[data-nav=settings]'); await t.until(() => t.screen() === 'settings'); await t.sleep(30);
+  await t.until(() => !t.$$('.settings-grid p').some(p => /Checking/.test(p.textContent)), { what: 'the system health and backup cards to finish loading' });   // (they ask the server, which takes longer under load)
   assert.deepEqual(english('.settings-grid label, .settings-grid select[name=ingredientStock] option, .settings-grid .field-label, .settings-grid p'), [], 'settings');
   t.click('[data-nav=customers]'); await t.until(() => t.screen() === 'customers');
   t.click('[data-act=new]'); await t.sleep(30);

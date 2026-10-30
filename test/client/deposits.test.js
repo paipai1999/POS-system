@@ -110,7 +110,9 @@ test('a bigger bill is split: the rest of the deposit on account, the balance in
   assert.equal(customer('Daw Hla').owing, 0, 'the deposit is all used');
   t.click('.modal [data-act=__close]');
 
-  // With nothing left, On account is no longer offered for this customer.
+  // With nothing left, On account is no longer offered for this customer. (The dialog is drawn once, so this device must already
+  // hold the new balance when it opens.)
+  await t.until(() => t.get("Store.data.customers.find(c => c.name === 'Daw Hla').owing") === 0, { what: 'this device to learn the balance is now 0' });
   await startPayment(t, 'Daw Hla', 1);
   assert.equal(t.$('.modal [data-act=method][data-method=credit]'), null);
 });
@@ -121,6 +123,7 @@ test('giving a deposit back needs a manager PIN, and the money is recorded as go
   await addCustomer(t, 'U Aung', '09 800 222');
   await deposit(t, 'U Aung', 30, 'other');
   const row = () => t.$$('tbody tr').find(r => r.querySelector('b') && r.querySelector('b').textContent === 'U Aung');
+  await t.until(() => row() && row().querySelector('[data-act=return-deposit]'), { what: 'the give-back button (once the server has confirmed the deposit)' });
   row().querySelector('[data-act=return-deposit]').click();
   await t.until(() => t.modalTitle() === 'Manager approval', { what: 'the manager prompt' });
   t.type('.modal .pin-input', '1234');
@@ -146,6 +149,7 @@ test('a wrong manager PIN gives nothing back', opts, async () => {
   t.click('[data-nav=customers]');
   await t.until(() => t.screen() === 'customers');
   const row = () => t.$$('tbody tr').find(r => r.querySelector('b') && r.querySelector('b').textContent === 'U Aung');
+  await t.until(() => row() && row().querySelector('[data-act=return-deposit]'), { what: 'the give-back button' });
   row().querySelector('[data-act=return-deposit]').click();
   await t.until(() => t.modalTitle() === 'Manager approval');
   t.type('.modal .pin-input', '9999');
@@ -174,10 +178,12 @@ test('a booking takes a deposit from its card; the guest becomes a customer, and
   assert.equal(customer('Ma Su Su').phone, '09 555 777', 'a customer was added from the booking');
   await t.until(() => /Deposit\s*\$25\.00/.test(card().textContent), { what: 'the deposit on the card' });
 
-  // A second deposit for the same booking finds the same customer and adds up.
+  // A second deposit for the same booking finds the same customer and adds up. (The form is drawn once, so this device must
+  // already hold the customer's new balance when it opens.)
+  await t.until(() => t.get("Store.data.customers.find(c => c.name === 'Ma Su Su').owing") === -25, { what: 'this device to learn the balance' });
   card().querySelector('[data-act=deposit]').click();
   await t.until(() => t.modalTitle() === 'Deposit from Ma Su Su');
-  assert.match(t.text('.modal'), /Deposit already held\s*\$25\.00/);
+  await t.until(() => /Deposit already held\s*\$25\.00/.test(t.text('.modal') || ''), { what: 'the deposit already held (the customer\'s balance comes from the server)' });
   t.type('.modal [name=amount]', '15');
   t.click('.modal [data-act=save]');
   await t.until(() => customer('Ma Su Su').owing === -40);
