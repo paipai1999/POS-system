@@ -175,6 +175,8 @@ test('a booking takes a deposit from its card; the guest becomes a customer, and
   await t.until(() => /Deposit\s*\$25\.00/.test(card().textContent), { what: 'the deposit on the card' });
 
   // A second deposit for the same booking finds the same customer and adds up.
+  // The card can show the deposit before this device has the customer's new balance (a separate live update), so wait for it.
+  await t.until(() => t.get("(Store.data.customers.find(c => c.name === 'Ma Su Su') || {}).owing") === -25, { what: 'the balance on this device' });
   card().querySelector('[data-act=deposit]').click();
   await t.until(() => t.modalTitle() === 'Deposit from Ma Su Su');
   assert.match(t.text('.modal'), /Deposit already held\s*\$25\.00/);
