@@ -2,7 +2,27 @@
   "name": "restaurant-pos",
   "version": "1.1.0",
   "private": true,
-  "description": "Restaurant point of sale: runs in a browser, optional LAN server",
+  "description": "Open-source restaurant & cafe POS: multi-device LAN sync, kitchen display, QR table ordering, inventory and finance reports. English / Myanmar.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paipai1999/POS-system.git"
+  },
+  "bugs": {
+    "url": "https://github.com/paipai1999/POS-system/issues"
+  },
+  "homepage": "https://github.com/paipai1999/POS-system#readme",
+  "keywords": [
+    "pos",
+    "point-of-sale",
+    "restaurant",
+    "cafe",
+    "kitchen-display",
+    "qr-ordering",
+    "inventory",
+    "myanmar",
+    "self-hosted"
+  ],
   "scripts": {
     "start": "node server/server.js",
     "test": "node --test server/test/*.test.js test/client/*.test.js",

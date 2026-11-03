@@ -1,6 +1,30 @@
 # Restaurant POS
 
-A point-of-sale system for restaurants and cafes. It runs in two ways:
+[![Tests](https://github.com/paipai1999/POS-system/actions/workflows/test.yml/badge.svg)](https://github.com/paipai1999/POS-system/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Node 22.5+](https://img.shields.io/badge/node-%3E%3D22.5-brightgreen)
+![No runtime dependencies](https://img.shields.io/badge/runtime%20deps-0-brightgreen)
+![English · မြန်မာ](https://img.shields.io/badge/UI-English%20%C2%B7%20Myanmar-orange)
+
+**A free, self-hosted POS for small restaurants and cafes.** One Windows PC runs it; the counter, waiters' phones, the kitchen screen and guests' phones all connect over the shop's Wi-Fi and stay in sync live — no cloud, no monthly fee, no internet needed.
+
+Built for small shops in Myanmar and Southeast Asia, where commercial POS software is expensive, needs a stable internet connection, or has no local language. It covers the whole day: ordering, kitchen tickets, payment (cash, card, KBZPay/Wave Pay…), stock and recipes, staff hours, and the owner's profit & loss.
+
+| Tables | Ordering | Kitchen screen | Guest menu (QR) |
+|---|---|---|---|
+| ![Tables](docs/screenshots/tables.png) | ![Ordering](docs/screenshots/order.png) | ![Kitchen](docs/screenshots/kitchen.png) | ![Guest menu on a phone](docs/screenshots/guest.png) |
+
+**Quick start:** install [Node.js](https://nodejs.org) 22.5+, download this repository, double-click `start-server.bat`, open `http://localhost:3000` and sign in as Admin with PIN `1234`. Or just double-click `index.html` to try it with no server.
+
+- 372 automated tests (server API, live multi-device sync, security, backups, money, and the real app clicked through in a browser)
+- The server recalculates every bill — a modified phone can't change a price or total
+- Daily backups, with optional copies to a USB drive or cloud folder
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Security issues: [SECURITY.md](SECURITY.md).
+
+## How it runs
+
+It runs in two ways:
 
 - **Multi-device (recommended).** One PC runs the POS server. The counter PC, waiters' phones, a kitchen screen and guests' phones all use it over the restaurant Wi-Fi and stay in sync live.
 - **Single device (trial / one counter).** Double-click `index.html`. Everything is saved in that browser only, and no server is needed. It has the same screens and the same payment and stock rules, but no PIN protection beyond the browser and no live sharing between devices.
@@ -190,3 +214,7 @@ test/client/            the real app clicked through in jsdom (incl. offline que
 server/test/            API, live-sync, security, backup, money, ledger, finance and feature tests
 *.bat                   start, auto-start, firewall, counter PC helpers (Windows)
 ```
+
+## License
+
+[MIT](LICENSE). Free to use, change and sell, including in your own shop.
