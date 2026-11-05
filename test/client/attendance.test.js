@@ -71,10 +71,12 @@ test('a waiter clocks in and out from the menu bar, on the server\'s time, and c
 });
 
 test('a manager sees who is in, adds a missed shift, is refused a clash, and corrects a forgotten clock-out', opts, async () => {
-  // Maya clocked in yesterday morning and never out; Leo is on shift now (the test above left his shift ended, so start one).
+  // Maya clocked in two days ago at 08:00 and never out; Leo is on shift now (the test above left his shift ended, so start one).
+  // (A fixed time of day: "30 hours ago" was after yesterday's 09:00–16:30 shift below from 22:30 on, so nothing clashed.)
   const maya = db().all('users').find(u => u.name === 'Maya');
   const leo = db().all('users').find(u => u.name === 'Leo');
-  db().put('attendance', 'forgot1', { id: 'forgot1', userId: maya.id, userName: 'Maya', in: Date.now() - 30 * HOUR, out: null, by: maya.id });
+  const twoDaysAgo8 = new Date(Date.now() - 48 * HOUR); twoDaysAgo8.setHours(8, 0, 0, 0);
+  db().put('attendance', 'forgot1', { id: 'forgot1', userId: maya.id, userName: 'Maya', in: twoDaysAgo8.getTime(), out: null, by: maya.id });
   db().put('attendance', 'leo_on', { id: 'leo_on', userId: leo.id, userName: 'Leo', in: Date.now() - 2 * HOUR, out: null, by: leo.id });
 
   const t = await open();

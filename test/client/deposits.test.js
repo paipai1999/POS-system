@@ -25,7 +25,10 @@ const money = n => '$' + n.toFixed(2);
 // device (noticeable on slow machines), and the screens are drawn from the device's copy, so tests wait for both.
 const localOwing = (t, name) => t.get(`(Store.data.customers.find(c => c.name === ${JSON.stringify(name)}) || {}).owing`);
 
-const App_render = t => t.get('App.render()');
+const pad = n => String(n).padStart(2, '0');
+const isoDay = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+// The booking below is 3 hours ahead, which after 21:00 is tomorrow, while the Reservations screen opens on today.
+const viewDayOf = (t, at) => t.type('[data-role=day]', isoDay(new Date(at)));
 
 async function addCustomer(t, name, phone) {
   t.get(`Screens.customers.create({ name: ${JSON.stringify(name)}, phone: ${JSON.stringify(phone)} })`);
@@ -169,7 +172,7 @@ test('a booking takes a deposit from its card; the guest becomes a customer, and
   await t.until(() => t.screen() === 'reservations');
   const booking = t.get(`Store.saveReservation({ name: 'Ma Su Su', phone: '09 555 777', guests: 8, at: ${Date.now() + 3 * 3600000}, duration: 90, tableId: null, note: '' }).id`);
   await t.until(() => db().all('reservations').some(r => r.id === booking), { what: 'the booking on the server' });
-  App_render(t);
+  viewDayOf(t, db().all('reservations').find(r => r.id === booking).at);
   await t.until(() => t.$$('.res').some(c => /Ma Su Su/.test(c.textContent)), { what: 'the booking' });
   const card = () => t.$$('.res').find(c => /Ma Su Su/.test(c.textContent));
   card().querySelector('[data-act=deposit]').click();
@@ -198,7 +201,8 @@ test('a waiter, who takes no money, has no Deposit button', opts, async () => {
   await t.signIn('Leo', '2222', '618204');
   t.click('[data-nav=reservations]');
   await t.until(() => t.screen() === 'reservations');
-  await t.until(() => t.$$('.res').length > 0);
+  viewDayOf(t, db().all('reservations').find(r => r.name === 'Ma Su Su').at);
+  await t.until(() => t.$$('.res').length > 0, { what: 'the booking' });
   assert.equal(t.$('.res [data-act=deposit]'), null);
 });
 

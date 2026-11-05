@@ -106,7 +106,7 @@ test('a waiter takes a booking, sees it on the day and on the table, and the dou
   t.$('.modal [name=tableId]').value = db().all('tables').find(x => x.name === 'Table 2').id;
   t.click('.modal [data-act=save]');
   await t.until(() => t.$$('.res').some(c => /U Ba/.test(c.textContent)), { what: 'the second booking' });
-  assert.equal(db().all('reservations').length, 2);
+  await t.until(() => db().all('reservations').length === 2, { what: 'the second booking on the server' });   // (shown here before the server has it)
 });
 
 test('seating a booking opens the bill at its table and takes the hint off the table', opts, async () => {
