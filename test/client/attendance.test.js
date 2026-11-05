@@ -24,6 +24,8 @@ const isoDay = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate
 const hhmm = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 // The default period is this week, which on a Monday holds nothing from yesterday: look at the last few days instead.
 async function lastDays(t) {
+  // A device holds only the last two days of bills, so from Wednesday on "This week" is fetched first ("Loading time sheets…").
+  await t.until(() => t.$('[data-act=range][data-range=custom]'), { what: 'the period buttons' });
   t.click('[data-act=range][data-range=custom]');
   await t.until(() => t.$('[data-role=from]'));
   t.type('[data-role=from]', isoDay(new Date(Date.now() - 4 * 24 * HOUR)));
