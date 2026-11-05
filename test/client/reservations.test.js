@@ -37,6 +37,13 @@ async function book(t, { name, phone = '09 555 1234', guests = 4, when, table = 
   t.$('.modal [name=duration]').value = stay;
   t.click('.modal [data-act=save]');
 }
+// Shows the day a booking is on. Bookings are made a little ahead of now, which late in the evening is already tomorrow,
+// while a screen opens on today.
+async function viewDayOf(t, name) {
+  await t.until(() => db().all('reservations').some(r => r.name === name), { what: `${name}'s booking on the server` });
+  t.type('[data-role=day]', isoDay(new Date(db().all('reservations').find(r => r.name === name).at)));
+  await t.until(() => t.$$('.res').some(c => c.textContent.includes(name)), { what: `${name}'s booking on this device` });
+}
 const cards = t => t.$$('.res').map(c => c.textContent.replace(/\s+/g, ' ').trim());
 
 test('a waiter takes a booking, sees it on the day and on the table, and the double booking is refused', opts, async () => {
@@ -69,7 +76,9 @@ test('a waiter takes a booking, sees it on the day and on the table, and the dou
   t.click('[data-nav=tables]');
   await t.until(() => t.screen() === 'tables');
   const tile = t.$$('.table-tile').find(x => /Table 1/.test(x.textContent));
-  assert.match(tile.textContent, new RegExp(`${hhmm(when).replace(':', ':')}.*Ma Hla \\(4\\)`));
+  // The time as the app writes it (12- or 24-hour, by the device's locale): a 24-hour pattern only matched in the morning.
+  const shown = t.get(`fmtTime(${when.getTime()})`);
+  assert.ok(tile.textContent.includes(`${shown} · Ma Hla (4)`), `"${shown} · Ma Hla (4)" on the tile: ${tile.textContent.trim()}`);
   assert.ok(tile.classList.contains('booked'));
   const other = t.$$('.table-tile').find(x => /Table 2/.test(x.textContent));
   assert.ok(!other.querySelector('.t-booked'), 'another table has no hint');
@@ -96,7 +105,8 @@ test('a waiter takes a booking, sees it on the day and on the table, and the dou
   t.type('.modal [name=guests]', '2');
   t.$('.modal [name=tableId]').value = db().all('tables').find(x => x.name === 'Table 2').id;
   t.click('.modal [data-act=save]');
-  await t.until(() => t.$$('.res').length === 2, { what: 'the second booking' });
+  await t.until(() => t.$$('.res').some(c => /U Ba/.test(c.textContent)), { what: 'the second booking' });
+  assert.equal(db().all('reservations').length, 2);
 });
 
 test('seating a booking opens the bill at its table and takes the hint off the table', opts, async () => {
@@ -104,7 +114,7 @@ test('seating a booking opens the bill at its table and takes the hint off the t
   await t.signIn('Maya', '1111', '735192');
   t.click('[data-nav=reservations]');
   await t.until(() => t.screen() === 'reservations');
-  await t.until(() => t.$$('.res').length === 2, { what: 'the bookings made on the other device' });
+  await viewDayOf(t, 'Ma Hla');   // (made on the other device)
   const ma = t.$$('.res').find(c => /Ma Hla/.test(c.textContent));
   ma.querySelector('[data-act=seat]').click();
   await t.until(() => t.screen() === 'order', { what: 'the order screen' });
@@ -143,6 +153,7 @@ test('a table that is already in use cannot be seated over', opts, async () => {
   await other.signIn('Maya', '735192');
   other.get(`Store.createOrder({ tableId: '${table2.id}', staffId: App.user.id })`);
   await t.until(() => t.get(`!!Store.openOrderForTable('${table2.id}')`), { what: 'the busy table to reach this device' });
+  await viewDayOf(t, 'U Ba');
   t.$$('.res').find(c => /U Ba/.test(c.textContent)).querySelector('[data-act=seat]').click();   // (the list was redrawn when the bill arrived, so find the button again)
   await t.until(() => t.toasts().some(x => /Table 2 is already in use/.test(x)), { what: 'the message' });
   assert.equal(db().all('reservations').find(r => r.name === 'U Ba').status, 'booked');
@@ -175,7 +186,8 @@ test('cancelling and no-shows free the table; only a manager can reopen or delet
   await t.signIn('Leo', '618204');
   t.click('[data-nav=reservations]');
   await t.until(() => t.screen() === 'reservations');
-  await book(t, { name: 'Cancel Me', guests: 2, when: inMinutes(300), table: db().all('tables').find(x => x.name === 'Table 3').id });
+  const later = inMinutes(300);   // after 19:00 this is tomorrow, so the admin below opens that day
+  await book(t, { name: 'Cancel Me', guests: 2, when: later, table: db().all('tables').find(x => x.name === 'Table 3').id });
   await t.until(() => t.$$('.res').some(c => /Cancel Me/.test(c.textContent)));
   const find = name => t.$$('.res').find(c => new RegExp(name).test(c.textContent));
   find('Cancel Me').querySelector('[data-act=cancel]').click();
@@ -187,7 +199,7 @@ test('cancelling and no-shows free the table; only a manager can reopen or delet
   assert.equal(find('Cancel Me').querySelector('[data-act=delete]'), null, 'nor delete');
 
   // The freed slot can be booked again.
-  await book(t, { name: 'Takes Over', guests: 2, when: inMinutes(300), table: db().all('tables').find(x => x.name === 'Table 3').id });
+  await book(t, { name: 'Takes Over', guests: 2, when: later, table: db().all('tables').find(x => x.name === 'Table 3').id });
   await t.until(() => t.$$('.res').some(c => /Takes Over/.test(c.textContent)), { what: 'the new booking in the freed slot' });
   find('Takes Over').querySelector('[data-act=noshow]').click();
   await t.until(() => t.modalTitle() === 'Mark as a no-show?');
@@ -198,7 +210,8 @@ test('cancelling and no-shows free the table; only a manager can reopen or delet
   await admin.signIn('Admin', '1234', '482915');
   admin.click('[data-nav=reservations]');
   await admin.until(() => admin.screen() === 'reservations');
-  await admin.until(() => admin.$$('.res').some(c => /Cancel Me/.test(c.textContent)));
+  admin.type('[data-role=day]', isoDay(later));
+  await admin.until(() => admin.$$('.res').some(c => /Cancel Me/.test(c.textContent)), { what: 'the bookings on the admin\'s screen' });
   const adminCard = name => admin.$$('.res').find(c => new RegExp(name).test(c.textContent));
   adminCard('Cancel Me').querySelector('[data-act=reopen]').click();
   await admin.until(() => db().all('reservations').find(r => r.name === 'Cancel Me').status === 'booked', { what: 'the manager reopening it' });
@@ -217,7 +230,10 @@ test('the day can be changed, and a booking made for another day shows there', o
   await book(t, { name: 'Tomorrow Lunch', guests: 6, when: tomorrow });
   await t.until(() => t.$$('.res').some(c => /Tomorrow Lunch/.test(c.textContent)), { what: 'the booking' });
   assert.equal(t.$('[data-role=day]').value, isoDay(tomorrow), 'the screen moved to the booked day');
-  assert.ok(!t.$$('.res').some(c => /Ma Hla/.test(c.textContent)), 'today\'s bookings are not on tomorrow');
+  const maHla = db().all('reservations').find(r => r.name === 'Ma Hla');
+  if (isoDay(new Date(maHla.at)) !== isoDay(tomorrow)) {   // (made 30 minutes ahead, it is itself tomorrow after 23:30)
+    assert.ok(!t.$$('.res').some(c => /Ma Hla/.test(c.textContent)), 'today\'s bookings are not on tomorrow');
+  }
   t.click('[data-act=today]');
   assert.equal(t.$('[data-role=day]').value, isoDay(new Date()));
   t.click('[data-act=next]');
