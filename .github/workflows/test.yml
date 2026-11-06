@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# The tests only read the code. Say so explicitly, so the job's token can never write to the repository,
+# whatever the repository's default is and whoever's pull request is being tested.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
