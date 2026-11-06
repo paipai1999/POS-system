@@ -28,3 +28,27 @@
 }
 .cart-bar.ghost { background: var(--chrome-2); box-shadow: 0 10px 30px rgba(0, 0, 0, .2); }
 .guest-staff { display: block; margin: 2.5rem auto 0; border: 0; background: transparent; color: var(--muted); font-size: .8rem; padding: .5rem 1rem; }
+/* Responsive guest menu header */
+@media (max-width: 480px) {
+  .guest-head {
+    flex-wrap: wrap;
+    gap: .5rem;
+    padding: .75rem 1rem;
+  }
+
+  .guest-head > .grow {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .guest-head h1,
+  .guest-head .guest-sub {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .guest-head .btn {
+    flex: 0 0 auto;
+  }
+}
