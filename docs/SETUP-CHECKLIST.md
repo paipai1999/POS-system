@@ -12,6 +12,8 @@ Nothing needs installing for the server except Node.js **22.5 or newer** (the LT
 
 ## 1. The counter PC (before opening)
 
+- [ ] **`setup-shop.bat /check`** has been run first: it lists what is missing on this PC (Node.js, firewall, auto-start, Chrome, default printer, network set to Private) and changes nothing. `setup-shop.bat` then does the missing steps for you. (This script is new and has not been tried on a real shop PC yet: if a step misbehaves, use the individual `.bat` files described in the README instead.)
+- [ ] If the program came as a ZIP download: right-click the ZIP → Properties → tick **Unblock** *before* extracting it, so Windows does not stop the `.bat` files.
 - [ ] `start-server.bat` opens `http://localhost:3000`. (If Node is too old, note what the message says.)
 - [ ] `allow-firewall.bat` has been run once **as administrator** (right-click → Run as administrator).
 - [ ] The Wi-Fi network in Windows is set to **Private**. (If it is *Public*, phones cannot connect.)

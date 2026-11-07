@@ -37,6 +37,8 @@ Before the first real day, go through the **[opening-day checklist](docs/SETUP-C
 
 You need [Node.js](https://nodejs.org) **22.5 or newer** (the "LTS" download) on the PC that runs the server. `start-server.bat` checks this and says so if it is too old. There is nothing else to install.
 
+**The short way (Windows counter PC):** double-click **`setup-shop.bat`**. It checks the PC, then offers each step below in turn (install Node.js with `winget`, open the firewall for phones, start the server by itself, start it now, open the counter screen) and asks before it changes anything. `setup-shop.bat /check` only reports what is missing and changes nothing. The steps below are the same things done one at a time, and each `.bat` file still works on its own.
+
 1. **Start the server.** On the counter PC, double-click `start-server.bat`. It shows the address to use, for example:
    ```
    On this PC:     http://localhost:3000

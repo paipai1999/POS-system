@@ -1,0 +1,4 @@
+# Windows batch files must keep Windows (CRLF) line endings. With bare LF endings cmd.exe can fail to find a
+# label (goto) depending on where the line breaks fall, which a ZIP download would otherwise leave behind.
+# They are stored with CRLF and never converted by git.
+*.bat -text
